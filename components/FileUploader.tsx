@@ -1,0 +1,274 @@
+"use client";
+
+import React, { useState, useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { toast } from "@/components/ui/use-toast";
+import { Spinner } from "@/components/ui/spinner";
+import { LlamaParseResult } from "@/types/api";
+
+interface FileUploaderProps {
+  onFileProcessed?: (result: LlamaParseResult) => void;
+}
+
+export function FileUploader({ onFileProcessed }: FileUploaderProps) {
+  const [file, setFile] = useState<File | null>(null);
+  const [parsingMode, setParsingMode] = useState<string>("balanced");
+  const [documentName, setDocumentName] = useState<string>("");
+  const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [dragActive, setDragActive] = useState<boolean>(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Handle drag events
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  // Handle drop event
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFile(e.dataTransfer.files[0]);
+    }
+  };
+
+  // Handle file input change
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    
+    if (e.target.files && e.target.files[0]) {
+      handleFile(e.target.files[0]);
+    }
+  };
+
+  // Handle file validation and state update
+  const handleFile = (file: File) => {
+    const fileExtension = file.name.split('.').pop()?.toLowerCase();
+    
+    if (fileExtension === 'csv' || fileExtension === 'xlsx' || fileExtension === 'xls' || fileExtension === 'pdf') {
+      setFile(file);
+      if (!documentName) {
+        setDocumentName(file.name.split('.')[0]);
+      }
+    } else {
+      toast({
+        title: "Unsupported file format",
+        description: "Please upload an Excel (.xlsx, .xls), CSV (.csv), or PDF file.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Handle file upload to LlamaParse
+  const handleUpload = async () => {
+    if (!file) {
+      toast({
+        title: "No file selected",
+        description: "Please select a file to upload.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!documentName.trim()) {
+      toast({
+        title: "Document name required",
+        description: "Please provide a name for this document.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsUploading(true);
+
+    try {
+      // Create form data
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('documentName', documentName);
+      
+      // Add parsing mode parameters based on selection
+      if (parsingMode === "fast") {
+        formData.append('fast_mode', "true");
+      } else if (parsingMode === "premium") {
+        formData.append('premium_mode', "true");
+      } else if (parsingMode === "complexTables") {
+        formData.append('preset', "complexTables");
+      }
+      
+      // Send the file to our API endpoint
+      console.log('Sending file to API...');
+      const response = await fetch('/api/llamaparse', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to upload file');
+      }
+      
+      const result = await response.json();
+      console.log('API response received:', result);
+      
+      toast({
+        title: "File processed successfully",
+        description: `${file.name} has been processed and added to your documents.`,
+      });
+      
+      // Reset form
+      setFile(null);
+      setDocumentName("");
+      
+      if (inputRef.current) {
+        inputRef.current.value = "";
+      }
+      
+      // Call the callback with the result
+      if (onFileProcessed) {
+        onFileProcessed(result);
+      }
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      toast({
+        title: "Upload failed",
+        description: error instanceof Error ? error.message : "There was an error uploading your file. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Upload Document</CardTitle>
+        <CardDescription>
+          Upload an Excel, CSV, or PDF file to be processed by LlamaParse
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-6">
+          {/* File Upload Area with Drag & Drop */}
+          <div 
+            className={`border-2 border-dashed rounded-lg p-10 text-center transition-colors cursor-pointer ${
+              dragActive 
+                ? "border-primary bg-primary/5" 
+                : "border-muted-foreground/25 hover:bg-muted/50"
+            }`}
+            onDragEnter={handleDrag}
+            onDragOver={handleDrag}
+            onDragLeave={handleDrag}
+            onDrop={handleDrop}
+            onClick={() => inputRef.current?.click()}
+          >
+            <div className="flex flex-col items-center justify-center gap-4">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="40"
+                height="40"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className={dragActive ? "text-primary" : "text-muted-foreground"}
+              >
+                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+                <polyline points="14 2 14 8 20 8" />
+              </svg>
+              <div>
+                <p className="font-medium">Drag and drop your file here or click to browse</p>
+                <p className="text-sm text-muted-foreground">Supports Excel (.xlsx, .xls), CSV (.csv), and PDF files</p>
+              </div>
+              <Input 
+                type="file" 
+                accept=".xlsx,.xls,.csv,.pdf" 
+                className="hidden" 
+                ref={inputRef}
+                onChange={handleChange}
+              />
+              <Button size="sm" type="button">
+                Select File
+              </Button>
+            </div>
+          </div>
+
+          {/* Upload Details */}
+          <div className="grid gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">Parsing Mode</label>
+              <Select 
+                defaultValue="balanced" 
+                value={parsingMode}
+                onValueChange={setParsingMode}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select parsing mode" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="fast">Fast (Simple, text-only documents)</SelectItem>
+                  <SelectItem value="balanced">Balanced (Default for mixed content)</SelectItem>
+                  <SelectItem value="premium">Premium (Complex documents with tables/images)</SelectItem>
+                  <SelectItem value="complexTables">Complex Tables (Specialized for tables)</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1">
+                Choose the appropriate mode based on your document's complexity
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Document Name</label>
+              <Input 
+                placeholder="Enter a name for this document" 
+                className="w-full"
+                value={documentName}
+                onChange={(e) => setDocumentName(e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+      </CardContent>
+      <CardFooter className="flex justify-between border-t pt-6">
+        <div className="space-y-1">
+          <p className="text-sm">
+            Selected File: {file ? (
+              <span className="font-medium">{file.name}</span>
+            ) : (
+              <span className="italic text-muted-foreground">No file selected</span>
+            )}
+          </p>
+          <p className="text-xs text-muted-foreground">Powered by LlamaParse</p>
+        </div>
+        <Button 
+          onClick={handleUpload} 
+          disabled={!file || isUploading}
+        >
+          {isUploading ? (
+            <>
+              <Spinner className="mr-2" size="sm" />
+              Processing...
+            </>
+          ) : (
+            "Upload & Process"
+          )}
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+} 
