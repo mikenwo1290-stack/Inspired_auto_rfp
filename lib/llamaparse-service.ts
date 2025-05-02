@@ -1,0 +1,149 @@
+import { env, validateEnv } from "./env";
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
+
+// Types for parse options
+export interface ParseOptions {
+  fastMode?: boolean;
+  premiumMode?: boolean;
+  complexTables?: boolean;
+}
+
+/**
+ * Service for interacting with LlamaParse
+ */
+export class LlamaParseService {
+  private apiKey: string;
+  
+  constructor() {
+    if (!validateEnv()) {
+      throw new Error('Required environment variables are missing');
+    }
+    
+    this.apiKey = env.LLAMA_CLOUD_API_KEY.apiKey;
+  }
+  
+  /**
+   * Parse a file using LlamaParse
+   */
+  async parseFile(
+    file: File,
+    options: ParseOptions = {}
+  ) {
+    try {
+      // Step 1: Convert the File object to a file path by saving it temporarily
+      const filePath = await this.saveFileToTemp(file);
+      
+      // Step 2: Configure parsing options
+      let mode = 'balanced'; // default mode
+      
+      if (options.fastMode) {
+        mode = 'fast';
+      } else if (options.premiumMode) {
+        mode = 'premium';
+      } else if (options.complexTables) {
+        mode = 'complexTables';
+      }
+      
+      console.log('Started parsing the file');
+      
+      // Step 3: Use dynamic import to avoid constructor issues
+      const llamaIndexModule = await import('llamaindex');
+      const { LlamaParseReader } = llamaIndexModule;
+      
+      // Step 4: Configure options based on the mode
+      let readerOptions: Record<string, any> = {
+        apiKey: this.apiKey,
+        resultType: "markdown"
+      };
+      
+      // Add mode-specific options
+      if (mode === 'fast') {
+        readerOptions.fast_mode = true;
+      } else if (mode === 'premium') {
+        readerOptions.premium_mode = true;
+      } else if (mode === 'complexTables') {
+        readerOptions.complexTables = true;
+      }
+      
+      console.log(`Creating reader with options:`, readerOptions);
+      
+      // Step 5: Create the reader with the appropriate options
+      const reader = new LlamaParseReader(readerOptions);
+      
+      // Step 6: Parse the document
+      const documents = await reader.loadData(filePath);
+      
+      // Log successful parsing
+      console.log("Document parsed successfully");
+      
+      // Step 7: Clean up the temporary file
+      await fs.promises.unlink(filePath);
+      
+      // Step 8: Get the parsed content
+      const documentText = documents[0]?.text || '';
+      
+      // Step 9: Return the result
+      return {
+        id: `llamaparse-${Date.now()}`,
+        status: 'success',
+        documentName: file.name,
+        content: documentText,
+        metadata: {
+          mode: mode as any,
+          wordCount: this.countWords(documentText),
+          pageCount: this.estimatePages(documentText),
+          summary: this.generateSummary(documentText),
+        }
+      };
+    } catch (error) {
+      console.error('Error parsing file with LlamaParse:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Save a File object to a temporary file and return the path
+   */
+  private async saveFileToTemp(file: File): Promise<string> {
+    // Create buffer from file
+    const buffer = Buffer.from(await file.arrayBuffer());
+    
+    // Create temporary file path
+    const tempDir = os.tmpdir();
+    const tempFilePath = path.join(tempDir, file.name);
+    
+    // Write to temporary file
+    await fs.promises.writeFile(tempFilePath, buffer);
+    
+    return tempFilePath;
+  }
+  
+  /**
+   * Count words in a text
+   */
+  private countWords(text: string): number {
+    return text.split(/\s+/).filter(Boolean).length;
+  }
+  
+  /**
+   * Estimate page count based on word count
+   * (roughly 500 words per page as a simple estimation)
+   */
+  private estimatePages(text: string): number {
+    const words = this.countWords(text);
+    return Math.max(1, Math.ceil(words / 500));
+  }
+  
+  /**
+   * Generate a short summary of the document content
+   */
+  private generateSummary(text: string): string {
+    // In a production app, you would use an LLM to generate a summary
+    // For now, we'll just take the first 100 words
+    const words = text.split(/\s+/).filter(Boolean);
+    const summary = words.slice(0, 100).join(' ');
+    return summary + (words.length > 100 ? '...' : '');
+  }
+} 
