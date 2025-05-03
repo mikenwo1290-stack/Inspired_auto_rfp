@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,8 @@ interface Question {
   category?: string;
 }
 
-export default function QuestionsPage() {
+// Create a client component that uses useSearchParams
+function QuestionsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const documentId = searchParams.get("documentId");
@@ -140,5 +141,50 @@ export default function QuestionsPage() {
       
       <Toaster />
     </div>
+  );
+}
+
+// Loading fallback for Suspense
+function QuestionsLoading() {
+  return (
+    <div className="flex flex-col min-h-screen">
+      <header className="border-b bg-white">
+        <div className="container flex h-16 items-center">
+          <Link href="/" className="font-bold text-xl">AutoRFP</Link>
+        </div>
+      </header>
+      
+      <main className="flex-1 bg-slate-50">
+        <div className="container py-8">
+          <div className="mb-8">
+            <Skeleton className="h-8 w-1/3" />
+          </div>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Loading Questions...</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <Skeleton className="h-6 w-full" />
+                <Skeleton className="h-6 w-full" />
+                <Skeleton className="h-6 w-full" />
+                <Skeleton className="h-6 w-full" />
+                <Skeleton className="h-6 w-full" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+// Main page component with Suspense boundary
+export default function QuestionsPage() {
+  return (
+    <Suspense fallback={<QuestionsLoading />}>
+      <QuestionsContent />
+    </Suspense>
   );
 } 
