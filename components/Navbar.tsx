@@ -11,6 +11,12 @@ export function Navbar() {
           </Link>
           <nav className="hidden md:flex gap-6">
             <Link 
+              href="/upload" 
+              className="text-sm font-medium transition-colors hover:text-primary"
+            >
+              Document Upload
+            </Link>
+            <Link 
               href="#platform" 
               className="text-sm font-medium transition-colors hover:text-primary"
             >
