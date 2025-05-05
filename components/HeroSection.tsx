@@ -1,4 +1,5 @@
 import { Button } from "./ui/button";
+import Link from "next/link";
 
 export function HeroSection() {
   return (
@@ -21,9 +22,11 @@ export function HeroSection() {
               <Button size="lg" className="px-8">
                 Contact sales
               </Button>
-              <Button size="lg" variant="outline" className="px-8">
-                See the platform
-              </Button>
+              <Link href="/upload">
+                <Button size="lg" variant="outline" className="px-8">
+                  Try Document Upload
+                </Button>
+              </Link>
             </div>
           </div>
           <div className="flex items-center justify-center">
