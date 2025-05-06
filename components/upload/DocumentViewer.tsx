@@ -1,7 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { LlamaParseResult } from "@/types/api";
+import { Spinner } from "@/components/ui/spinner";
+import { useRouter } from "next/navigation";
 
 interface DocumentViewerProps {
   document: LlamaParseResult;
@@ -9,6 +11,43 @@ interface DocumentViewerProps {
 }
 
 export function DocumentViewer({ document, onBack }: DocumentViewerProps) {
+  const router = useRouter();
+  const [isExtracting, setIsExtracting] = useState(false);
+  
+  // Function to extract questions from the document
+  const handleExtractQuestions = async () => {
+    setIsExtracting(true);
+    
+    try {
+      const response = await fetch('/api/extract-questions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          documentId: document.documentId,
+          documentName: document.documentName,
+          content: document.content
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to extract questions');
+      }
+      
+      const result = await response.json();
+      console.log('Questions extracted:', result);
+      
+      // Navigate to questions page with the document ID
+      router.push(`/questions?documentId=${document.documentId}`);
+    } catch (error) {
+      console.error('Error extracting questions:', error);
+      // We could add toast notification here
+    } finally {
+      setIsExtracting(false);
+    }
+  };
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
@@ -25,6 +64,20 @@ export function DocumentViewer({ document, onBack }: DocumentViewerProps) {
             Processed with {document.metadata.mode} mode • {document.metadata.wordCount} words
           </p>
         </div>
+        <Button 
+          onClick={handleExtractQuestions}
+          disabled={isExtracting}
+          className="bg-blue-600 hover:bg-blue-700"
+        >
+          {isExtracting ? (
+            <>
+              <Spinner className="mr-2" size="sm" />
+              Extracting Questions...
+            </>
+          ) : (
+            'Get Questions'
+          )}
+        </Button>
       </div>
       
       <Card>

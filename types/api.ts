@@ -4,11 +4,11 @@ export interface LlamaParseResult {
   documentId: string;
   documentName: string;
   status: string;
-  content?: string;
+  content: string;
   metadata: {
     mode: 'fast' | 'balanced' | 'premium' | 'complexTables';
     wordCount: number;
-    pageCount: number;
+    pageCount?: number;
     summary?: string;
   };
 }
@@ -27,4 +27,25 @@ export interface GenerateResponseResult {
 // Common Error Response
 export interface ApiErrorResponse {
   error: string;
+}
+
+// RFP Question structure
+export interface RfpQuestion {
+  id: string;
+  question: string;
+  answer?: string;
+}
+
+export interface RfpSection {
+  id: string;
+  title: string;
+  description?: string;
+  questions: RfpQuestion[];
+}
+
+export interface RfpDocument {
+  documentId: string;
+  documentName: string;
+  sections: RfpSection[];
+  extractedAt: string;
 } 
