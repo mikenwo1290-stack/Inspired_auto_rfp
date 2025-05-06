@@ -34,7 +34,10 @@ export function FileUploader({ onFileProcessed }: FileUploaderProps) {
   // Debug effect to monitor modal state
   useEffect(() => {
     console.log("Processing modal state changed:", showProcessingModal);
-  }, [showProcessingModal]);
+    if (showProcessingModal) {
+      console.log("Modal shown with status:", processingStatus);
+    }
+  }, [showProcessingModal, processingStatus]);
 
   // Handle drag events
   const handleDrag = (e: React.DragEvent) => {
@@ -86,51 +89,6 @@ export function FileUploader({ onFileProcessed }: FileUploaderProps) {
     }
   };
 
-  // Simulate progress for the importing process
-  const simulateProgress = (result: LlamaParseResult) => {
-    console.log("Starting simulation process");
-    
-    // Set initial status
-    setProcessingStatus("uploading");
-    setProcessingProgress(0);
-    
-    // Simulate "analyzing" phase
-    setTimeout(() => {
-      console.log("Moving to analyzing state");
-      setProcessingStatus("analyzing");
-      
-      // Simulate "mapping" phase with progress
-      setTimeout(() => {
-        console.log("Moving to mapping state");
-        setProcessingStatus("mapping");
-        
-        const interval = setInterval(() => {
-          setProcessingProgress(prev => {
-            if (prev >= 100) {
-              clearInterval(interval);
-              
-              // When complete, move to questions page
-              setTimeout(() => {
-                console.log("Process complete");
-                setProcessingStatus("complete");
-                
-                // Short delay before navigating to questions page
-                setTimeout(() => {
-                  console.log("Redirecting to questions page");
-                  setShowProcessingModal(false);
-                  router.push(`/questions?documentId=${result.documentId}`);
-                }, 1000);
-                
-              }, 500);
-              return 100;
-            }
-            return prev + 10;
-          });
-        }, 300);
-      }, 1500);
-    }, 1500);
-  };
-
   // Handle file upload to LlamaParse
   const handleUpload = async () => {
     if (!file) {
@@ -151,7 +109,21 @@ export function FileUploader({ onFileProcessed }: FileUploaderProps) {
       return;
     }
 
+    // Show the processing modal immediately
+    console.log("Starting upload - showing modal immediately");
+    setProcessingStatus("uploading");
+    setProcessingProgress(0);
+    setShowProcessingModal(true);
     setIsUploading(true);
+
+    // Set up a timer to automatically progress the UI after a reasonable time
+    const progressTimer = setTimeout(() => {
+      // If we're still uploading after 3 seconds, assume backend processing has started
+      if (processingStatus === "uploading") {
+        console.log("Auto-advancing to analyzing state after timeout");
+        setProcessingStatus("analyzing");
+      }
+    }, 3000);
 
     try {
       // Create form data
@@ -175,6 +147,9 @@ export function FileUploader({ onFileProcessed }: FileUploaderProps) {
         body: formData,
       });
       
+      // Clear the auto-progress timer since the API has responded
+      clearTimeout(progressTimer);
+      
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to upload file');
@@ -185,21 +160,46 @@ export function FileUploader({ onFileProcessed }: FileUploaderProps) {
       
       // Upload is done, now switch to import progress flow
       setIsUploading(false);
-      
-      // Show the processing modal
       setProcessedResult(result);
-      setShowProcessingModal(true);
       
-      // Start the progress simulation after a short delay
-      setTimeout(() => {
-        simulateProgress(result);
+      // Since API has responded completely, go directly to mapping phase
+      // The actual parsing is already done at this point
+      setProcessingStatus("mapping");
+      
+      // Now simulate the mapping progress
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += 5;
+        setProcessingProgress(progress);
         
-        // Call the callback with the result
-        if (onFileProcessed) {
-          onFileProcessed(result);
+        if (progress >= 100) {
+          clearInterval(interval);
+          
+          // When complete, move to complete state
+          setTimeout(() => {
+            console.log("Process complete");
+            setProcessingStatus("complete");
+            
+            // Short delay before navigating or returning result
+            setTimeout(() => {
+              console.log("Completing process");
+              
+              // Call the callback with the result right before closing the modal
+              if (onFileProcessed) {
+                onFileProcessed(result);
+              } else {
+                setShowProcessingModal(false);
+                router.push(`/questions?documentId=${result.documentId}`);
+              }
+            }, 1000);
+          }, 1000);
         }
-      }, 100);
+      }, 200);
+      
     } catch (error) {
+      // Clear the auto-progress timer on error
+      clearTimeout(progressTimer);
+      
       console.error("Error uploading file:", error);
       toast({
         title: "Upload failed",
@@ -207,27 +207,9 @@ export function FileUploader({ onFileProcessed }: FileUploaderProps) {
         variant: "destructive"
       });
       setIsUploading(false);
+      // Hide the modal on error
+      setShowProcessingModal(false);
     }
-  };
-
-  // For testing - trigger dialog manually
-  const testProcessingModal = () => {
-    // Create a mock result if none exists
-    const mockResult = processedResult || {
-      documentId: "test-doc-" + Date.now(),
-      documentName: file?.name || "Test Document",
-      success: true,
-      status: "success",
-      metadata: {
-        mode: "balanced" as any,
-        wordCount: 1250,
-        pageCount: 3,
-      }
-    };
-    
-    setProcessedResult(mockResult);
-    setShowProcessingModal(true);
-    simulateProgress(mockResult);
   };
 
   return (
@@ -344,16 +326,6 @@ export function FileUploader({ onFileProcessed }: FileUploaderProps) {
             <p className="text-xs text-muted-foreground">Powered by LlamaParse</p>
           </div>
           <div className="flex gap-2">
-            {/* Debug button to test modal */}
-            {file && (
-              <Button 
-                variant="outline" 
-                onClick={testProcessingModal} 
-                type="button"
-              >
-                Test Dialog
-              </Button>
-            )}
             <Button 
               onClick={handleUpload} 
               disabled={!file || isUploading}
