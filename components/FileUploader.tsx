@@ -89,51 +89,6 @@ export function FileUploader({ onFileProcessed }: FileUploaderProps) {
     }
   };
 
-  // Simulate progress for the importing process
-  const simulateProgress = (result: LlamaParseResult) => {
-    console.log("Starting simulation process");
-    
-    // Move directly to analyzing phase since upload is already complete
-    console.log("Moving to analyzing state");
-    setProcessingStatus("analyzing");
-    
-    // Simulate "mapping" phase with progress after a delay
-    setTimeout(() => {
-      console.log("Moving to mapping state");
-      setProcessingStatus("mapping");
-      
-      const interval = setInterval(() => {
-        setProcessingProgress(prev => {
-          if (prev >= 100) {
-            clearInterval(interval);
-            
-            // When complete, move to complete state
-            setTimeout(() => {
-              console.log("Process complete");
-              setProcessingStatus("complete");
-              
-              // Short delay before navigating or returning result
-              setTimeout(() => {
-                console.log("Completing process");
-                
-                // Call the callback with the result right before closing the modal
-                if (onFileProcessed) {
-                  onFileProcessed(result);
-                } else {
-                  setShowProcessingModal(false);
-                  router.push(`/questions?documentId=${result.documentId}`);
-                }
-              }, 3000);
-              
-            }, 1000);
-            return 100;
-          }
-          return prev + 5; // Slowed down the progress increment for better visualization
-        });
-      }, 200);
-    }, 1500);
-  };
-
   // Handle file upload to LlamaParse
   const handleUpload = async () => {
     if (!file) {
@@ -161,6 +116,15 @@ export function FileUploader({ onFileProcessed }: FileUploaderProps) {
     setShowProcessingModal(true);
     setIsUploading(true);
 
+    // Set up a timer to automatically progress the UI after a reasonable time
+    const progressTimer = setTimeout(() => {
+      // If we're still uploading after 3 seconds, assume backend processing has started
+      if (processingStatus === "uploading") {
+        console.log("Auto-advancing to analyzing state after timeout");
+        setProcessingStatus("analyzing");
+      }
+    }, 3000);
+
     try {
       // Create form data
       const formData = new FormData();
@@ -183,6 +147,9 @@ export function FileUploader({ onFileProcessed }: FileUploaderProps) {
         body: formData,
       });
       
+      // Clear the auto-progress timer since the API has responded
+      clearTimeout(progressTimer);
+      
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to upload file');
@@ -193,15 +160,46 @@ export function FileUploader({ onFileProcessed }: FileUploaderProps) {
       
       // Upload is done, now switch to import progress flow
       setIsUploading(false);
-      
-      // Store the processed result
       setProcessedResult(result);
       
-      // Continue the progress simulation after API call is complete
-      simulateProgress(result);
+      // Since API has responded completely, go directly to mapping phase
+      // The actual parsing is already done at this point
+      setProcessingStatus("mapping");
       
-      // The callback to onFileProcessed is now handled in simulateProgress
+      // Now simulate the mapping progress
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += 5;
+        setProcessingProgress(progress);
+        
+        if (progress >= 100) {
+          clearInterval(interval);
+          
+          // When complete, move to complete state
+          setTimeout(() => {
+            console.log("Process complete");
+            setProcessingStatus("complete");
+            
+            // Short delay before navigating or returning result
+            setTimeout(() => {
+              console.log("Completing process");
+              
+              // Call the callback with the result right before closing the modal
+              if (onFileProcessed) {
+                onFileProcessed(result);
+              } else {
+                setShowProcessingModal(false);
+                router.push(`/questions?documentId=${result.documentId}`);
+              }
+            }, 1000);
+          }, 1000);
+        }
+      }, 200);
+      
     } catch (error) {
+      // Clear the auto-progress timer on error
+      clearTimeout(progressTimer);
+      
       console.error("Error uploading file:", error);
       toast({
         title: "Upload failed",

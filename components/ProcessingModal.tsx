@@ -38,6 +38,22 @@ export function ProcessingModal({
   const isAnalyzed = status === "mapping" || status === "complete";
   const isComplete = status === "complete";
 
+  // Helper function to get status text
+  const getStatusText = () => {
+    switch(status) {
+      case "uploading":
+        return "Uploading and preparing your file...";
+      case "analyzing":
+        return "Parsing document structure...";
+      case "mapping":
+        return "Mapping content and formatting...";
+      case "complete":
+        return "Processing complete!";
+      default:
+        return "Processing your file...";
+    }
+  };
+
   return (
     <div 
       className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0'}`}
@@ -48,6 +64,7 @@ export function ProcessingModal({
         <div className="mb-4">
           <h2 className="text-xl font-bold">Importing</h2>
           <p className="text-sm text-gray-500">{fileName}</p>
+          <p className="text-sm font-medium text-blue-600 mt-1">{getStatusText()}</p>
         </div>
         
         <div className="space-y-6">
@@ -74,11 +91,13 @@ export function ProcessingModal({
                 {isUploaded ? "File Upload Complete" : "Uploading File..."}
               </div>
               <div className="text-sm text-gray-500">
-                {isUploaded ? "Your file has been uploaded successfully" : "Please wait while we upload your file"}
+                {isUploaded 
+                  ? "Your file has been uploaded and processed successfully" 
+                  : "Please wait while we upload your file"}
               </div>
-              {status === "uploading" && (
+              {(status === "uploading" || (!isUploaded && status === "analyzing")) && (
                 <div className="mt-2">
-                  <Progress value={30} className="h-2 w-full bg-blue-100" />
+                  <Progress value={status === "uploading" ? 30 : 60} className="h-2 w-full bg-blue-100" />
                 </div>
               )}
             </div>
@@ -141,7 +160,13 @@ export function ProcessingModal({
               )}
             </div>
             <div>
-              <div className="font-medium">File Mapping Agent is processing</div>
+              <div className="font-medium">
+                {isComplete 
+                  ? "File Processing Complete" 
+                  : status === "mapping" 
+                    ? "File Mapping Agent is processing" 
+                    : "Waiting for processing to begin"}
+              </div>
               <div className="text-sm text-gray-500">
                 The file is being configured. This may take a while, we will notify you when it's done.
               </div>
