@@ -34,7 +34,10 @@ export function FileUploader({ onFileProcessed }: FileUploaderProps) {
   // Debug effect to monitor modal state
   useEffect(() => {
     console.log("Processing modal state changed:", showProcessingModal);
-  }, [showProcessingModal]);
+    if (showProcessingModal) {
+      console.log("Modal shown with status:", processingStatus);
+    }
+  }, [showProcessingModal, processingStatus]);
 
   // Handle drag events
   const handleDrag = (e: React.DragEvent) => {
@@ -90,44 +93,44 @@ export function FileUploader({ onFileProcessed }: FileUploaderProps) {
   const simulateProgress = (result: LlamaParseResult) => {
     console.log("Starting simulation process");
     
-    // Set initial status
-    setProcessingStatus("uploading");
-    setProcessingProgress(0);
+    // Move directly to analyzing phase since upload is already complete
+    console.log("Moving to analyzing state");
+    setProcessingStatus("analyzing");
     
-    // Simulate "analyzing" phase
+    // Simulate "mapping" phase with progress after a delay
     setTimeout(() => {
-      console.log("Moving to analyzing state");
-      setProcessingStatus("analyzing");
+      console.log("Moving to mapping state");
+      setProcessingStatus("mapping");
       
-      // Simulate "mapping" phase with progress
-      setTimeout(() => {
-        console.log("Moving to mapping state");
-        setProcessingStatus("mapping");
-        
-        const interval = setInterval(() => {
-          setProcessingProgress(prev => {
-            if (prev >= 100) {
-              clearInterval(interval);
+      const interval = setInterval(() => {
+        setProcessingProgress(prev => {
+          if (prev >= 100) {
+            clearInterval(interval);
+            
+            // When complete, move to complete state
+            setTimeout(() => {
+              console.log("Process complete");
+              setProcessingStatus("complete");
               
-              // When complete, move to questions page
+              // Short delay before navigating or returning result
               setTimeout(() => {
-                console.log("Process complete");
-                setProcessingStatus("complete");
+                console.log("Completing process");
                 
-                // Short delay before navigating to questions page
-                setTimeout(() => {
-                  console.log("Redirecting to questions page");
+                // Call the callback with the result right before closing the modal
+                if (onFileProcessed) {
+                  onFileProcessed(result);
+                } else {
                   setShowProcessingModal(false);
                   router.push(`/questions?documentId=${result.documentId}`);
-                }, 1000);
-                
-              }, 500);
-              return 100;
-            }
-            return prev + 10;
-          });
-        }, 300);
-      }, 1500);
+                }
+              }, 3000);
+              
+            }, 1000);
+            return 100;
+          }
+          return prev + 5; // Slowed down the progress increment for better visualization
+        });
+      }, 200);
     }, 1500);
   };
 
@@ -151,6 +154,11 @@ export function FileUploader({ onFileProcessed }: FileUploaderProps) {
       return;
     }
 
+    // Show the processing modal immediately
+    console.log("Starting upload - showing modal immediately");
+    setProcessingStatus("uploading");
+    setProcessingProgress(0);
+    setShowProcessingModal(true);
     setIsUploading(true);
 
     try {
@@ -186,19 +194,13 @@ export function FileUploader({ onFileProcessed }: FileUploaderProps) {
       // Upload is done, now switch to import progress flow
       setIsUploading(false);
       
-      // Show the processing modal
+      // Store the processed result
       setProcessedResult(result);
-      setShowProcessingModal(true);
       
-      // Start the progress simulation after a short delay
-      setTimeout(() => {
-        simulateProgress(result);
-        
-        // Call the callback with the result
-        if (onFileProcessed) {
-          onFileProcessed(result);
-        }
-      }, 100);
+      // Continue the progress simulation after API call is complete
+      simulateProgress(result);
+      
+      // The callback to onFileProcessed is now handled in simulateProgress
     } catch (error) {
       console.error("Error uploading file:", error);
       toast({
@@ -207,27 +209,9 @@ export function FileUploader({ onFileProcessed }: FileUploaderProps) {
         variant: "destructive"
       });
       setIsUploading(false);
+      // Hide the modal on error
+      setShowProcessingModal(false);
     }
-  };
-
-  // For testing - trigger dialog manually
-  const testProcessingModal = () => {
-    // Create a mock result if none exists
-    const mockResult = processedResult || {
-      documentId: "test-doc-" + Date.now(),
-      documentName: file?.name || "Test Document",
-      success: true,
-      status: "success",
-      metadata: {
-        mode: "balanced" as any,
-        wordCount: 1250,
-        pageCount: 3,
-      }
-    };
-    
-    setProcessedResult(mockResult);
-    setShowProcessingModal(true);
-    simulateProgress(mockResult);
   };
 
   return (
@@ -344,16 +328,6 @@ export function FileUploader({ onFileProcessed }: FileUploaderProps) {
             <p className="text-xs text-muted-foreground">Powered by LlamaParse</p>
           </div>
           <div className="flex gap-2">
-            {/* Debug button to test modal */}
-            {file && (
-              <Button 
-                variant="outline" 
-                onClick={testProcessingModal} 
-                type="button"
-              >
-                Test Dialog
-              </Button>
-            )}
             <Button 
               onClick={handleUpload} 
               disabled={!file || isUploading}
