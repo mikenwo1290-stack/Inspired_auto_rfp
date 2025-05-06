@@ -14,9 +14,15 @@ import { ProcessingModal, ProcessingStatus } from "./ProcessingModal";
 
 interface FileUploaderProps {
   onFileProcessed?: (result: LlamaParseResult) => void;
+  processingStatus?: ProcessingStatus;
+  updateProcessingStatus?: (status: ProcessingStatus) => void;
 }
 
-export function FileUploader({ onFileProcessed }: FileUploaderProps) {
+export function FileUploader({ 
+  onFileProcessed,
+  processingStatus: externalProcessingStatus,
+  updateProcessingStatus: externalUpdateProcessingStatus
+}: FileUploaderProps) {
   const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
   const [parsingMode, setParsingMode] = useState<string>("balanced");
@@ -25,11 +31,30 @@ export function FileUploader({ onFileProcessed }: FileUploaderProps) {
   const [dragActive, setDragActive] = useState<boolean>(false);
   const inputRef = useRef<HTMLInputElement>(null);
   
-  // Processing modal state
+  // Processing modal state - use external state if provided
   const [showProcessingModal, setShowProcessingModal] = useState(false);
-  const [processingStatus, setProcessingStatus] = useState<ProcessingStatus>("uploading");
+  const [internalProcessingStatus, setInternalProcessingStatus] = useState<ProcessingStatus>("uploading");
   const [processingProgress, setProcessingProgress] = useState(0);
   const [processedResult, setProcessedResult] = useState<LlamaParseResult | null>(null);
+
+  // Use external processing status if provided, otherwise use internal
+  const processingStatus = externalProcessingStatus || internalProcessingStatus;
+  
+  // Function to update processing status - calls external handler if provided
+  const updateProcessingStatus = (status: ProcessingStatus) => {
+    if (externalUpdateProcessingStatus) {
+      externalUpdateProcessingStatus(status);
+    } else {
+      setInternalProcessingStatus(status);
+    }
+    
+    // If status is "complete", hide the modal after a brief delay
+    if (status === "complete") {
+      setTimeout(() => {
+        setShowProcessingModal(false);
+      }, 2000);
+    }
+  };
 
   // Debug effect to monitor modal state
   useEffect(() => {
@@ -111,7 +136,7 @@ export function FileUploader({ onFileProcessed }: FileUploaderProps) {
 
     // Show the processing modal immediately
     console.log("Starting upload - showing modal immediately");
-    setProcessingStatus("uploading");
+    updateProcessingStatus("uploading");
     setProcessingProgress(0);
     setShowProcessingModal(true);
     setIsUploading(true);
@@ -121,7 +146,7 @@ export function FileUploader({ onFileProcessed }: FileUploaderProps) {
       // If we're still uploading after 3 seconds, assume backend processing has started
       if (processingStatus === "uploading") {
         console.log("Auto-advancing to analyzing state after timeout");
-        setProcessingStatus("analyzing");
+        updateProcessingStatus("analyzing");
       }
     }, 3000);
 
@@ -164,7 +189,7 @@ export function FileUploader({ onFileProcessed }: FileUploaderProps) {
       
       // Since API has responded completely, go directly to mapping phase
       // The actual parsing is already done at this point
-      setProcessingStatus("mapping");
+      updateProcessingStatus("mapping");
       
       // Now simulate the mapping progress
       let progress = 0;
@@ -175,24 +200,27 @@ export function FileUploader({ onFileProcessed }: FileUploaderProps) {
         if (progress >= 100) {
           clearInterval(interval);
           
-          // When complete, move to complete state
-          setTimeout(() => {
-            console.log("Process complete");
-            setProcessingStatus("complete");
+          // When complete, move to parsing status
+          updateProcessingStatus("parsing");
+          console.log("LlamaParse processing complete, waiting for OpenAI to extract questions");
+          
+          // Call the onFileProcessed callback to begin question extraction
+          if (onFileProcessed) {
+            onFileProcessed(result);
             
-            // Short delay before navigating or returning result
+            // Update to extracting status when OpenAI API call begins
             setTimeout(() => {
-              console.log("Completing process");
+              updateProcessingStatus("extracting");
+              console.log("Starting OpenAI extraction process");
               
-              // Call the callback with the result right before closing the modal
-              if (onFileProcessed) {
-                onFileProcessed(result);
-              } else {
-                setShowProcessingModal(false);
-                router.push(`/questions?documentId=${result.documentId}`);
-              }
-            }, 1000);
-          }, 1000);
+              // Keep modal open until question extraction completes
+              // The page component will handle hiding the modal
+            }, 1500);
+          } else {
+            // This path shouldn't typically be used, but just in case
+            setShowProcessingModal(false);
+            router.push(`/questions?projectId=${result.documentId}`);
+          }
         }
       }, 200);
       
@@ -346,7 +374,7 @@ export function FileUploader({ onFileProcessed }: FileUploaderProps) {
       {/* Processing Modal - simpler implementation without using Dialog */}
       <ProcessingModal
         isOpen={showProcessingModal}
-        fileName={file?.name || ""}
+        fileName={file?.name || "Unknown file"}
         status={processingStatus}
         progress={processingProgress}
       />

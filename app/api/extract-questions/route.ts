@@ -2,21 +2,29 @@ import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { RfpDocument } from '@/types/api';
 import { DEFAULT_LANGUAGE_MODEL } from '@/lib/constants';
+import { projectService } from '@/lib/project-service';
 
 // Initialize OpenAI client
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// Reference to the questionsCache in the questions API
-// In a real app, this would be a database
-import { questionsCache } from '../questions/cache';
-
 export async function POST(request: NextRequest) {
   try {
-    const { documentId, documentName, content } = await request.json();
+    console.log('Starting question extraction process');
+    
+    const { documentId, documentName, content, projectId } = await request.json();
+    
+    console.log(`Request received for documentId: ${documentId}, projectId: ${projectId}`);
 
-    if (!documentId || !documentName || !content) {
+    if (!documentId || !documentName || !content || !projectId) {
+      console.error('Missing required fields:', { 
+        hasDocumentId: !!documentId, 
+        hasDocumentName: !!documentName, 
+        hasContent: !!content, 
+        hasProjectId: !!projectId 
+      });
+      
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -59,45 +67,75 @@ Requirements:
 `;
 
     console.log('Extracting questions from document:', documentId);
+    console.log(`Content length: ${content.length} characters`);
     
-    // Call OpenAI API
-    const response = await openai.chat.completions.create({
-      model: DEFAULT_LANGUAGE_MODEL,
-      response_format: { type: "json_object" },
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: content }
-      ],
-      temperature: 0.1, // Low temperature for consistent, predictable results
-    });
+    try {
+      // STAGE 1: Document parsing is already complete by this point
+      console.log('STAGE 1 COMPLETE: Document has been parsed by LlamaParse.');
+      
+      // STAGE 2: OpenAI processing
+      console.log('STAGE 2 STARTING: Calling OpenAI API to extract questions...');
+      const response = await openai.chat.completions.create({
+        model: DEFAULT_LANGUAGE_MODEL,
+        response_format: { type: "json_object" },
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: content }
+        ],
+        temperature: 0.1, // Low temperature for consistent, predictable results
+      });
 
-    // Parse the JSON response
-    const assistantMessage = response.choices[0].message.content;
-    if (!assistantMessage) {
-      throw new Error('Empty response from OpenAI');
+      // Parse the JSON response
+      const assistantMessage = response.choices[0].message.content;
+      if (!assistantMessage) {
+        throw new Error('Empty response from OpenAI');
+      }
+
+      console.log('STAGE 2 COMPLETE: OpenAI response received. Parsing JSON...');
+      const extractedData = JSON.parse(assistantMessage);
+      
+      const sectionCount = extractedData.sections?.length || 0;
+      let questionCount = 0;
+      
+      if (extractedData.sections) {
+        for (const section of extractedData.sections) {
+          questionCount += section.questions?.length || 0;
+        }
+      }
+      
+      console.log(`Extracted ${sectionCount} sections and ${questionCount} questions total`);
+      
+      // Create the RFP document structure
+      const rfpDocument: RfpDocument = {
+        documentId: projectId, // Use project ID as the document ID
+        documentName,
+        sections: extractedData.sections || [],
+        extractedAt: new Date().toISOString(),
+      };
+
+      // Store questions in the database using the project service
+      console.log('FINAL STAGE: Saving questions to database...');
+      try {
+        await projectService.saveQuestions(projectId, rfpDocument.sections);
+        console.log('Questions saved successfully to database');
+      } catch (error: any) {
+        console.error('Error saving questions to database:', error);
+        throw new Error(`Database error: ${error?.message || 'Unknown database error'}`);
+      }
+      
+      console.log('COMPLETE: All stages finished successfully for project:', projectId);
+      
+      // Return the extracted data
+      return NextResponse.json(rfpDocument);
+    } catch (error: any) {
+      console.error('Error in OpenAI processing:', error);
+      throw new Error(`OpenAI processing error: ${error?.message || 'Unknown OpenAI error'}`);
     }
-
-    const extractedData = JSON.parse(assistantMessage);
     
-    // Create the RFP document structure
-    const rfpDocument: RfpDocument = {
-      documentId,
-      documentName,
-      sections: extractedData.sections || [],
-      extractedAt: new Date().toISOString(),
-    };
-
-    // Store in cache for later retrieval
-    questionsCache.set(documentId, rfpDocument);
-    console.log('Stored extracted questions in cache for document:', documentId);
-    
-    // Return the extracted data
-    return NextResponse.json(rfpDocument);
-    
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error extracting questions:', error);
     return NextResponse.json(
-      { error: 'Failed to extract questions' },
+      { error: `Failed to extract questions: ${error?.message || 'Unknown error'}` },
       { status: 500 }
     );
   }

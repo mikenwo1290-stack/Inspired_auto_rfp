@@ -1,0 +1,291 @@
+import { db } from './db';
+import { RfpDocument, RfpSection, RfpQuestion } from '@/types/api';
+
+export const projectService = {
+  // Project operations
+  async createProject(name: string, description?: string) {
+    return db.project.create({
+      data: {
+        name,
+        description,
+      },
+    });
+  },
+
+  async getProjects() {
+    return db.project.findMany({
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+  },
+
+  async getProject(id: string) {
+    return db.project.findUnique({
+      where: { id },
+      include: {
+        questions: {
+          include: {
+            answer: true,
+          },
+        },
+      },
+    });
+  },
+
+  // Question operations
+  async saveQuestions(projectId: string, sections: RfpSection[]) {
+    console.log(`Starting to save questions for project ${projectId}. Total sections: ${sections.length}`);
+    
+    // Process each section separately instead of in one large transaction
+    let questionsCreated = 0;
+    
+    try {
+      for (const section of sections) {
+        console.log(`Processing section: ${section.title} with ${section.questions.length} questions`);
+        
+        // Process questions in smaller batches of 10 to avoid transaction timeouts
+        const BATCH_SIZE = 10;
+        for (let i = 0; i < section.questions.length; i += BATCH_SIZE) {
+          const batch = section.questions.slice(i, i + BATCH_SIZE);
+          console.log(`Processing batch of ${batch.length} questions (${i} to ${i + batch.length - 1})`);
+          
+          // Use a transaction for each batch
+          await db.$transaction(async (tx) => {
+            for (const questionItem of batch) {
+              try {
+                // Check if question already exists to avoid duplicates
+                const existing = await tx.question.findFirst({
+                  where: {
+                    id: questionItem.id,
+                    projectId,
+                  }
+                });
+                
+                if (!existing) {
+                  await tx.question.create({
+                    data: {
+                      id: questionItem.id,
+                      text: questionItem.question,
+                      topic: section.title,
+                      projectId,
+                    },
+                  });
+                  questionsCreated++;
+                }
+              } catch (error) {
+                console.error(`Error creating question ${questionItem.id}:`, error);
+                throw error;
+              }
+            }
+          });
+          
+          console.log(`Batch completed. Total questions created so far: ${questionsCreated}`);
+        }
+      }
+      
+      console.log(`All questions saved successfully. Total created: ${questionsCreated}`);
+      return true;
+    } catch (error) {
+      console.error(`Error in saveQuestions for project ${projectId}:`, error);
+      throw error;
+    }
+  },
+
+  async getQuestions(projectId: string) {
+    console.log(`Fetching questions for project ${projectId}`);
+    
+    try {
+      const questions = await db.question.findMany({
+        where: {
+          projectId,
+        },
+        include: {
+          answer: true,
+        },
+        orderBy: {
+          createdAt: 'asc',
+        },
+      });
+
+      console.log(`Found ${questions.length} questions for project ${projectId}`);
+
+      // If no questions found, return an empty RFP document structure
+      if (questions.length === 0) {
+        console.log(`No questions found for project ${projectId}, returning empty document`);
+        
+        const project = await db.project.findUnique({
+          where: { id: projectId },
+        });
+        
+        if (!project) {
+          console.log(`Project ${projectId} not found`);
+          return null;
+        }
+        
+        return {
+          documentId: projectId,
+          documentName: project.name,
+          sections: [],
+          extractedAt: project.createdAt.toISOString(),
+        };
+      }
+
+      // Convert database format to application format (RfpDocument)
+      const groupedByTopic = questions.reduce<Record<string, RfpQuestion[]>>((acc, question) => {
+        const topic = question.topic;
+        if (!acc[topic]) {
+          acc[topic] = [];
+        }
+        
+        acc[topic].push({
+          id: question.id,
+          question: question.text,
+          answer: question.answer?.text, // Get answer if exists
+        });
+        
+        return acc;
+      }, {});
+
+      // Convert to sections
+      const sections: RfpSection[] = Object.entries(groupedByTopic).map(
+        ([title, questions], index) => ({
+          id: `section_${index + 1}`,
+          title,
+          questions,
+        })
+      );
+
+      const project = await db.project.findUnique({
+        where: { id: projectId },
+      });
+
+      if (!project) {
+        console.log(`Project ${projectId} not found after loading questions`);
+        return null;
+      }
+
+      // Construct RFP document
+      const rfpDocument: RfpDocument = {
+        documentId: projectId,
+        documentName: project.name,
+        sections,
+        extractedAt: project.createdAt.toISOString(),
+      };
+
+      return rfpDocument;
+    } catch (error) {
+      console.error(`Error in getQuestions for project ${projectId}:`, error);
+      throw error;
+    }
+  },
+
+  // Answer operations
+  async saveAnswers(projectId: string, answers: Record<string, string>) {
+    console.log(`Saving answers for project ${projectId}. Total answers: ${Object.keys(answers).length}`);
+    
+    try {
+      let answersProcessed = 0;
+      const BATCH_SIZE = 10;
+      const questionIds = Object.keys(answers);
+      
+      // Process in smaller batches
+      for (let i = 0; i < questionIds.length; i += BATCH_SIZE) {
+        const batchIds = questionIds.slice(i, i + BATCH_SIZE);
+        console.log(`Processing batch of ${batchIds.length} answers (${i} to ${i + batchIds.length - 1})`);
+        
+        await db.$transaction(async (tx) => {
+          for (const questionId of batchIds) {
+            const text = answers[questionId];
+            
+            // Check if this question belongs to the project
+            const question = await tx.question.findFirst({
+              where: {
+                id: questionId,
+                projectId,
+              },
+            });
+
+            if (!question) {
+              console.log(`Question ${questionId} not found for project ${projectId}, skipping`);
+              continue;
+            }
+
+            // Check if an answer already exists
+            const existingAnswer = await tx.answer.findUnique({
+              where: {
+                questionId,
+              },
+            });
+
+            if (existingAnswer) {
+              // Update existing answer
+              await tx.answer.update({
+                where: {
+                  id: existingAnswer.id,
+                },
+                data: {
+                  text,
+                },
+              });
+            } else {
+              // Create new answer
+              await tx.answer.create({
+                data: {
+                  text,
+                  questionId,
+                },
+              });
+            }
+            
+            answersProcessed++;
+          }
+        });
+        
+        console.log(`Batch completed. Total answers processed so far: ${answersProcessed}`);
+      }
+      
+      console.log(`All answers saved successfully. Total processed: ${answersProcessed}`);
+      return true;
+    } catch (error) {
+      console.error(`Error in saveAnswers for project ${projectId}:`, error);
+      throw error;
+    }
+  },
+
+  async getAnswers(projectId: string) {
+    console.log(`Fetching answers for project ${projectId}`);
+    
+    try {
+      const questions = await db.question.findMany({
+        where: {
+          projectId,
+        },
+        include: {
+          answer: true,
+        },
+      });
+
+      console.log(`Found ${questions.length} questions for project ${projectId}`);
+
+      // Convert to map of questionId -> answer
+      const answers: Record<string, string> = {};
+      for (const question of questions) {
+        if (question.answer) {
+          answers[question.id] = question.answer.text;
+        }
+      }
+
+      console.log(`Returning ${Object.keys(answers).length} answers for project ${projectId}`);
+      return answers;
+    } catch (error) {
+      console.error(`Error in getAnswers for project ${projectId}:`, error);
+      throw error;
+    }
+  },
+};
+
+// Helper type for unique constraint
+type QuestionId = {
+  questionId: string;
+}; 

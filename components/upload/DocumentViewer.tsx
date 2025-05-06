@@ -4,19 +4,26 @@ import { Card, CardContent } from "@/components/ui/card";
 import { LlamaParseResult } from "@/types/api";
 import { Spinner } from "@/components/ui/spinner";
 import { useRouter } from "next/navigation";
+import { ProcessingStatus } from "@/components/ProcessingModal";
 
 interface DocumentViewerProps {
   document: LlamaParseResult;
   onBack: () => void;
+  updateProcessingStatus?: (status: ProcessingStatus) => void;
 }
 
-export function DocumentViewer({ document, onBack }: DocumentViewerProps) {
+export function DocumentViewer({ document, onBack, updateProcessingStatus }: DocumentViewerProps) {
   const router = useRouter();
   const [isExtracting, setIsExtracting] = useState(false);
   
   // Function to extract questions from the document
   const handleExtractQuestions = async () => {
     setIsExtracting(true);
+    
+    // Update the processing status to "extracting" if available
+    if (updateProcessingStatus) {
+      updateProcessingStatus("extracting");
+    }
     
     try {
       const response = await fetch('/api/extract-questions', {
@@ -27,7 +34,8 @@ export function DocumentViewer({ document, onBack }: DocumentViewerProps) {
         body: JSON.stringify({
           documentId: document.documentId,
           documentName: document.documentName,
-          content: document.content
+          content: document.content,
+          projectId: document.projectId,
         }),
       });
       
@@ -38,8 +46,19 @@ export function DocumentViewer({ document, onBack }: DocumentViewerProps) {
       const result = await response.json();
       console.log('Questions extracted:', result);
       
-      // Navigate to questions page with the document ID
-      router.push(`/questions?documentId=${document.documentId}`);
+      // Update to complete status when done
+      if (updateProcessingStatus) {
+        updateProcessingStatus("complete");
+        
+        // Let the UI show "complete" for a moment before navigating
+        setTimeout(() => {
+          // Navigate to questions page with the project ID
+          router.push(`/questions?projectId=${document.projectId || document.documentId}`);
+        }, 1000);
+      } else {
+        // If no status updater provided, navigate immediately
+        router.push(`/questions?projectId=${document.projectId || document.documentId}`);
+      }
     } catch (error) {
       console.error('Error extracting questions:', error);
       // We could add toast notification here

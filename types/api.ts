@@ -5,6 +5,7 @@ export interface LlamaParseResult {
   documentName: string;
   status: string;
   content: string;
+  projectId?: string;
   metadata: {
     mode: 'fast' | 'balanced' | 'premium' | 'complexTables';
     wordCount: number;

@@ -15,7 +15,7 @@ import { Toaster } from "@/components/ui/toaster";
 function QuestionsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const documentId = searchParams.get("documentId");
+  const projectId = searchParams.get("projectId");
   
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,18 +24,35 @@ function QuestionsContent() {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<string | null>(null);
+  const [project, setProject] = useState<any>(null);
 
   useEffect(() => {
-    if (!documentId) {
-      setError("No document ID provided");
+    if (!projectId) {
+      setError("No project ID provided");
       setIsLoading(false);
       return;
     }
 
-    // Fetch the extracted questions for this document
+    // Fetch the project details
+    const fetchProject = async () => {
+      try {
+        const response = await fetch(`/api/projects/${projectId}`);
+        if (!response.ok) {
+          throw new Error("Failed to load project");
+        }
+        const data = await response.json();
+        setProject(data);
+      } catch (error) {
+        console.error("Error loading project:", error);
+        setError("Failed to load project. Please try again.");
+        setIsLoading(false);
+      }
+    };
+
+    // Fetch the extracted questions for this project
     const fetchQuestions = async () => {
       try {
-        const response = await fetch(`/api/questions/${documentId}`);
+        const response = await fetch(`/api/questions/${projectId}`);
         
         if (!response.ok) {
           throw new Error("Failed to load questions");
@@ -45,7 +62,7 @@ function QuestionsContent() {
         setRfpDocument(data);
 
         // Also fetch any saved answers
-        const answersResponse = await fetch(`/api/questions/${documentId}/answers`);
+        const answersResponse = await fetch(`/api/questions/${projectId}/answers`);
         if (answersResponse.ok) {
           const savedAnswers = await answersResponse.json();
           setAnswers(savedAnswers);
@@ -58,17 +75,20 @@ function QuestionsContent() {
       }
     };
 
-    fetchQuestions();
-  }, [documentId]);
+    // Fetch both project and questions
+    Promise.all([fetchProject(), fetchQuestions()]).catch(error => {
+      console.error("Error in parallel loading:", error);
+    });
+  }, [projectId]);
 
   // Auto-save answers when they change
   useEffect(() => {
-    if (!documentId || !rfpDocument || Object.keys(answers).length === 0) return;
+    if (!projectId || !rfpDocument || Object.keys(answers).length === 0) return;
     
     const saveTimeout = setTimeout(async () => {
       try {
         setIsSaving(true);
-        const response = await fetch(`/api/questions/${documentId}/answers`, {
+        const response = await fetch(`/api/questions/${projectId}/answers`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -96,7 +116,7 @@ function QuestionsContent() {
     }, 2000); // Save after 2 seconds of inactivity
     
     return () => clearTimeout(saveTimeout);
-  }, [answers, documentId, rfpDocument]);
+  }, [answers, projectId, rfpDocument]);
 
   // Handle section selection
   const handleSectionClick = (sectionId: string) => {
@@ -186,8 +206,8 @@ function QuestionsContent() {
             </CardHeader>
             <CardContent>
               <p>{error || "Failed to load document questions."}</p>
-              <Button className="mt-4" onClick={() => router.push("/upload")}>
-                Back to Upload Page
+              <Button className="mt-4" onClick={() => router.push("/")}>
+                Back to Projects
               </Button>
             </CardContent>
           </Card>
@@ -212,12 +232,15 @@ function QuestionsContent() {
             <div>
               <Button 
                 variant="outline" 
-                onClick={() => router.push("/upload")}
+                onClick={() => router.push(`/upload?projectId=${projectId}`)}
                 className="mb-2"
               >
                 ← Back to Files
               </Button>
               <h1 className="text-3xl font-bold">{rfpDocument.documentName}</h1>
+              {project && project.description && (
+                <p className="text-muted-foreground mb-2">{project.description}</p>
+              )}
               <p className="text-muted-foreground">
                 {rfpDocument.sections.length} sections • {rfpDocument.sections.reduce((count, section) => count + section.questions.length, 0)} questions
               </p>
@@ -250,13 +273,14 @@ function QuestionsContent() {
                 {rfpDocument.sections.map((section) => (
                   <button
                     key={section.id}
-                    className={`w-full text-left px-4 py-2 rounded-md hover:bg-slate-100 text-sm transition ${
-                      activeSection === section.id ? "bg-blue-50 text-blue-700 font-medium" : ""
-                    }`}
+                    className={`
+                      w-full text-left px-3 py-2 text-sm rounded-md transition-colors
+                      ${activeSection === section.id ? 'bg-slate-100 text-slate-900 font-medium' : 'text-slate-600 hover:bg-slate-50'}
+                    `}
                     onClick={() => handleSectionClick(section.id)}
                   >
                     {section.title}
-                    <span className="text-xs text-gray-500 ml-2">
+                    <span className="ml-2 text-xs text-slate-400">
                       ({section.questions.length})
                     </span>
                   </button>
@@ -264,82 +288,83 @@ function QuestionsContent() {
               </nav>
             </div>
 
-            {/* Questions and answers main area */}
-            <div className="col-span-1 md:col-span-2">
+            {/* Questions and answers main content */}
+            <div className="col-span-2">
               <div className="space-y-6">
                 {rfpDocument.sections.map((section) => (
-                  <div 
+                  <Accordion
                     key={section.id}
-                    id={`section-${section.id}`}
-                    className={`bg-white rounded-lg border overflow-hidden transition-all duration-200 ${
-                      activeSection === section.id ? "ring-2 ring-blue-500" : ""
-                    }`}
+                    type="single"
+                    collapsible
+                    defaultValue={activeSection === section.id ? section.id : undefined}
+                    value={activeSection === section.id ? section.id : undefined}
+                    onValueChange={(value) => {
+                      setActiveSection(value || null);
+                    }}
                   >
-                    <div 
-                      className="p-6 cursor-pointer"
-                      onClick={() => handleSectionClick(section.id)}
-                    >
-                      <h2 className="text-xl font-semibold">{section.title}</h2>
-                      {section.description && (
-                        <p className="text-gray-600 mt-2">{section.description}</p>
-                      )}
-                    </div>
-                    
-                    <div className={`border-t ${activeSection !== section.id ? "hidden" : ""}`}>
-                      <div className="p-6 space-y-6">
-                        {section.questions.map((question) => (
-                          <div key={question.id} className="space-y-2">
-                            <p className="font-medium">{question.question}</p>
-                            <div className="min-h-32 border border-dashed rounded-md p-4">
+                    <AccordionItem value={section.id} className="bg-white rounded-lg border">
+                      <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-slate-50">
+                        <div className="text-left">
+                          <h3 className="text-md font-medium">{section.title}</h3>
+                          {section.description && (
+                            <p className="text-sm text-slate-500 mt-1">{section.description}</p>
+                          )}
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="px-6 pb-4">
+                        <div className="space-y-4">
+                          {section.questions.map((question) => (
+                            <div key={question.id} className="border-t pt-4 first:border-t-0 first:pt-0">
+                              <label htmlFor={question.id} className="block text-sm font-medium mb-2">
+                                {question.question}
+                              </label>
                               <textarea
-                                className="w-full min-h-28 focus:outline-none resize-none"
-                                placeholder="Enter your answer here..."
+                                id={question.id}
+                                rows={4}
+                                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 value={answers[question.id] || ''}
                                 onChange={(e) => handleAnswerChange(question.id, e.target.value)}
+                                placeholder="Type your answer here..."
                               />
                             </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
+                          ))}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
                 ))}
               </div>
             </div>
           </div>
         </div>
       </main>
-      <Toaster />
     </div>
   );
 }
 
-// Create a loading fallback component
 function QuestionsLoadingFallback() {
   return (
     <div className="flex flex-col min-h-screen">
       <header className="border-b bg-white">
         <div className="container flex h-16 p-4 items-center">
-          <Link href="/" className="font-bold text-xl">
-            AutoRFP
-          </Link>
+          <div className="font-bold text-xl">AutoRFP</div>
         </div>
       </header>
       <main className="flex-1 bg-slate-50 flex items-center justify-center">
         <div className="text-center">
           <Spinner size="lg" className="mb-4" />
-          <p className="text-lg">Loading questions...</p>
+          <p className="text-lg">Loading...</p>
         </div>
       </main>
     </div>
   );
 }
 
-// Main page component with Suspense boundary
 export default function QuestionsPage() {
   return (
     <Suspense fallback={<QuestionsLoadingFallback />}>
       <QuestionsContent />
+      <Toaster />
     </Suspense>
   );
 } 
