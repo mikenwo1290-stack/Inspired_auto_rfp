@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { Progress } from "@/components/ui/progress";
 
-export type ProcessingStatus = "uploading" | "analyzing" | "mapping" | "complete";
+export type ProcessingStatus = "uploading" | "analyzing" | "mapping" | "parsing" | "extracting" | "complete";
 
 interface ProcessingModalProps {
   isOpen: boolean;
@@ -34,8 +34,9 @@ export function ProcessingModal({
   
   if (!isOpen && !visible) return null;
 
-  const isUploaded = status === "analyzing" || status === "mapping" || status === "complete";
-  const isAnalyzed = status === "mapping" || status === "complete";
+  const isUploaded = status === "analyzing" || status === "mapping" || status === "parsing" || status === "extracting" || status === "complete";
+  const isAnalyzed = status === "mapping" || status === "parsing" || status === "extracting" || status === "complete";
+  const isProcessed = status === "parsing" || status === "extracting" || status === "complete";
   const isComplete = status === "complete";
 
   // Helper function to get status text
@@ -47,6 +48,10 @@ export function ProcessingModal({
         return "Parsing document structure...";
       case "mapping":
         return "Mapping content and formatting...";
+      case "parsing":
+        return "Document parsed. Waiting for AI to process document content...";
+      case "extracting":
+        return "AI is extracting and organizing questions...";
       case "complete":
         return "Processing complete!";
       default:

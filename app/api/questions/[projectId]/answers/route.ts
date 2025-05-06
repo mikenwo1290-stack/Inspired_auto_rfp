@@ -1,19 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { questionsCache } from '../../cache';
-
-// For storing answers - in a real app, use a database
-const answersCache = new Map<string, Record<string, string>>();
+import { projectService } from '@/lib/project-service';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ documentId: string }> }
+  { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
-    const documentId = (await params).documentId;
+    const projectId = (await params).projectId;
     
-    if (!documentId) {
+    if (!projectId) {
       return NextResponse.json(
-        { error: 'Document ID is required' },
+        { error: 'Project ID is required' },
         { status: 400 }
       );
     }
@@ -21,16 +18,8 @@ export async function POST(
     // Get the answers from the request body
     const answers = await request.json();
     
-    // Validate that we have the document
-    if (!questionsCache.has(documentId)) {
-      return NextResponse.json(
-        { error: 'Document not found' },
-        { status: 404 }
-      );
-    }
-    
-    // Store the answers
-    answersCache.set(documentId, answers);
+    // Save answers to the database
+    await projectService.saveAnswers(projectId, answers);
     
     return NextResponse.json({ 
       success: true,
@@ -48,20 +37,20 @@ export async function POST(
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ documentId: string }> }
+  { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
-    const documentId = (await params).documentId;
+    const projectId = (await params).projectId;
     
-    if (!documentId) {
+    if (!projectId) {
       return NextResponse.json(
-        { error: 'Document ID is required' },
+        { error: 'Project ID is required' },
         { status: 400 }
       );
     }
     
-    // Get the answers for this document
-    const answers = answersCache.get(documentId) || {};
+    // Get answers from the database
+    const answers = await projectService.getAnswers(projectId);
     
     return NextResponse.json(answers);
   } catch (error) {
