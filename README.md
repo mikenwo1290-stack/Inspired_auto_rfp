@@ -1,3 +1,46 @@
+# AutoRFP
+
+AutoRFP is a tool for processing and responding to Request for Proposal (RFP) documents. It allows uploading documents, extracting structured questions, and managing responses.
+
+## Features
+
+- Document upload and parsing
+- Automatic extraction of RFP questions and sections
+- Structured organization of questions for easy response
+- Answer management
+
+## Setup
+
+1. Clone the repository
+2. Install dependencies:
+   ```
+   npm install
+   ```
+
+3. Create a `.env.local` file with the following variables:
+   ```
+   OPENAI_API_KEY=your-openai-api-key
+   ```
+
+4. Run the development server:
+   ```
+   npm run dev
+   ```
+
+## Usage
+
+1. Upload an RFP document via the upload page
+2. Click "Get Questions" to extract structured questions
+3. View and answer questions in the organized interface
+4. Export your answers when complete
+
+## Technologies
+
+- Next.js
+- React
+- OpenAI GPT-4
+- shadcn/ui components
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
