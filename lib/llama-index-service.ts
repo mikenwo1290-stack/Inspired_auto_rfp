@@ -1,12 +1,13 @@
 import { env, validateEnv } from "./env";
 import { documentStore } from "./document-service";
-import { LlamaParseResult } from "@/types/api";
+import { LlamaCloudIndex, ContextChatEngine } from "llamaindex";
 
 /**
  * Service for interacting with LlamaIndex Cloud API
  */
 export class LlamaIndexService {
   private apiKey: string;
+  private index: LlamaCloudIndex;
   
   constructor() {
     if (!validateEnv()) {
@@ -14,6 +15,13 @@ export class LlamaIndexService {
     }
     
     this.apiKey = env.LLAMA_CLOUD_API_KEY.apiKey;
+
+    // Connect to existing LlamaCloud index
+    this.index = new LlamaCloudIndex({
+      name: "rfp_docs_new", // Update this to your actual index name
+      projectName: "Default", // Update this to your actual project name
+      apiKey: this.apiKey,
+    });
   }
   
   /**
@@ -21,66 +29,38 @@ export class LlamaIndexService {
    */
   async generateResponse(question: string, documentIds?: string[]) {
     try {
-      // Get documents from the document store
-      let documents: { text: string, id: string }[] = [];
-      
-      if (documentIds && documentIds.length > 0) {
-        // If document IDs are provided, get those specific documents
-        const filteredDocs = documentStore.getAllDocuments()
-          .filter(doc => documentIds.includes(doc.documentId));
-          
-        documents = filteredDocs.map(doc => ({
-          text: doc.content || `Document about ${doc.documentName}`,
-          id: doc.documentId
-        }));
-      } else {
-        // Otherwise, use all documents
-        documents = documentStore.getAllDocuments()
-          .map(doc => ({
-            text: doc.content || `Document about ${doc.documentName}`,
-            id: doc.documentId
-          }));
-      }
-      
-      // If no documents are available, return a default response
-      if (documents.length === 0) {
-        return this.generateDefaultResponse(question);
-      }
-      
-      // Call the LlamaIndex Cloud API
-      const response = await fetch('https://api.cloud.llamaindex.ai/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`
-        },
-        body: JSON.stringify({
-          messages: [
-            {
-              role: 'user',
-              content: question
-            }
-          ],
-          context: {
-            documents: documents
-          }
-        })
+      // Create a retriever with a specific top-k value
+      const retriever = this.index.asRetriever({
+        similarityTopK: 5,
       });
-      
-      if (!response.ok) {
-        throw new Error(`LlamaIndex API error: ${response.status} ${response.statusText}`);
-      }
-      
-      const result = await response.json();
-      
+
+      // Create a chat engine with the retriever
+      const chatEngine = new ContextChatEngine({ retriever });
+
+      // Get the response using the chat engine
+      const responder = await chatEngine.chat({ message: question });
+      const response = responder.response;
+
+      // Get the source documents that were used
+      const sourcesWithMetadata = responder.sourceNodes || [];
+      const sources = sourcesWithMetadata.map(node => {
+
+        console.log("information about the node" , node);
+        // Try to extract an identifier from the node
+        if (node.node && node.node.metadata) {
+          return node.node.metadata.file_name || 'unknown';
+        }
+        return 'unknown';
+      });
+
       return {
-        response: result.message?.content || 'No response generated',
-        sources: documents.map(doc => doc.id),
-        confidence: 0.95,
+        response: response,
+        sources: sources,
+        confidence: 0.95, // This is a placeholder, LlamaIndex doesn't directly provide confidence scores
         generatedAt: new Date().toISOString(),
       };
     } catch (error) {
-      console.error('Error generating response with LlamaIndex API:', error);
+      console.error('Error generating response with LlamaIndex:', error);
       return this.generateDefaultResponse(question);
     }
   }

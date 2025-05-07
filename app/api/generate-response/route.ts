@@ -4,17 +4,6 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-
-// Temporary empty handler to make the file a valid module
-export async function POST(request: NextRequest) {
-  return NextResponse.json(
-    { message: 'This API endpoint is under development' },
-    { status: 501 }
-  );
-}
-
-/*
-import { NextRequest, NextResponse } from 'next/server';
 import { LlamaIndexService } from '@/lib/llama-index-service';
 
 // Initialize the LlamaIndex service
@@ -47,6 +36,9 @@ export async function POST(request: NextRequest) {
 
     // Generate response using LlamaIndex
     const result = await llamaIndexService.generateResponse(question, documentIds);
+
+    console.log(result);
+
     
     return NextResponse.json({
       success: true,
@@ -65,4 +57,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-*/ 
