@@ -182,6 +182,6 @@ export default function Home() {
       </Dialog>
 
       <Toaster />
-    </main>
+      </main>
   );
 }
