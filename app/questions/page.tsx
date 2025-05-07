@@ -3,13 +3,19 @@
 import React, { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { RfpDocument } from "@/types/api";
+import { RfpDocument, AnswerSource } from "@/types/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "@/components/ui/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 import { SectionItem } from "./components/SectionItem";
+
+// Interface for answer data
+interface AnswerData {
+  text: string;
+  sources?: AnswerSource[];
+}
 
 // Create a client component that uses useSearchParams
 function QuestionsContent() {
@@ -21,7 +27,7 @@ function QuestionsContent() {
   const [error, setError] = useState<string | null>(null);
   const [rfpDocument, setRfpDocument] = useState<RfpDocument | null>(null);
   const [activeSection, setActiveSection] = useState<string | null>(null);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [answers, setAnswers] = useState<Record<string, AnswerData>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<string | null>(null);
   const [project, setProject] = useState<any>(null);
@@ -67,7 +73,20 @@ function QuestionsContent() {
         const answersResponse = await fetch(`/api/questions/${projectId}/answers`);
         if (answersResponse.ok) {
           const savedAnswers = await answersResponse.json();
-          setAnswers(savedAnswers);
+          
+          // Normalize answers to new format
+          const normalizedAnswers: Record<string, AnswerData> = {};
+          for (const [questionId, answerData] of Object.entries(savedAnswers)) {
+            if (typeof answerData === 'string') {
+              // Convert legacy string format to object format
+              normalizedAnswers[questionId] = { text: answerData };
+            } else {
+              // Already in object format
+              normalizedAnswers[questionId] = answerData as AnswerData;
+            }
+          }
+          
+          setAnswers(normalizedAnswers);
         }
       } catch (error) {
         console.error("Error loading questions:", error);
@@ -127,10 +146,16 @@ function QuestionsContent() {
 
   // Handle answer changes
   const handleAnswerChange = (questionId: string, value: string) => {
-    setAnswers(prev => ({
-      ...prev,
-      [questionId]: value
-    }));
+    setAnswers(prev => {
+      const existing = prev[questionId] || { text: '' };
+      return {
+        ...prev,
+        [questionId]: {
+          ...existing,
+          text: value
+        }
+      };
+    });
   };
 
   // Handle answer generation
@@ -162,8 +187,14 @@ function QuestionsContent() {
       
       const result = await response.json();
       
-      // Update the answer with the generated response
-      handleAnswerChange(questionId, result.response);
+      // Update the answer with the generated response and sources
+      setAnswers(prev => ({
+        ...prev,
+        [questionId]: {
+          text: result.response,
+          sources: result.sources
+        }
+      }));
       
       // Show toast notification for successful generation
       toast({
@@ -194,7 +225,7 @@ function QuestionsContent() {
       
       for (const question of allQuestions) {
         // Skip questions that already have answers
-        if (answers[question.id] && answers[question.id].trim() !== '') {
+        if (answers[question.id]?.text && answers[question.id].text.trim() !== '') {
           continue;
         }
         
@@ -219,8 +250,14 @@ function QuestionsContent() {
           
           const result = await response.json();
           
-          // Update the answer with the generated response
-          handleAnswerChange(question.id, result.response);
+          // Update the answer with the generated response and sources
+          setAnswers(prev => ({
+            ...prev,
+            [question.id]: {
+              text: result.response,
+              sources: result.sources
+            }
+          }));
           
           // Small delay between questions to avoid rate limiting
           await new Promise(resolve => setTimeout(resolve, 500));
@@ -248,12 +285,19 @@ function QuestionsContent() {
   };
 
   // Handle confirmation of an answer
-  const handleConfirmAnswer = (questionId: string, answer: string) => {
-    // Update the answer in state
-    setAnswers(prev => ({
-      ...prev,
-      [questionId]: answer
-    }));
+  const handleConfirmAnswer = (questionId: string, answer: string, answerSources?: AnswerSource[]) => {
+    // Update the answer in state with its sources
+    setAnswers(prev => {
+      const existing = prev[questionId] || { text: '' };
+      return {
+        ...prev,
+        [questionId]: {
+          ...existing,
+          text: answer,
+          sources: answerSources || existing.sources
+        }
+      };
+    });
     
     // Show a toast notification
     toast({
@@ -276,7 +320,7 @@ function QuestionsContent() {
         rows.push([
           section.title,
           question.question,
-          answers[question.id] || '' // Get answer from our state
+          answers[question.id]?.text || '' // Get answer text from our state
         ]);
       });
     });

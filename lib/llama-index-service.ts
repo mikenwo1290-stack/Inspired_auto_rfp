@@ -43,14 +43,48 @@ export class LlamaIndexService {
 
       // Get the source documents that were used
       const sourcesWithMetadata = responder.sourceNodes || [];
-      const sources = sourcesWithMetadata.map(node => {
-
-        console.log("information about the node" , node);
-        // Try to extract an identifier from the node
-        if (node.node && node.node.metadata) {
-          return node.node.metadata.file_name || 'unknown';
+      
+      // Extract detailed source information
+      const sources = sourcesWithMetadata.map((node, index) => {
+        // Safely extract text content from the node, if available
+        let textContent = null;
+        try {
+          // Access the text content of the node
+          // In LlamaIndex, nodes may have text content in different properties
+          // depending on the node type
+          if (node.node) {
+            // Try different ways to access the content based on various node types
+            if ('text' in node.node) {
+              textContent = (node.node as any).text;
+            } else if (node.node.metadata && 'text' in node.node.metadata) {
+              textContent = (node.node.metadata as any).text;
+            }
+          }
+        } catch (error) {
+          console.error('Error extracting text content from node:', error);
         }
-        return 'unknown';
+
+        if (node.node && node.node.metadata) {
+          const metadata = node.node.metadata;
+          return {
+            id: index + 1, // Use 1-based indexing for user-friendly display
+            fileName: metadata.file_name || 'Unknown',
+            filePath: metadata.file_path,
+            pageNumber: metadata.page_label || metadata.start_page_label,
+            documentId: metadata.document_id,
+            // Add a score or relevance percentage based on the node score
+            relevance: node.score ? Math.round(node.score * 100) : null,
+            // Include the actual text content from the node
+            textContent: textContent
+          };
+        }
+        return {
+          id: index + 1,
+          fileName: 'Unknown Source',
+          pageNumber: null,
+          documentId: null,
+          textContent: null
+        };
       });
 
       return {
