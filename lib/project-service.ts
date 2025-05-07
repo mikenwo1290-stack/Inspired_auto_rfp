@@ -1,5 +1,5 @@
 import { db } from './db';
-import { RfpDocument, RfpSection, RfpQuestion } from '@/types/api';
+import { RfpDocument, RfpSection, RfpQuestion, AnswerSource } from '@/types/api';
 
 export const projectService = {
   // Project operations
@@ -26,7 +26,11 @@ export const projectService = {
       include: {
         questions: {
           include: {
-            answer: true,
+            answer: {
+              include: {
+                sources: true,
+              },
+            },
           },
         },
       },
@@ -101,7 +105,11 @@ export const projectService = {
           projectId,
         },
         include: {
-          answer: true,
+          answer: {
+            include: {
+              sources: true,
+            },
+          },
         },
         orderBy: {
           createdAt: 'asc',
@@ -138,10 +146,22 @@ export const projectService = {
           acc[topic] = [];
         }
         
+        // Map database sources to API format
+        const sources = question.answer?.sources?.map((source, index) => ({
+          id: index + 1,
+          fileName: source.fileName,
+          filePath: source.filePath || undefined,
+          pageNumber: source.pageNumber || undefined,
+          documentId: source.documentId || undefined,
+          relevance: source.relevance || null,
+          textContent: source.textContent || null,
+        })) || [];
+        
         acc[topic].push({
           id: question.id,
           question: question.text,
           answer: question.answer?.text, // Get answer if exists
+          sources: sources.length > 0 ? sources : undefined,
         });
         
         return acc;
@@ -181,12 +201,12 @@ export const projectService = {
   },
 
   // Answer operations
-  async saveAnswers(projectId: string, answers: Record<string, string>) {
+  async saveAnswers(projectId: string, answers: Record<string, { text: string; sources?: AnswerSource[] }>) {
     console.log(`Saving answers for project ${projectId}. Total answers: ${Object.keys(answers).length}`);
     
     try {
       let answersProcessed = 0;
-      const BATCH_SIZE = 10;
+      const BATCH_SIZE = 5; // Smaller batch size for complex operations
       const questionIds = Object.keys(answers);
       
       // Process in smaller batches
@@ -196,7 +216,9 @@ export const projectService = {
         
         await db.$transaction(async (tx) => {
           for (const questionId of batchIds) {
-            const text = answers[questionId];
+            const answerData = answers[questionId];
+            const text = typeof answerData === 'string' ? answerData : answerData.text;
+            const sources = typeof answerData === 'string' ? [] : (answerData.sources || []);
             
             // Check if this question belongs to the project
             const question = await tx.question.findFirst({
@@ -216,6 +238,9 @@ export const projectService = {
               where: {
                 questionId,
               },
+              include: {
+                sources: true,
+              },
             });
 
             if (existingAnswer) {
@@ -228,14 +253,57 @@ export const projectService = {
                   text,
                 },
               });
+              
+              // Delete existing sources
+              if (existingAnswer.sources.length > 0) {
+                await tx.source.deleteMany({
+                  where: {
+                    answerId: existingAnswer.id,
+                  },
+                });
+              }
+              
+              // Create new sources
+              if (sources.length > 0) {
+                await Promise.all(sources.map(source => 
+                  tx.source.create({
+                    data: {
+                      fileName: source.fileName,
+                      filePath: source.filePath || null,
+                      pageNumber: source.pageNumber?.toString() || null,
+                      documentId: source.documentId || null,
+                      relevance: source.relevance ? Math.round(Number(source.relevance)) : null,
+                      textContent: source.textContent || null,
+                      answerId: existingAnswer.id,
+                    },
+                  })
+                ));
+              }
             } else {
               // Create new answer
-              await tx.answer.create({
+              const answer = await tx.answer.create({
                 data: {
                   text,
                   questionId,
                 },
               });
+              
+              // Create sources
+              if (sources.length > 0) {
+                await Promise.all(sources.map(source => 
+                  tx.source.create({
+                    data: {
+                      fileName: source.fileName,
+                      filePath: source.filePath || null,
+                      pageNumber: source.pageNumber?.toString() || null,
+                      documentId: source.documentId || null,
+                      relevance: source.relevance ? Math.round(Number(source.relevance)) : null,
+                      textContent: source.textContent || null,
+                      answerId: answer.id,
+                    },
+                  })
+                ));
+              }
             }
             
             answersProcessed++;
@@ -262,17 +330,35 @@ export const projectService = {
           projectId,
         },
         include: {
-          answer: true,
+          answer: {
+            include: {
+              sources: true,
+            },
+          },
         },
       });
 
       console.log(`Found ${questions.length} questions for project ${projectId}`);
 
-      // Convert to map of questionId -> answer
-      const answers: Record<string, string> = {};
+      // Convert to map of questionId -> answer with sources
+      const answers: Record<string, { text: string; sources?: AnswerSource[] }> = {};
       for (const question of questions) {
         if (question.answer) {
-          answers[question.id] = question.answer.text;
+          // Map database sources to API format
+          const sources = question.answer.sources.map((source, index) => ({
+            id: index + 1,
+            fileName: source.fileName,
+            filePath: source.filePath || undefined,
+            pageNumber: source.pageNumber || undefined,
+            documentId: source.documentId || undefined,
+            relevance: source.relevance || null,
+            textContent: source.textContent || null,
+          }));
+          
+          answers[question.id] = {
+            text: question.answer.text,
+            sources: sources.length > 0 ? sources : undefined,
+          };
         }
       }
 

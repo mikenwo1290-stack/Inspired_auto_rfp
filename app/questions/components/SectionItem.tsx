@@ -5,16 +5,33 @@ import { RfpSection } from "@/types/api";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { QuestionItem } from "./QuestionItem";
 
+// Source interface for answer sources
+interface AnswerSource {
+  id: number;
+  fileName: string;
+  filePath?: string;
+  pageNumber?: number | string;
+  documentId?: string;
+  relevance?: number | null;
+  textContent?: string | null;
+}
+
+// Interface for answer data
+interface AnswerData {
+  text: string;
+  sources?: AnswerSource[];
+}
+
 // SectionItem component - represents a section with its questions
 interface SectionItemProps {
   section: RfpSection;
   isActive: boolean;
-  answers: Record<string, string>;
+  answers: Record<string, AnswerData>;
   isGenerating: Record<string, boolean>;
   onToggle: (sectionId: string) => void;
   onAnswerChange: (questionId: string, value: string) => void;
   onGenerateAnswer: (questionId: string) => void;
-  onConfirmAnswer?: (questionId: string, answer: string) => void;
+  onConfirmAnswer?: (questionId: string, answer: string, sources?: AnswerSource[]) => void;
 }
 
 export function SectionItem({
@@ -50,8 +67,9 @@ export function SectionItem({
               <QuestionItem
                 key={question.id}
                 question={question}
-                answer={answers[question.id] || ''}
+                answer={answers[question.id]?.text || ''}
                 isGenerating={isGenerating[question.id] || false}
+                sources={answers[question.id]?.sources || []}
                 onAnswerChange={(value) => onAnswerChange(question.id, value)}
                 onGenerateAnswer={() => onGenerateAnswer(question.id)}
                 onConfirmAnswer={onConfirmAnswer}

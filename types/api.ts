@@ -14,11 +14,22 @@ export interface LlamaParseResult {
   };
 }
 
+// Source information
+export interface AnswerSource {
+  id: number;
+  fileName: string;
+  filePath?: string;
+  pageNumber?: string | number;
+  documentId?: string;
+  relevance?: number | null;
+  textContent?: string | null;
+}
+
 // Response Generation API Types
 export interface GenerateResponseResult {
   success: boolean;
   response: string;
-  sources: string[];
+  sources: AnswerSource[];
   metadata: {
     confidence: number;
     generatedAt: string;
@@ -35,6 +46,7 @@ export interface RfpQuestion {
   id: string;
   question: string;
   answer?: string;
+  sources?: AnswerSource[];
 }
 
 export interface RfpSection {

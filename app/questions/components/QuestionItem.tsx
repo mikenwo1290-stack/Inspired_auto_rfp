@@ -4,21 +4,42 @@ import React, { useState, useEffect } from "react";
 import { RfpQuestion } from "@/types/api";
 import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+
+// Source interface for answer sources
+interface AnswerSource {
+  id: number;
+  fileName: string;
+  filePath?: string;
+  pageNumber?: number | string;
+  documentId?: string;
+  relevance?: number | null;
+  textContent?: string | null;
+}
 
 // QuestionItem component - represents a single question with its answer
 interface QuestionItemProps {
   question: RfpQuestion;
   answer: string;
   isGenerating: boolean;
+  sources?: AnswerSource[];
   onAnswerChange: (value: string) => void;
   onGenerateAnswer: () => void;
-  onConfirmAnswer?: (questionId: string, answer: string) => void;
+  onConfirmAnswer?: (questionId: string, answer: string, sources?: AnswerSource[]) => void;
 }
 
 export function QuestionItem({
   question,
   answer,
   isGenerating,
+  sources = [],
   onAnswerChange,
   onGenerateAnswer,
   onConfirmAnswer
@@ -28,6 +49,9 @@ export function QuestionItem({
   const [isSaving, setIsSaving] = useState(false);
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [isGenerated, setIsGenerated] = useState(false);
+  const [selectedSource, setSelectedSource] = useState<AnswerSource | null>(null);
+  const [isSourceModalOpen, setIsSourceModalOpen] = useState(false);
+  const [isTextTabActive, setIsTextTabActive] = useState(true);
   
   // Update local answer when the prop changes (from parent)
   useEffect(() => {
@@ -64,7 +88,7 @@ export function QuestionItem({
     
     // This is where we actually save the answer to the parent state
     if (onConfirmAnswer) {
-      onConfirmAnswer(question.id, localAnswer);
+      onConfirmAnswer(question.id, localAnswer, sources);
     } else {
       onAnswerChange(localAnswer);
     }
@@ -76,6 +100,13 @@ export function QuestionItem({
       setIsEdited(false);
       setIsGenerated(false);
     }, 500);
+  };
+
+  // Handle source click to open the modal
+  const handleSourceClick = (source: AnswerSource) => {
+    setSelectedSource(source);
+    setIsSourceModalOpen(true);
+    setIsTextTabActive(true);
   };
 
   return (
@@ -150,6 +181,115 @@ export function QuestionItem({
           </button>
         </div>
       </div>
+      
+      {/* Display sources if available */}
+      {sources.length > 0 && (
+        <div className="mt-2 text-sm">
+          <div className="font-medium text-gray-700">Sources:</div>
+          <div className="flex flex-wrap gap-2 mt-1">
+            {sources.map((source) => (
+              <span 
+                key={source.id} 
+                className="inline-block px-2 py-1 bg-slate-100 rounded text-slate-700 hover:bg-slate-200 cursor-pointer" 
+                title={`${source.fileName}${source.pageNumber ? ` - Page ${source.pageNumber}` : ''}`}
+                onClick={() => handleSourceClick(source)}
+              >
+                {source.id}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      {/* Source Details Modal */}
+      <Dialog open={isSourceModalOpen} onOpenChange={setIsSourceModalOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Source Information</DialogTitle>
+            <DialogDescription>
+              Details about this source document
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedSource && (
+            <div className="mt-4">
+              {/* Tab Navigation */}
+              <div className="flex border-b mb-4">
+                <button
+                  className={`px-4 py-2 font-medium ${isTextTabActive ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                  onClick={() => setIsTextTabActive(true)}
+                >
+                  Text Content
+                </button>
+                <button
+                  className={`px-4 py-2 font-medium ${!isTextTabActive ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                  onClick={() => setIsTextTabActive(false)}
+                >
+                  Metadata
+                </button>
+              </div>
+              
+              {/* Text Content Tab */}
+              {isTextTabActive ? (
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="font-medium">Text:</h3>
+                    <div className="text-sm text-gray-500">
+                      {selectedSource.fileName} {selectedSource.pageNumber ? `- Page ${selectedSource.pageNumber}` : ''}
+                    </div>
+                  </div>
+                  
+                  {selectedSource.textContent ? (
+                    <ScrollArea className="h-60 border rounded-md p-3">
+                      <div className="whitespace-pre-wrap font-mono text-sm">
+                        {selectedSource.textContent}
+                      </div>
+                    </ScrollArea>
+                  ) : (
+                    <div className="h-60 border rounded-md p-3 flex items-center justify-center text-gray-500">
+                      No text content available for this source
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* Metadata Tab */
+                <div className="space-y-4">
+                  <div className="flex flex-col space-y-1">
+                    <span className="text-sm font-medium text-gray-500">File Name</span>
+                    <span className="font-medium">{selectedSource.fileName}</span>
+                  </div>
+                  
+                  {selectedSource.pageNumber && (
+                    <div className="flex flex-col space-y-1">
+                      <span className="text-sm font-medium text-gray-500">Page Number</span>
+                      <span>{selectedSource.pageNumber}</span>
+                    </div>
+                  )}
+                  
+                  {selectedSource.relevance !== null && (
+                    <div className="flex flex-col space-y-1">
+                      <span className="text-sm font-medium text-gray-500">Relevance</span>
+                      <div className="w-full bg-gray-200 rounded-full h-2.5">
+                        <div 
+                          className="bg-blue-600 h-2.5 rounded-full" 
+                          style={{ width: `${selectedSource.relevance}%` }}
+                        ></div>
+                      </div>
+                      <span className="text-xs text-gray-500">{selectedSource.relevance}% match</span>
+                    </div>
+                  )}
+                  
+                  <div className="border-t pt-4">
+                    <p className="text-sm text-gray-500 mb-2">
+                      This source was used to generate the answer. You can view the full document in your project files.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
       
       {/* Save/Confirm button - shown prominently when answer is generated or edited */}
       {isEdited && (

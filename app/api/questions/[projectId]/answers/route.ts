@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { projectService } from '@/lib/project-service';
+import { AnswerSource } from '@/types/api';
+
+// Type for answer data
+interface AnswerData {
+  text: string;
+  sources?: AnswerSource[];
+}
 
 export async function POST(
   request: NextRequest,
@@ -18,8 +25,28 @@ export async function POST(
     // Get the answers from the request body
     const answers = await request.json();
     
+    // Normalize the answers format for backward compatibility
+    const normalizedAnswers = Object.entries(answers).reduce((acc, [questionId, answer]) => {
+      // Handle both string answers and objects with sources
+      if (typeof answer === 'string') {
+        acc[questionId] = { text: answer };
+      } else if (answer && typeof answer === 'object' && 'text' in answer) {
+        // Type assertion after validation
+        const answerObj = answer as AnswerData;
+        acc[questionId] = {
+          text: answerObj.text,
+          sources: answerObj.sources
+        };
+      } else {
+        // Fallback for invalid data
+        console.warn(`Invalid answer format for question ${questionId}, using empty string`);
+        acc[questionId] = { text: '' };
+      }
+      return acc;
+    }, {} as Record<string, AnswerData>);
+    
     // Save answers to the database
-    await projectService.saveAnswers(projectId, answers);
+    await projectService.saveAnswers(projectId, normalizedAnswers);
     
     return NextResponse.json({ 
       success: true,
