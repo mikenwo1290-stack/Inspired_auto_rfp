@@ -214,6 +214,7 @@ export const projectService = {
         const batchIds = questionIds.slice(i, i + BATCH_SIZE);
         console.log(`Processing batch of ${batchIds.length} answers (${i} to ${i + batchIds.length - 1})`);
         
+        // Increase the transaction timeout to 30 seconds
         await db.$transaction(async (tx) => {
           for (const questionId of batchIds) {
             const answerData = answers[questionId];
@@ -308,6 +309,9 @@ export const projectService = {
             
             answersProcessed++;
           }
+        }, {
+          // Set a longer timeout (30 seconds) for complex transactions with many sources
+          timeout: 30000
         });
         
         console.log(`Batch completed. Total answers processed so far: ${answersProcessed}`);

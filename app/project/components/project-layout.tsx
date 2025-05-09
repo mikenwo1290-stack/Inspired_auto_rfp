@@ -1,0 +1,13 @@
+import type React from "react"
+import { ProjectHeader } from "./project-header"
+
+export function ProjectLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex min-h-screen flex-col">
+      <ProjectHeader />
+      <div className="flex flex-1 overflow-hidden">
+        <main className="flex-1 overflow-auto bg-background">{children}</main>
+      </div>
+    </div>
+  )
+}
