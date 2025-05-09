@@ -71,7 +71,7 @@ export default function Home() {
       if (response.ok) {
         const project = await response.json();
         setShowCreateDialog(false);
-        router.push(`/upload?projectId=${project.id}`);
+        router.push(`/project?projectId=${project.id}`);
       } else {
         throw new Error("Failed to create project");
       }
@@ -112,7 +112,7 @@ export default function Home() {
               <div 
                 key={project.id} 
                 className="border rounded-lg p-4 hover:border-blue-400 hover:shadow-md transition-all cursor-pointer"
-                onClick={() => router.push(`/upload?projectId=${project.id}`)}
+                onClick={() => router.push(`/project?projectId=${project.id}`)}
               >
                 <h3 className="font-semibold">{project.name}</h3>
                 {project.description && (
