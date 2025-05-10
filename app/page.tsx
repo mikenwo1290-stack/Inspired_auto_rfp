@@ -1,29 +1,22 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
-import { toast } from "@/components/ui/use-toast";
-import { Toaster } from "@/components/ui/toaster";
-import { Spinner } from "@/components/ui/spinner";
+import { Search, Plus, Loader2 } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 
-export default function Home() {
-  const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
+// Inner component for data fetching
+function HomePageContent() {
   const [projects, setProjects] = useState<any[]>([]);
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [newProjectName, setNewProjectName] = useState("");
-  const [newProjectDescription, setNewProjectDescription] = useState("");
-  const [isCreating, setIsCreating] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  // Load projects when the component mounts
   useEffect(() => {
     const fetchProjects = async () => {
-      setIsLoading(true);
       try {
         const response = await fetch("/api/projects");
         if (response.ok) {
@@ -32,11 +25,6 @@ export default function Home() {
         }
       } catch (error) {
         console.error("Error fetching projects:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load projects",
-          variant: "destructive",
-        });
       } finally {
         setIsLoading(false);
       }
@@ -45,143 +33,163 @@ export default function Home() {
     fetchProjects();
   }, []);
 
-  const handleCreateProject = async () => {
-    if (!newProjectName.trim()) {
-      toast({
-        title: "Invalid input",
-        description: "Project name is required",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsCreating(true);
-    try {
-      const response = await fetch("/api/projects", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: newProjectName,
-          description: newProjectDescription,
-        }),
-      });
-
-      if (response.ok) {
-        const project = await response.json();
-        setShowCreateDialog(false);
-        router.push(`/project?projectId=${project.id}`);
-      } else {
-        throw new Error("Failed to create project");
-      }
-    } catch (error) {
-      console.error("Error creating project:", error);
-      toast({
-        title: "Error",
-        description: "Failed to create project",
-        variant: "destructive",
-      });
-    } finally {
-      setIsCreating(false);
-    }
-  };
+  // Filter projects based on search
+  const filteredProjects = projects.filter(project => 
+    project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (project.description && project.description.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-8 max-w-5xl mx-auto">
-      <div className="w-full">
-        <h1 className="text-3xl font-bold mb-2">AutoRFP</h1>
-        <p className="text-slate-600 mb-8">Manage your RFP responses efficiently</p>
-
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold">Your Projects</h2>
-          <Button 
-            onClick={() => setShowCreateDialog(true)}
-          >
-            Create New Project
-          </Button>
-        </div>
-
-        {isLoading ? (
-          <div className="flex justify-center my-12">
-            <Spinner size="lg" />
+    <div className="max-w-5xl mx-auto">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-2xl font-semibold">Dashboard</h1>
+        <div className="flex items-center gap-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Input
+              placeholder="Search projects..."
+              className="pl-10 w-[250px]"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
-        ) : projects.length > 0 ? (
+          <Link href="/projects">
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              New project
+            </Button>
+          </Link>
+        </div>
+      </div>
+      
+      <div className="mb-8">
+        <h2 className="text-xl font-medium mb-4">Your Projects</h2>
+        
+        {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {projects.map((project) => (
-              <div 
-                key={project.id} 
-                className="border rounded-lg p-4 hover:border-blue-400 hover:shadow-md transition-all cursor-pointer"
-                onClick={() => router.push(`/project?projectId=${project.id}`)}
-              >
-                <h3 className="font-semibold">{project.name}</h3>
-                {project.description && (
-                  <p className="text-sm text-slate-600 mt-1">{project.description}</p>
-                )}
-                <p className="text-xs text-slate-500 mt-2">
-                  Created {new Date(project.createdAt).toLocaleDateString()}
-                </p>
-              </div>
+            {[1, 2, 3].map((i) => (
+              <Card key={i} className="hover:shadow-md transition-shadow">
+                <CardHeader className="pb-2">
+                  <Skeleton className="h-6 w-48 mb-2" />
+                  <Skeleton className="h-4 w-32" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-4 w-28 mb-4" />
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-4 w-16" />
+                    </div>
+                    <Skeleton className="h-2 w-full" />
+                  </div>
+                </CardContent>
+                <CardFooter className="pt-0">
+                  <Skeleton className="h-9 w-full" />
+                </CardFooter>
+              </Card>
             ))}
           </div>
-        ) : (
-          <div className="text-center my-12 p-8 border rounded-lg border-dashed">
-            <p className="text-slate-500 mb-4">You haven't created any projects yet</p>
-            <Button 
-              onClick={() => setShowCreateDialog(true)}
-            >
-              Create Your First Project
-            </Button>
+        ) : filteredProjects.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredProjects.map((project) => (
+              <Card key={project.id} className="hover:shadow-md transition-shadow">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg">{project.name}</CardTitle>
+                  {project.description && (
+                    <CardDescription>{project.description}</CardDescription>
+                  )}
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">
+                    Created {new Date(project.createdAt).toLocaleDateString()}
+                  </p>
+                  
+                  {/* Question stats would be fetched on demand to avoid overloading */}
+                  <div className="mt-2 space-y-1">
+                    <div className="flex justify-between text-xs">
+                      <span>Progress</span>
+                      <span className="font-medium">In Progress</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+                      <div className="h-full bg-blue-500 rounded-full" style={{ width: '40%' }}></div>
+                    </div>
+                  </div>
+                </CardContent>
+                <CardFooter className="pt-0">
+                  <Link href={`/project?projectId=${project.id}`} className="w-full">
+                    <Button variant="outline" className="w-full">View Project</Button>
+                  </Link>
+                </CardFooter>
+              </Card>
+            ))}
+            
+            {/* Add Project Card */}
+            <Link href="/projects" className="block">
+              <Card className="hover:shadow-md transition-shadow border-dashed flex items-center justify-center h-full">
+                <CardContent className="p-6 text-center">
+                  <div className="h-24 flex items-center justify-center">
+                    <div>
+                      <Plus className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                      <p className="text-muted-foreground">Create New Project</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
           </div>
+        ) : (
+          <Card className="text-center p-8">
+            <CardContent>
+              <p className="mb-4 text-muted-foreground">No projects found</p>
+              <Link href="/projects">
+                <Button>Create Your First Project</Button>
+              </Link>
+            </CardContent>
+          </Card>
         )}
       </div>
+      
+      <div>
+        <h2 className="text-xl font-medium mb-4">Recent Activity</h2>
+        <Card>
+          <CardContent className="p-6">
+            <p className="text-center text-muted-foreground">
+              No recent activity to show
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
 
-      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create New Project</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <label htmlFor="name" className="text-sm font-medium">
-                Project Name
-              </label>
-              <Input
-                id="name"
-                value={newProjectName}
-                onChange={(e) => setNewProjectName(e.target.value)}
-                placeholder="Enter project name"
-              />
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="description" className="text-sm font-medium">
-                Description (Optional)
-              </label>
-              <Textarea
-                id="description"
-                value={newProjectDescription}
-                onChange={(e) => setNewProjectDescription(e.target.value)}
-                placeholder="Enter project description"
-                rows={3}
-              />
-            </div>
+export default function HomePage() {
+  return (
+    <Suspense fallback={
+      <div className="max-w-5xl mx-auto">
+        <div className="flex justify-between items-center mb-8">
+          <Skeleton className="h-8 w-40" />
+          <div className="flex items-center gap-4">
+            <Skeleton className="h-10 w-64" />
+            <Skeleton className="h-10 w-32" />
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleCreateProject} 
-              disabled={isCreating || !newProjectName.trim()}
-            >
-              {isCreating ? <Spinner size="sm" className="mr-2" /> : null}
-              Create Project
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Toaster />
-      </main>
+        </div>
+        
+        <div className="mb-8">
+          <Skeleton className="h-7 w-48 mb-4" />
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-64 w-full" />
+            ))}
+          </div>
+        </div>
+        
+        <Skeleton className="h-7 w-48 mb-4" />
+        <Skeleton className="h-32 w-full" />
+      </div>
+    }>
+      <HomePageContent />
+    </Suspense>
   );
 }

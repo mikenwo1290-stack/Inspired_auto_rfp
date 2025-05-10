@@ -2,16 +2,19 @@
 
 import React, { useState, Suspense } from 'react'
 import { GlobalSidebar } from './sidebar'
+import { HomeSidebar } from './home-sidebar'
 import { SidebarProvider } from '@/components/ui/sidebar'
 import { Button } from '@/components/ui/button'
 import { PanelLeftIcon } from 'lucide-react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, usePathname } from 'next/navigation'
 
 // Create a separate client component that uses useSearchParams
 function SidebarController({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const searchParams = useSearchParams()
+  const pathname = usePathname()
   const projectId = searchParams.get("projectId")
+  const isHomePage = pathname === '/'
   
   return (
     <SidebarProvider 
@@ -20,10 +23,10 @@ function SidebarController({ children }: { children: React.ReactNode }) {
       onOpenChange={setSidebarOpen}
     >
       <div className="flex min-h-screen">
-        <div className='mr-12'>
-          <GlobalSidebar />
+        <div className="flex-shrink-0">
+          {isHomePage ? <HomeSidebar /> : <GlobalSidebar />}
         </div>
-        <div className="flex-1 overflow-auto p-12">
+        <div className="flex-1 overflow-auto p-6">
           {children}
         </div>
         
@@ -52,8 +55,13 @@ export default function RootLayoutWrapper({
   return (
     <Suspense fallback={
       <div className="flex min-h-screen">
-        <div className="flex-1 overflow-auto p-12">
-          <div className="animate-pulse">Loading...</div>
+        <div className="w-64 border-r bg-muted/20 animate-pulse"></div>
+        <div className="flex-1 overflow-auto p-6">
+          <div className="animate-pulse space-y-4">
+            <div className="h-8 w-64 bg-muted rounded"></div>
+            <div className="h-32 bg-muted rounded"></div>
+            <div className="h-64 bg-muted rounded"></div>
+          </div>
         </div>
       </div>
     }>
