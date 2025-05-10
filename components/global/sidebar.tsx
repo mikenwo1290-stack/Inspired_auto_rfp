@@ -1,6 +1,6 @@
 "use client"
 
-import React, { Suspense } from "react"
+import React, { Suspense, useState, useEffect } from "react"
 import {
   Sidebar,
   SidebarContent,
@@ -20,14 +20,82 @@ import { Calendar, FileText, FolderOpen, HelpCircle, Home, MessageSquare, Settin
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
+import { Skeleton } from "@/components/ui/skeleton"
 import { usePathname, useSearchParams } from "next/navigation"
 import Link from "next/link"
+import { RfpDocument } from "@/types/api"
 
 // Create a separate client component that uses useSearchParams
 function SidebarInnerContent() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const projectId = searchParams.get("projectId")
+  
+  // Data states
+  const [project, setProject] = useState<any>(null)
+  const [rfpDocument, setRfpDocument] = useState<RfpDocument | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [projectName, setProjectName] = useState("")
+  const [clientName, setClientName] = useState("Client")
+  
+  // Fetch project data when projectId changes
+  useEffect(() => {
+    if (projectId) {
+      const fetchProjectData = async () => {
+        setIsLoading(true)
+        try {
+          // Fetch project details
+          const projectResponse = await fetch(`/api/projects/${projectId}`)
+          if (projectResponse.ok) {
+            const projectData = await projectResponse.json()
+            setProject(projectData)
+            setProjectName(projectData.name || "Unnamed Project")
+            
+            // For demo purposes, extract client name from project name if possible
+            if (projectData.name && projectData.name.includes("for")) {
+              setClientName(projectData.name.split("for")[1].trim())
+            } else if (projectData.description && projectData.description.includes("client:")) {
+              setClientName(projectData.description.split("client:")[1].split(",")[0].trim())
+            }
+
+            // Fetch RFP document with questions
+            const rfpResponse = await fetch(`/api/questions/${projectId}`)
+            if (rfpResponse.ok) {
+              const rfpData = await rfpResponse.json()
+              setRfpDocument(rfpData)
+            }
+          }
+        } catch (err) {
+          console.error("Error fetching project data:", err)
+        } finally {
+          setIsLoading(false)
+        }
+      }
+
+      fetchProjectData()
+    }
+  }, [projectId])
+  
+  // Calculate metrics
+  const getTotalQuestions = () => rfpDocument?.sections.reduce((total, section) => total + section.questions.length, 0) || 0
+  const getAnsweredQuestions = () => {
+    if (!rfpDocument) return 0
+    return rfpDocument.sections.reduce((total, section) => {
+      return total + section.questions.filter(q => q.answer).length
+    }, 0)
+  }
+  
+  const totalQuestions = getTotalQuestions()
+  const answeredQuestions = getAnsweredQuestions()
+  const questionsCompletionPercentage = totalQuestions > 0 ? Math.round((answeredQuestions / totalQuestions) * 100) : 0
+  
+  // Mock document processing (would need actual API for this in a real app)
+  const totalDocuments = 0 // This would come from an API in a real implementation
+  const processedDocuments = 0 // This would come from an API in a real implementation
+  const documentsCompletionPercentage = totalDocuments > 0 ? Math.round((processedDocuments / totalDocuments) * 100) : 0
+  
+  // Overall completion is the average of questions and documents completion
+  const overallCompletionPercentage = Math.round((questionsCompletionPercentage + documentsCompletionPercentage) / 2)
   
   const getIsActive = (path: string) => {
     // For exact matches
@@ -63,11 +131,13 @@ function SidebarInnerContent() {
           <div className="flex items-center gap-2">
             <Avatar className="h-8 w-8">
               <AvatarImage src="/letter-v-floral.png" alt="VL" />
-              <AvatarFallback>VL</AvatarFallback>
+              <AvatarFallback>
+                {clientName ? clientName.substring(0, 2).toUpperCase() : "VL"}
+              </AvatarFallback>
             </Avatar>
             <div className="flex flex-col">
-              <span className="text-sm font-semibold">Software Dev RFP</span>
-              <span className="text-xs text-muted-foreground">Velocity Labs</span>
+              <span className="text-sm font-semibold">{projectName || "Software Dev RFP"}</span>
+              <span className="text-xs text-muted-foreground">{clientName}</span>
             </div>
           </div>
           <SidebarTrigger />
@@ -93,27 +163,55 @@ function SidebarInnerContent() {
           
           <div className="text-xs font-medium text-muted-foreground pl-4 py-2">Project Status</div>
           <div className="space-y-3 px-4">
-            <div className="space-y-1">
-              <div className="flex justify-between text-xs">
-                <span>Questions Answered</span>
-                <span className="font-medium">30/80</span>
-              </div>
-              <Progress value={37.5} className="h-2" />
-            </div>
-            <div className="space-y-1">
-              <div className="flex justify-between text-xs">
-                <span>Documents Processed</span>
-                <span className="font-medium">12/15</span>
-              </div>
-              <Progress value={80} className="h-2" />
-            </div>
-            <div className="space-y-1">
-              <div className="flex justify-between text-xs">
-                <span>Overall Completion</span>
-                <span className="font-medium">45%</span>
-              </div>
-              <Progress value={45} className="h-2" />
-            </div>
+            {isLoading ? (
+              <>
+                <div className="space-y-1">
+                  <div className="flex justify-between">
+                    <Skeleton className="h-3 w-28" />
+                    <Skeleton className="h-3 w-10" />
+                  </div>
+                  <Skeleton className="h-2 w-full" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex justify-between">
+                    <Skeleton className="h-3 w-28" />
+                    <Skeleton className="h-3 w-10" />
+                  </div>
+                  <Skeleton className="h-2 w-full" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex justify-between">
+                    <Skeleton className="h-3 w-28" />
+                    <Skeleton className="h-3 w-10" />
+                  </div>
+                  <Skeleton className="h-2 w-full" />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="space-y-1">
+                  <div className="flex justify-between text-xs">
+                    <span>Questions Answered</span>
+                    <span className="font-medium">{answeredQuestions}/{totalQuestions}</span>
+                  </div>
+                  <Progress value={questionsCompletionPercentage} className="h-2" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex justify-between text-xs">
+                    <span>Documents Processed</span>
+                    <span className="font-medium">{processedDocuments}/{totalDocuments}</span>
+                  </div>
+                  <Progress value={documentsCompletionPercentage} className="h-2" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex justify-between text-xs">
+                    <span>Overall Completion</span>
+                    <span className="font-medium">{overallCompletionPercentage}%</span>
+                  </div>
+                  <Progress value={overallCompletionPercentage} className="h-2" />
+                </div>
+              </>
+            )}
           </div>
           
           <SidebarSeparator className="my-4" />
