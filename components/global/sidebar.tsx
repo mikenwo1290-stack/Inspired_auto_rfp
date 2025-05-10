@@ -16,7 +16,7 @@ import {
   SidebarTrigger,
   useSidebar
 } from "@/components/ui/sidebar"
-import { Calendar, FileText, FolderOpen, HelpCircle, Home, MessageSquare, Settings, Users } from "lucide-react"
+import { Calendar, FileText, FolderOpen, HelpCircle, Home, MessageSquare, Settings, Upload, Users } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
@@ -113,7 +113,8 @@ function SidebarInnerContent() {
   const menuItems = [
     { id: "overview", label: "Overview", icon: Home, path: projectId ? `/project?projectId=${projectId}` : "/project" },
     { id: "questions", label: "Questions", icon: FileText, path: projectId ? `/questions?projectId=${projectId}` : "/questions" },
-    { id: "documents", label: "Documents", icon: FolderOpen, path: projectId ? `/upload?projectId=${projectId}` : "/upload" },
+    { id: "documents", label: "Documents", icon: FolderOpen, path: projectId ? `/documents?projectId=${projectId}` : "/documents" },
+    { id: "upload", label: "Upload", icon: Upload, path: projectId ? `/upload?projectId=${projectId}` : "/upload" },
     
   ]
   

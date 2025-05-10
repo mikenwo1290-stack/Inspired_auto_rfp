@@ -8,7 +8,6 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { PageLayout } from "@/components/upload/PageLayout";
 import { UploadComponent } from "@/components/upload/UploadComponent";
 
 
@@ -61,49 +60,33 @@ function UploadPage() {
   
     if (isLoading) {
       return (
-        <PageLayout>
+        
           <div className="flex flex-col items-center justify-center h-64">
             <Spinner size="lg" className="mb-4" />
             <p>Loading project...</p>
           </div>
-        </PageLayout>
+        
       );
     }
   
     if (error) {
       return (
-        <PageLayout>
+        
           <div className="flex flex-col items-center justify-center h-64">
             <div className="text-red-500 mb-4">{error}</div>
             <Button onClick={() => router.push("/")}>
               Back to Projects
             </Button>
           </div>
-        </PageLayout>
+        
       );
     }
   
     return (
-      <PageLayout>
-        {project && (
-          <div className="mb-6">
-            <h1 className="text-2xl font-semibold">{project.name}</h1>
-            {project.description && (
-              <p className="text-slate-600 mt-1">{project.description}</p>
-            )}
-            <div className="mt-4">
-              <Button 
-                variant="outline"
-                onClick={() => handleViewQuestions(projectId as string)}
-              >
-                View Questions
-              </Button>
-            </div>
-          </div>
-        )}
-  
+      <div>
+
         <UploadComponent projectId={projectId} />
-      </PageLayout>
+        </div>
     );
   }
   

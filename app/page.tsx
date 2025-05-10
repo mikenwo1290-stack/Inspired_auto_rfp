@@ -42,7 +42,7 @@ function HomePageContent() {
   return (
     <div className="max-w-5xl mx-auto">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-semibold">Dashboard</h1>
+        <h1 className="text-2xl font-semibold mr-4">Dashboard</h1>
         <div className="flex items-center gap-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -90,16 +90,16 @@ function HomePageContent() {
             ))}
           </div>
         ) : filteredProjects.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {filteredProjects.map((project) => (
-              <Card key={project.id} className="hover:shadow-md transition-shadow">
+              <Card key={project.id} className="hover:shadow-md transition-shadow flex flex-col">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-lg">{project.name}</CardTitle>
                   {project.description && (
                     <CardDescription>{project.description}</CardDescription>
                   )}
                 </CardHeader>
-                <CardContent>
+                <CardContent className="flex-grow">
                   <p className="text-sm text-muted-foreground">
                     Created {new Date(project.createdAt).toLocaleDateString()}
                   </p>
@@ -126,12 +126,10 @@ function HomePageContent() {
             {/* Add Project Card */}
             <Link href="/projects" className="block">
               <Card className="hover:shadow-md transition-shadow border-dashed flex items-center justify-center h-full">
-                <CardContent className="p-6 text-center">
-                  <div className="h-24 flex items-center justify-center">
-                    <div>
-                      <Plus className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                      <p className="text-muted-foreground">Create New Project</p>
-                    </div>
+                <CardContent className="p-6 text-center flex items-center justify-center w-full">
+                  <div className="flex items-center justify-center">
+                    <Plus className="h-8 w-8 mr-3 text-muted-foreground" />
+                    <p className="text-muted-foreground">Create New Project</p>
                   </div>
                 </CardContent>
               </Card>
@@ -178,9 +176,9 @@ export default function HomePage() {
         <div className="mb-8">
           <Skeleton className="h-7 w-48 mb-4" />
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-64 w-full" />
+              <Skeleton key={i} className="h-56 w-full" />
             ))}
           </div>
         </div>
