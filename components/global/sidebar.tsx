@@ -114,9 +114,7 @@ function SidebarInnerContent() {
     { id: "overview", label: "Overview", icon: Home, path: projectId ? `/project?projectId=${projectId}` : "/project" },
     { id: "questions", label: "Questions", icon: FileText, path: projectId ? `/questions?projectId=${projectId}` : "/questions" },
     { id: "documents", label: "Documents", icon: FolderOpen, path: projectId ? `/upload?projectId=${projectId}` : "/upload" },
-    { id: "team", label: "Team", icon: Users, path: projectId ? `/team?projectId=${projectId}` : "/team" },
-    { id: "activity", label: "Activity", icon: Calendar, path: projectId ? `/activity?projectId=${projectId}` : "/activity" },
-    { id: "messages", label: "Messages", icon: MessageSquare, path: projectId ? `/messages?projectId=${projectId}` : "/messages" },
+    
   ]
   
   const bottomMenuItems = [
