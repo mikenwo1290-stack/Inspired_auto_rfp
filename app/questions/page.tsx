@@ -9,8 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "@/components/ui/use-toast";
 import { Toaster } from "@/components/ui/toaster";
-import { SectionItem } from "./components/SectionItem";
-import { QuestionsSection } from "../project/components/questions-section";
+import { QuestionsSection } from "./components/questions-section";
 
 // Interface for answer data
 interface AnswerData {

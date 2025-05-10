@@ -2,7 +2,7 @@
 
 import React, { useState, Suspense } from "react"
 import { ProjectOverview } from "./project-overview"
-import { QuestionsSection } from "./questions-section"
+import { QuestionsSection } from "../../questions/components/questions-section"
 import { DocumentsSection } from "./documents-section"
 import { TeamSection } from "./team-section"
 import { useSearchParams } from "next/navigation"
