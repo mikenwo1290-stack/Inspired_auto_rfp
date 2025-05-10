@@ -125,16 +125,16 @@ function ProjectsPageInner() {
           <Spinner size="lg" />
         </div>
       ) : filteredProjects.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {filteredProjects.map((project) => (
-            <Card key={project.id} className="hover:shadow-md transition-shadow">
+            <Card key={project.id} className="hover:shadow-md transition-shadow flex flex-col">
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg">{project.name}</CardTitle>
                 {project.description && (
                   <CardDescription>{project.description}</CardDescription>
                 )}
               </CardHeader>
-              <CardContent>
+              <CardContent className="flex-grow">
                 <p className="text-sm text-muted-foreground">
                   Created {new Date(project.createdAt).toLocaleDateString()}
                 </p>
@@ -152,12 +152,10 @@ function ProjectsPageInner() {
             className="hover:shadow-md transition-shadow border-dashed flex items-center justify-center cursor-pointer"
             onClick={() => setShowCreateDialog(true)}
           >
-            <CardContent className="p-6 text-center">
-              <div className="h-32 flex items-center justify-center">
-                <div>
-                  <Plus className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                  <p className="text-muted-foreground">Create New Project</p>
-                </div>
+            <CardContent className="p-6 text-center flex items-center justify-center w-full">
+              <div className="flex items-center justify-center">
+                <Plus className="h-8 w-8 mr-3 text-muted-foreground" />
+                <p className="text-muted-foreground">Create New Project</p>
               </div>
             </CardContent>
           </Card>
@@ -232,9 +230,9 @@ export default function ProjectsPage() {
             <div className="h-10 w-40 bg-muted animate-pulse rounded"></div>
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="h-48 bg-muted animate-pulse rounded"></div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-56 bg-muted animate-pulse rounded"></div>
           ))}
         </div>
       </div>
