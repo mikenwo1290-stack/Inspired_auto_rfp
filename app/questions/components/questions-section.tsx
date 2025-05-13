@@ -18,6 +18,7 @@ import { RfpDocument, AnswerSource } from "@/types/api"
 import { cn } from "@/lib/utils"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { AnswerDisplay } from "@/components/ui/answer-display"
 
 // Interface for answer data
 interface AnswerData {
@@ -788,6 +789,14 @@ function QuestionsSectionInner() {
                         onChange={(e) => handleAnswerChange(selectedQuestion, e.target.value)}
                       />
                       
+                      {/* Show markdown preview if there's content */}
+                      {answers[selectedQuestion]?.text && (
+                        <div className="mt-4">
+                          <h3 className="text-sm font-medium mb-2">Preview:</h3>
+                          <AnswerDisplay content={answers[selectedQuestion]?.text || ""} />
+                        </div>
+                      )}
+                      
                       {/* Display sources if available */}
                       {answers[selectedQuestion]?.sources && answers[selectedQuestion].sources.length > 0 && (
                         <div className="mt-2 text-sm">
@@ -956,6 +965,14 @@ function QuestionsSectionInner() {
                         onChange={(e) => handleAnswerChange(selectedQuestion, e.target.value)}
                       />
                       
+                      {/* Show markdown preview if there's content */}
+                      {answers[selectedQuestion]?.text && (
+                        <div className="mt-4">
+                          <h3 className="text-sm font-medium mb-2">Preview:</h3>
+                          <AnswerDisplay content={answers[selectedQuestion]?.text || ""} />
+                        </div>
+                      )}
+                      
                       {/* Display sources if available */}
                       {answers[selectedQuestion]?.sources && answers[selectedQuestion].sources.length > 0 && (
                         <div className="mt-2 text-sm">
@@ -1113,6 +1130,14 @@ function QuestionsSectionInner() {
                         value={answers[selectedQuestion]?.text || ""}
                         onChange={(e) => handleAnswerChange(selectedQuestion, e.target.value)}
                       />
+                      
+                      {/* Show markdown preview if there's content */}
+                      {answers[selectedQuestion]?.text && (
+                        <div className="mt-4">
+                          <h3 className="text-sm font-medium mb-2">Preview:</h3>
+                          <AnswerDisplay content={answers[selectedQuestion]?.text || ""} />
+                        </div>
+                      )}
                       
                       {/* Display sources if available */}
                       {answers[selectedQuestion]?.sources && answers[selectedQuestion].sources.length > 0 && (
@@ -1281,6 +1306,14 @@ function QuestionsSectionInner() {
                         value={answers[selectedQuestion]?.text || ""}
                         onChange={(e) => handleAnswerChange(selectedQuestion, e.target.value)}
                       />
+                      
+                      {/* Show markdown preview if there's content */}
+                      {answers[selectedQuestion]?.text && (
+                        <div className="mt-4">
+                          <h3 className="text-sm font-medium mb-2">Preview:</h3>
+                          <AnswerDisplay content={answers[selectedQuestion]?.text || ""} />
+                        </div>
+                      )}
                       
                       {/* Display sources if available */}
                       {answers[selectedQuestion]?.sources && answers[selectedQuestion].sources.length > 0 && (
