@@ -9,8 +9,6 @@ import { ProjectLayout } from "./components/project-layout";
 import { ProjectContent } from "./components/project-content";
 
 
-
-
 // Loading fallback component
 function ProjectPageLoading() {
   return (
