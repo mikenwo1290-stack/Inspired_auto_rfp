@@ -23,12 +23,6 @@ export function SearchBar({ searchQuery, onSearchChange }: SearchBarProps) {
             onChange={(e) => onSearchChange(e.target.value)}
           />
         </div>
-        <Link href="/projects">
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            New project
-          </Button>
-        </Link>
       </div>
     </div>
   );

@@ -22,11 +22,11 @@ function SidebarController({ children }: { children: React.ReactNode }) {
       open={sidebarOpen}
       onOpenChange={setSidebarOpen}
     >
-      <div className="flex min-h-screen">
+      <div className="flex w-full min-h-screen">
         <div className="flex-shrink-0">
           {isHomePage ? <HomeSidebar /> : <GlobalSidebar />}
         </div>
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-auto pl-6">
           {children}
         </div>
         
@@ -56,7 +56,7 @@ export default function RootLayoutWrapper({
     <Suspense fallback={
       <div className="flex min-h-screen">
         <div className="w-64 border-r bg-muted/20 animate-pulse"></div>
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-auto pl-6">
           <div className="animate-pulse space-y-4 p-6">
             <div className="h-8 w-64 bg-muted rounded"></div>
             <div className="h-32 bg-muted rounded"></div>
