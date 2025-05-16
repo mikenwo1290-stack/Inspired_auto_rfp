@@ -25,6 +25,7 @@ import {
 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Organization } from "@/types/organization"
+import { OrganizationSwitcher } from "./organization-switcher"
 
 function OrganizationSidebarContent() {
   const pathname = usePathname()
@@ -66,20 +67,13 @@ function OrganizationSidebarContent() {
   return (
     <>
       <SidebarHeader className="border-b">
-        <div className="flex items-center justify-between p-4">
-          <div className="flex items-center gap-2">
-            <Avatar className="h-8 w-8">
-              <AvatarImage src="/letter-v-floral.png" alt="VL" />
-              <AvatarFallback>
-                {organization?.name?.substring(0, 2).toUpperCase() || "OR"}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex flex-col">
-              <span className="text-sm font-semibold">{isLoading ? "Loading..." : organization?.name || "Organization"}</span>
-              <span className="text-xs text-muted-foreground">Free</span>
+        <div className="p-2">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <OrganizationSwitcher />
             </div>
+            <SidebarTrigger />
           </div>
-          <SidebarTrigger />
         </div>
       </SidebarHeader>
       <SidebarContent className="p-2">

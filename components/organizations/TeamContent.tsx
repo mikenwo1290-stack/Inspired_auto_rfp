@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from "react";
+import { useOrganization, useOrganizationMembers } from "@/lib/hooks/use-api";
 import { Button } from "@/components/ui/button";
 import { 
   Table, 
@@ -60,57 +61,43 @@ export function TeamContent({ orgId }: TeamContentProps) {
   const [isInviting, setIsInviting] = useState(false);
   const { toast } = useToast();
 
+  const { data: orgData, isLoading: isOrgLoading, isError: isOrgError } = useOrganization(orgId);
+  const { data: membersData, isLoading: isMembersLoading, isError: isMembersError } = useOrganizationMembers(orgId);
+  
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        
-        // Fetch organization details
-        const orgResponse = await fetch(`/api/organizations/${orgId}`);
-        if (!orgResponse.ok) {
-          throw new Error("Failed to fetch organization");
-        }
-        
-        const orgData = await orgResponse.json();
-        setOrganization(orgData);
-        
-        // Fetch organization members
-        const membersResponse = await fetch(`/api/organizations/${orgId}/members`);
-        if (membersResponse.ok) {
-          const membersData = await membersResponse.json();
-          console.log("API response for members:", membersData);
-          
-          // Transform the data structure to match our TeamMember interface
-          const transformedMembers = membersData.map((orgUser: any) => ({
-            id: orgUser.userId,
-            name: orgUser.user?.name || 'Unknown',
-            email: orgUser.user?.email || '',
-            role: orgUser.role,
-            joinedAt: orgUser.createdAt,
-            avatarUrl: orgUser.user?.avatarUrl
-          }));
-          
-          console.log("Transformed members:", transformedMembers);
-          setMembers(transformedMembers);
-        } else {
-          console.error("Failed to fetch members:", await membersResponse.text());
-        }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load team data",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (orgId) {
-      fetchData();
+    if (orgData) {
+      setOrganization(orgData);
     }
-  }, [orgId, toast]);
+    
+    if (membersData && Array.isArray(membersData)) {
+      console.log("API response for members:", membersData);
+      
+      // Transform the data structure to match our TeamMember interface
+      const transformedMembers = membersData.map((orgUser: any) => ({
+        id: orgUser.userId,
+        name: orgUser.user?.name || 'Unknown',
+        email: orgUser.user?.email || '',
+        role: orgUser.role,
+        joinedAt: orgUser.createdAt,
+        avatarUrl: orgUser.user?.avatarUrl
+      }));
+      
+      console.log("Transformed members:", transformedMembers);
+      setMembers(transformedMembers);
+    }
+    
+    // Set loading state based on both data sources
+    setIsLoading(isOrgLoading || isMembersLoading);
+    
+    // Handle errors
+    if (isOrgError || isMembersError) {
+      toast({
+        title: "Error",
+        description: "Failed to load team data",
+        variant: "destructive",
+      });
+    }
+  }, [orgData, membersData, isOrgLoading, isMembersLoading, isOrgError, isMembersError, toast]);
 
   // Filter members based on search
   const filteredMembers = members.filter(member => 

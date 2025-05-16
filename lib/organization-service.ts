@@ -1,6 +1,10 @@
 import { db } from './db';
 import { createClient } from '@/lib/utils/supabase/server';
 
+// Simple in-memory cache for current user (lasts for the duration of request)
+let currentUserCache: { user: any; timestamp: number } | null = null;
+const CACHE_TTL = 60 * 1000; // 1 minute in milliseconds
+
 export const organizationService = {
   // Organization operations
   async createOrganization(name: string, description: string | null = null, userId: string) {
@@ -46,7 +50,23 @@ export const organizationService = {
     });
   },
 
-  async getOrganization(id: string) {
+  async getOrganization(id: string, includeRelations = false) {
+    // Basic organization data without expensive relations
+    if (!includeRelations) {
+      return db.organization.findUnique({
+        where: { id },
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          description: true,
+          createdAt: true,
+          updatedAt: true
+        }
+      });
+    }
+    
+    // Full organization data with relations when explicitly requested
     return db.organization.findUnique({
       where: { id },
       include: {
@@ -64,7 +84,23 @@ export const organizationService = {
     });
   },
 
-  async getOrganizationBySlug(slug: string) {
+  async getOrganizationBySlug(slug: string, includeRelations = false) {
+    // Basic organization data without expensive relations
+    if (!includeRelations) {
+      return db.organization.findUnique({
+        where: { slug },
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          description: true,
+          createdAt: true,
+          updatedAt: true
+        }
+      });
+    }
+
+    // Full organization data with relations when explicitly requested
     return db.organization.findUnique({
       where: { slug },
       include: {
@@ -193,10 +229,18 @@ export const organizationService = {
   },
 
   async getCurrentUser() {
+    // Check if we have a valid cached user
+    const now = Date.now();
+    if (currentUserCache && (now - currentUserCache.timestamp < CACHE_TTL)) {
+      return currentUserCache.user;
+    }
+
+    // No cache or expired cache, fetch the user
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
+      currentUserCache = null;
       return null;
     }
 
@@ -207,6 +251,8 @@ export const organizationService = {
       user.user_metadata?.name || null
     );
 
+    // Cache the user for subsequent calls
+    currentUserCache = { user: dbUser, timestamp: now };
     return dbUser;
   },
 

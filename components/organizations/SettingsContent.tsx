@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from "react";
+import { useOrganization } from "@/lib/hooks/use-api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,37 +24,26 @@ export function SettingsContent({ orgId }: SettingsContentProps) {
   const [slackWebhook, setSlackWebhook] = useState("");
   const { toast } = useToast();
 
+  const { data: orgData, isLoading: isOrgLoading, isError: isOrgError } = useOrganization(orgId);
+  
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        
-        // Fetch organization details
-        const orgResponse = await fetch(`/api/organizations/${orgId}`);
-        if (!orgResponse.ok) {
-          throw new Error("Failed to fetch organization");
-        }
-        
-        const orgData = await orgResponse.json();
-        setOrganization(orgData);
-        setName(orgData.name || "");
-        setSlackWebhook(orgData.slackWebhook || "");
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load organization data",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (orgId) {
-      fetchData();
+    if (orgData) {
+      setOrganization(orgData);
+      setName((orgData as any).name || "");
+      setSlackWebhook((orgData as any).slackWebhook || "");
+      setIsLoading(false);
+    } else {
+      setIsLoading(isOrgLoading);
     }
-  }, [orgId, toast]);
+    
+    if (isOrgError) {
+      toast({
+        title: "Error",
+        description: "Failed to load organization data",
+        variant: "destructive",
+      });
+    }
+  }, [orgData, isOrgLoading, isOrgError, toast]);
 
   const handleUpdateOrganization = async (event: React.FormEvent) => {
     event.preventDefault();

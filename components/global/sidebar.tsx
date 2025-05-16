@@ -24,6 +24,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { usePathname, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { RfpDocument } from "@/types/api"
+import { OrganizationSwitcher } from "./organization-switcher"
 
 // Create a separate client component that uses useSearchParams
 function SidebarInnerContent() {
@@ -118,42 +119,39 @@ function SidebarInnerContent() {
     { id: "overview", label: "Project", icon: LayoutGrid, path: addParamsToPath("/project") },
     { id: "questions", label: "Questions", icon: FileText, path: addParamsToPath("/questions") },
     { id: "documents", label: "Documents", icon: Database, path: addParamsToPath("/documents") },
-    { id: "data", label: "Table Editor", icon: Table, path: addParamsToPath("/data") },
-    { id: "settings", label: "Project Settings", icon: Settings, path: addParamsToPath("/settings") },
+   
+   
   ]
 
   return (
     <>
       <SidebarHeader className="border-b">
-        <div className="flex items-center justify-between p-4">
-          <div className="flex items-center gap-2">
-            <Avatar className="h-8 w-8">
-              <AvatarImage src="/letter-v-floral.png" alt="Project" />
-              <AvatarFallback>
-                {clientName ? clientName.substring(0, 2).toUpperCase() : "P"}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex flex-col">
-              <span className="text-sm font-semibold">{projectName || "Project"}</span>
-              <span className="text-xs text-muted-foreground">zhaoqi@runllama.ai's Project</span>
+        <div className="p-2">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <OrganizationSwitcher />
             </div>
+            <SidebarTrigger />
           </div>
-          <SidebarTrigger />
         </div>
       </SidebarHeader>
       <SidebarContent>
         <div className="px-2 py-4">
-          {/* Back to organization button */}
-          {orgId && (
-            <div className="mb-4">
-              <Link href={`/org/${orgId}`}>
-                <Button variant="ghost" size="sm" className="w-full flex items-center justify-start text-sm">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to organization
-                </Button>
-              </Link>
+          {/* Project info */}
+          <div className="mb-4 px-2 py-2 rounded-md border">
+            <div className="flex items-center gap-2">
+              <Avatar className="h-8 w-8">
+                <AvatarImage src="/letter-v-floral.png" alt="Project" />
+                <AvatarFallback>
+                  {clientName ? clientName.substring(0, 2).toUpperCase() : "P"}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col">
+                <span className="text-sm font-semibold">{projectName || "Project"}</span>
+                <span className="text-xs text-muted-foreground">zhaoqi@runllama.ai's Project</span>
+              </div>
             </div>
-          )}
+          </div>
         
           <SidebarMenu className="space-y-1">
             {menuItems.map((item) => (

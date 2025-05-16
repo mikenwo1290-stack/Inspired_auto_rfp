@@ -13,27 +13,32 @@ function SidebarController({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const searchParams = useSearchParams()
   const pathname = usePathname()
-  const projectId = searchParams.get("projectId")
   
-  // Check if we're on an organization page
+  // Check if we're on an organization page or at the root/home
   const isOrgPage = pathname.startsWith('/org/')
+  const isHomePage = pathname === '/' || pathname === '/new-organization'
+  
+  // Don't show sidebar on home/organizations page (like Supabase)
+  const showSidebar = !isHomePage
   
   return (
     <SidebarProvider 
       defaultOpen={true} 
-      open={sidebarOpen}
+      open={showSidebar && sidebarOpen}
       onOpenChange={setSidebarOpen}
     >
       <div className="flex w-full min-h-screen bg-background">
-        <div className="flex-shrink-0">
-          {isOrgPage ? <OrganizationSidebar /> : <GlobalSidebar />}
-        </div>
+        {showSidebar && (
+          <div className="flex-shrink-0">
+            {isOrgPage ? <OrganizationSidebar /> : <GlobalSidebar />}
+          </div>
+        )}
         <div className="flex-1 overflow-auto">
           {children}
         </div>
         
         {/* Floating toggle button that appears only when sidebar is closed */}
-        {!sidebarOpen && (
+        {showSidebar && !sidebarOpen && (
           <Button
             variant="outline"
             size="icon"

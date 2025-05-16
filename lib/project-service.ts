@@ -20,6 +20,14 @@ export const projectService = {
         where: {
           organizationId,
         },
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          createdAt: true,
+          updatedAt: true,
+          organizationId: true
+        },
         orderBy: {
           createdAt: 'desc',
         },
@@ -28,16 +36,49 @@ export const projectService = {
     
     // Otherwise get all projects (mostly for admin purposes)
     return db.project.findMany({
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        createdAt: true,
+        updatedAt: true,
+        organizationId: true,
+        organization: {
+          select: {
+            id: true,
+            name: true
+          }
+        }
+      },
       orderBy: {
         createdAt: 'desc',
-      },
-      include: {
-        organization: true,
       },
     });
   },
 
-  async getProject(id: string) {
+  async getProject(id: string, includeRelations = false) {
+    // Basic project data without expensive relations
+    if (!includeRelations) {
+      return db.project.findUnique({
+        where: { id },
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          createdAt: true,
+          updatedAt: true,
+          organizationId: true,
+          organization: {
+            select: {
+              id: true,
+              name: true
+            }
+          }
+        }
+      });
+    }
+    
+    // Full project data with all relations when explicitly requested
     return db.project.findUnique({
       where: { id },
       include: {

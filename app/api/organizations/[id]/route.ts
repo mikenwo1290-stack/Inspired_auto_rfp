@@ -9,6 +9,12 @@ export async function GET(
   try {
     const { id } = await params;
     const organizationId = id;
+    
+    // Get include parameter from query string
+    const { searchParams } = new URL(request.url);
+    const includeRelations = searchParams.get('include') === 'all';
+    
+    // Get user from auth service - only once
     const currentUser = await organizationService.getCurrentUser();
     
     if (!currentUser) {
@@ -31,7 +37,8 @@ export async function GET(
       );
     }
     
-    const organization = await organizationService.getOrganization(organizationId);
+    // Use the optimized query with selective loading
+    const organization = await organizationService.getOrganization(organizationId, includeRelations);
     
     if (!organization) {
       return NextResponse.json(

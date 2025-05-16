@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Organization } from "@/types/organization";
 import { Project } from "@/types/project";
+import { useOrganization, useOrganizationProjects } from "@/lib/hooks/use-api";
 import { Button } from "@/components/ui/button";
 import { PlusIcon, SearchIcon, ChevronRight } from "lucide-react";
 import Link from "next/link";
@@ -22,42 +23,30 @@ export function OrganizationContent({ orgId }: OrganizationContentProps) {
   const { toast } = useToast();
   const router = useRouter();
 
+  const { data: orgData, isLoading: isOrgLoading, isError: isOrgError } = useOrganization(orgId);
+  const { data: projectsData, isLoading: isProjectsLoading, isError: isProjectsError } = useOrganizationProjects(orgId);
+  
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        
-        // Fetch organization details
-        const orgResponse = await fetch(`/api/organizations/${orgId}`);
-        if (!orgResponse.ok) {
-          throw new Error("Failed to fetch organization");
-        }
-        
-        const orgData = await orgResponse.json();
-        setOrganization(orgData);
-        
-        // Fetch organization projects
-        const projectsResponse = await fetch(`/api/projects?organizationId=${orgId}`);
-        if (projectsResponse.ok) {
-          const projectsData = await projectsResponse.json();
-          setProjects(projectsData);
-        }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load data",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (orgId) {
-      fetchData();
+    if (orgData) {
+      setOrganization(orgData as Organization);
     }
-  }, [orgId, toast]);
+    
+    if (projectsData && Array.isArray(projectsData)) {
+      setProjects(projectsData);
+    }
+    
+    // Set loading state based on both data sources
+    setIsLoading(isOrgLoading || isProjectsLoading);
+    
+    // Handle errors
+    if (isOrgError || isProjectsError) {
+      toast({
+        title: "Error",
+        description: "Failed to load data",
+        variant: "destructive",
+      });
+    }
+  }, [orgData, projectsData, isOrgLoading, isProjectsLoading, isOrgError, isProjectsError, toast]);
 
   // Filter projects based on search
   const filteredProjects = projects.filter(project => 
