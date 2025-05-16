@@ -23,7 +23,8 @@ import {
   Users, 
   Calendar,
   MessageSquare,
-  HelpCircle
+  HelpCircle,
+  LogOut
 } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -39,6 +40,7 @@ function HomeSidebarContent() {
   const bottomMenuItems = [
     { id: "settings", label: "Settings", icon: Settings, path: "/settings" },
     { id: "help", label: "Help & Support", icon: HelpCircle, path: "/help" },
+    { id: "logout", label: "Log out", icon: LogOut, path: "/logout" },
   ]
   
   return (
@@ -127,9 +129,11 @@ function HomeSidebarContent() {
               <span className="text-xs text-muted-foreground">Admin</span>
             </div>
           </div>
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <Settings className="h-4 w-4" />
-          </Button>
+          <Link href="/logout">
+            <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Log out">
+              <LogOut className="h-4 w-4" />
+            </Button>
+          </Link>
         </div>
       </SidebarFooter>
     </>

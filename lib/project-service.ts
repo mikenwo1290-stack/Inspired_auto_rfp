@@ -3,19 +3,36 @@ import { RfpDocument, RfpSection, RfpQuestion, AnswerSource } from '@/types/api'
 
 export const projectService = {
   // Project operations
-  async createProject(name: string, description?: string) {
+  async createProject(name: string, organizationId: string, description?: string) {
     return db.project.create({
       data: {
         name,
         description,
+        organizationId,
       },
     });
   },
 
-  async getProjects() {
+  async getProjects(organizationId?: string) {
+    // If organizationId is provided, get projects for that organization only
+    if (organizationId) {
+      return db.project.findMany({
+        where: {
+          organizationId,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
+    }
+    
+    // Otherwise get all projects (mostly for admin purposes)
     return db.project.findMany({
       orderBy: {
         createdAt: 'desc',
+      },
+      include: {
+        organization: true,
       },
     });
   },
@@ -24,6 +41,7 @@ export const projectService = {
     return db.project.findUnique({
       where: { id },
       include: {
+        organization: true,
         questions: {
           include: {
             answer: {
@@ -34,6 +52,19 @@ export const projectService = {
           },
         },
       },
+    });
+  },
+
+  async updateProject(id: string, data: { name?: string; description?: string }) {
+    return db.project.update({
+      where: { id },
+      data,
+    });
+  },
+
+  async deleteProject(id: string) {
+    return db.project.delete({
+      where: { id },
     });
   },
 

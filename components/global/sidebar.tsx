@@ -16,7 +16,7 @@ import {
   SidebarTrigger,
   useSidebar
 } from "@/components/ui/sidebar"
-import { Calendar, FileText, FolderOpen, HelpCircle, Home, MessageSquare, Settings, Upload, Users } from "lucide-react"
+import { Calendar, FileText, FolderOpen, HelpCircle, Home, LogOut, MessageSquare, Settings, Upload, Users } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
@@ -121,6 +121,7 @@ function SidebarInnerContent() {
   const bottomMenuItems = [
     { id: "settings", label: "Settings", icon: Settings, path: "/settings" },
     { id: "help", label: "Help & Support", icon: HelpCircle, path: "/help" },
+    { id: "logout", label: "Log out", icon: LogOut, path: "/logout" },
   ]
 
   return (
@@ -241,9 +242,11 @@ function SidebarInnerContent() {
               <span className="text-xs text-muted-foreground">Project Owner</span>
             </div>
           </div>
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <Settings className="h-4 w-4" />
-          </Button>
+          <Link href="/logout">
+            <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Log out">
+              <LogOut className="h-4 w-4" />
+            </Button>
+          </Link>
         </div>
       </SidebarFooter>
     </>

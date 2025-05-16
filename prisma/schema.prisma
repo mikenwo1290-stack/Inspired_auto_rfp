@@ -14,6 +14,53 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+model User {
+  id        String   @id
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  organizationUsers OrganizationUser[]
+
+  @@map("users")
+}
+
+model Organization {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relationships
+  projects          Project[]
+  organizationUsers OrganizationUser[]
+
+  @@map("organizations")
+}
+
+model OrganizationUser {
+  id        String   @id @default(cuid())
+  role      String   @default("member") // "owner", "admin", "member"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Foreign keys
+  userId         String
+  organizationId String
+
+  // Relationships
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@index([organizationId])
+  @@map("organization_users")
+}
+
 model Project {
   id          String     @id @default(cuid())
   name        String
@@ -22,6 +69,13 @@ model Project {
   updatedAt   DateTime   @updatedAt
   questions   Question[]
 
+  // Foreign key
+  organizationId String
+
+  // Relationship
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
   @@map("projects")
 }
 
