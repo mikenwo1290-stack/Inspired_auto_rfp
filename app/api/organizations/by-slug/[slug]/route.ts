@@ -4,10 +4,10 @@ import { organizationService } from '@/lib/organization-service';
 // Get organization by slug
 export async function GET(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
-    const slug = params.slug;
+    const { slug } = await params;
     const currentUser = await organizationService.getCurrentUser();
     
     if (!currentUser) {

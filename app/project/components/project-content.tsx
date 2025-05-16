@@ -5,17 +5,28 @@ import { ProjectOverview } from "./project-overview"
 import { QuestionsSection } from "../../questions/components/questions-section"
 import { DocumentsSection } from "./documents-section"
 import { TeamSection } from "./team-section"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { ArrowLeft } from "lucide-react"
 
 // Inner component that uses search params
 function ProjectContentInner() {
   const [activeSection, setActiveSection] = useState("overview")
   const searchParams = useSearchParams()
+  const router = useRouter()
   const projectId = searchParams.get("projectId")
+  const orgId = searchParams.get("orgId")
 
   // Function to navigate between sections
   const navigateToSection = (section: string) => {
     setActiveSection(section)
+  }
+
+  // Function to navigate back to organization
+  const navigateToOrganization = () => {
+    if (orgId) {
+      router.push(`/org/${orgId}`)
+    }
   }
 
   // This would be connected to the sidebar navigation in a real implementation
@@ -29,11 +40,21 @@ function ProjectContentInner() {
         return <TeamSection />
       case "overview":
       default:
-        return <ProjectOverview onViewQuestions={() => navigateToSection("questions")} projectId={projectId} />
+        return (
+          <ProjectOverview 
+            onViewQuestions={() => navigateToSection("questions")} 
+            projectId={projectId}
+            orgId={orgId}
+          />
+        )
     }
   }
 
-  return <div className="container py-6">{renderContent()}</div>
+  return (
+    <div className="container py-6">
+      {renderContent()}
+    </div>
+  )
 }
 
 export function ProjectContent() {

@@ -5,10 +5,10 @@ import { OrganizationUser } from '@/types/organization';
 // Update a member's role
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string; userId: string } }
+  { params }: { params: Promise<{ id: string; userId: string }> }
 ) {
   try {
-    const { id: organizationId, userId } = params;
+    const { id: organizationId, userId } = await params;
     const { role } = await request.json();
     const currentUser = await organizationService.getCurrentUser();
     
@@ -49,7 +49,7 @@ export async function PATCH(
     // Prevent demoting the last owner
     if (targetUserRole === 'owner') {
       const members = await organizationService.getOrganizationMembers(organizationId);
-      const ownerCount = members.filter((m: OrganizationUser) => m.role === 'owner').length;
+      const ownerCount = members.filter(m => m.role === 'owner').length;
       
       if (ownerCount === 1 && role !== 'owner') {
         return NextResponse.json(
@@ -78,10 +78,10 @@ export async function PATCH(
 // Remove a member from the organization
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string; userId: string } }
+  { params }: { params: Promise<{ id: string; userId: string }> }
 ) {
   try {
-    const { id: organizationId, userId } = params;
+    const { id: organizationId, userId } = await params;
     const currentUser = await organizationService.getCurrentUser();
     
     if (!currentUser) {
@@ -121,7 +121,7 @@ export async function DELETE(
     // Prevent removing the last owner
     if (targetUserRole === 'owner') {
       const members = await organizationService.getOrganizationMembers(organizationId);
-      const ownerCount = members.filter((m: OrganizationUser) => m.role === 'owner').length;
+      const ownerCount = members.filter(m => m.role === 'owner').length;
       
       if (ownerCount === 1) {
         return NextResponse.json(
@@ -138,7 +138,7 @@ export async function DELETE(
       // If this is the last owner, prevent leaving
       if (targetUserRole === 'owner') {
         const members = await organizationService.getOrganizationMembers(organizationId);
-        const ownerCount = members.filter((m: OrganizationUser) => m.role === 'owner').length;
+        const ownerCount = members.filter(m => m.role === 'owner').length;
         
         if (ownerCount === 1) {
           return NextResponse.json(

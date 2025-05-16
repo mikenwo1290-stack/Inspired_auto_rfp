@@ -16,9 +16,10 @@ import { cn } from "@/lib/utils"
 interface ProjectOverviewProps {
   onViewQuestions: () => void;
   projectId: string | null;
+  orgId?: string | null;
 }
 
-export function ProjectOverview({ onViewQuestions, projectId }: ProjectOverviewProps) {
+export function ProjectOverview({ onViewQuestions, projectId, orgId }: ProjectOverviewProps) {
   const [loading, setLoading] = useState(true)
   const [project, setProject] = useState<any>(null)
   const [rfpDocument, setRfpDocument] = useState<RfpDocument | null>(null)

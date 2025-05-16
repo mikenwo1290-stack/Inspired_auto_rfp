@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
       const organizations = await organizationService.getUserOrganizations(currentUser.id);
       
       // Get projects for each organization
-      const projectPromises = organizations.map((org: Organization) => 
+      const projectPromises = organizations.map((org) => 
         projectService.getProjects(org.id)
       );
       

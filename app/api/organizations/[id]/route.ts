@@ -4,10 +4,11 @@ import { organizationService } from '@/lib/organization-service';
 // Get organization by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const organizationId = params.id;
+    const { id } = await params;
+    const organizationId = id;
     const currentUser = await organizationService.getCurrentUser();
     
     if (!currentUser) {
@@ -52,10 +53,11 @@ export async function GET(
 // Update organization
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const organizationId = params.id;
+    const { id } = await params;
+    const organizationId = id;
     const { name, description } = await request.json();
     const currentUser = await organizationService.getCurrentUser();
     
@@ -102,10 +104,11 @@ export async function PATCH(
 // Delete organization
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const organizationId = params.id;
+    const { id } = await params;
+    const organizationId = id;
     const currentUser = await organizationService.getCurrentUser();
     
     if (!currentUser) {

@@ -16,7 +16,7 @@ import {
   SidebarTrigger,
   useSidebar
 } from "@/components/ui/sidebar"
-import { Calendar, FileText, FolderOpen, HelpCircle, Home, LogOut, MessageSquare, Settings, Upload, Users } from "lucide-react"
+import { FileText, Database, LayoutGrid, Table, Settings, MessageSquare, ChevronRight, LogOut, Command, ArrowLeft } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
@@ -30,6 +30,7 @@ function SidebarInnerContent() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const projectId = searchParams.get("projectId")
+  const orgId = searchParams.get("orgId")
   
   // Data states
   const [project, setProject] = useState<any>(null)
@@ -89,14 +90,6 @@ function SidebarInnerContent() {
   const answeredQuestions = getAnsweredQuestions()
   const questionsCompletionPercentage = totalQuestions > 0 ? Math.round((answeredQuestions / totalQuestions) * 100) : 0
   
-  // Mock document processing (would need actual API for this in a real app)
-  const totalDocuments = 0 // This would come from an API in a real implementation
-  const processedDocuments = 0 // This would come from an API in a real implementation
-  const documentsCompletionPercentage = totalDocuments > 0 ? Math.round((processedDocuments / totalDocuments) * 100) : 0
-  
-  // Overall completion is the average of questions and documents completion
-  const overallCompletionPercentage = Math.round((questionsCompletionPercentage + documentsCompletionPercentage) / 2)
-  
   const getIsActive = (path: string) => {
     // For exact matches
     if (pathname === path) return true
@@ -110,18 +103,23 @@ function SidebarInnerContent() {
     return false
   }
   
-  const menuItems = [
-    { id: "overview", label: "Overview", icon: Home, path: projectId ? `/project?projectId=${projectId}` : "/project" },
-    { id: "questions", label: "Questions", icon: FileText, path: projectId ? `/questions?projectId=${projectId}` : "/questions" },
-    { id: "documents", label: "Documents", icon: FolderOpen, path: projectId ? `/documents?projectId=${projectId}` : "/documents" },
-    { id: "upload", label: "Upload", icon: Upload, path: projectId ? `/upload?projectId=${projectId}` : "/upload" },
+  const addParamsToPath = (path: string) => {
+    // Add both projectId and orgId to URLs
+    const baseParams = new URLSearchParams()
+    if (projectId) baseParams.set("projectId", projectId)
+    if (orgId) baseParams.set("orgId", orgId)
     
-  ]
+    // Return path with parameters
+    const queryString = baseParams.toString()
+    return queryString ? `${path}?${queryString}` : path
+  }
   
-  const bottomMenuItems = [
-    { id: "settings", label: "Settings", icon: Settings, path: "/settings" },
-    { id: "help", label: "Help & Support", icon: HelpCircle, path: "/help" },
-    { id: "logout", label: "Log out", icon: LogOut, path: "/logout" },
+  const menuItems = [
+    { id: "overview", label: "Project", icon: LayoutGrid, path: addParamsToPath("/project") },
+    { id: "questions", label: "Questions", icon: FileText, path: addParamsToPath("/questions") },
+    { id: "documents", label: "Documents", icon: Database, path: addParamsToPath("/documents") },
+    { id: "data", label: "Table Editor", icon: Table, path: addParamsToPath("/data") },
+    { id: "settings", label: "Project Settings", icon: Settings, path: addParamsToPath("/settings") },
   ]
 
   return (
@@ -130,22 +128,33 @@ function SidebarInnerContent() {
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center gap-2">
             <Avatar className="h-8 w-8">
-              <AvatarImage src="/letter-v-floral.png" alt="VL" />
+              <AvatarImage src="/letter-v-floral.png" alt="Project" />
               <AvatarFallback>
-                {clientName ? clientName.substring(0, 2).toUpperCase() : "VL"}
+                {clientName ? clientName.substring(0, 2).toUpperCase() : "P"}
               </AvatarFallback>
             </Avatar>
             <div className="flex flex-col">
-              <span className="text-sm font-semibold">{projectName || "Software Dev RFP"}</span>
-              <span className="text-xs text-muted-foreground">{clientName}</span>
+              <span className="text-sm font-semibold">{projectName || "Project"}</span>
+              <span className="text-xs text-muted-foreground">zhaoqi@runllama.ai's Project</span>
             </div>
           </div>
           <SidebarTrigger />
         </div>
       </SidebarHeader>
       <SidebarContent>
-        <div className="p-2">
-          <div className="text-xs font-medium text-muted-foreground pl-4 py-2">Navigation</div>
+        <div className="px-2 py-4">
+          {/* Back to organization button */}
+          {orgId && (
+            <div className="mb-4">
+              <Link href={`/org/${orgId}`}>
+                <Button variant="ghost" size="sm" className="w-full flex items-center justify-start text-sm">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to organization
+                </Button>
+              </Link>
+            </div>
+          )}
+        
           <SidebarMenu className="space-y-1">
             {menuItems.map((item) => (
               <SidebarMenuItem key={item.id}>
@@ -161,24 +170,10 @@ function SidebarInnerContent() {
           
           <SidebarSeparator className="my-4" />
           
-          <div className="text-xs font-medium text-muted-foreground pl-4 py-2">Project Status</div>
+          <div className="text-xs font-medium text-muted-foreground px-4 py-2">Project Status</div>
           <div className="space-y-3 px-4">
             {isLoading ? (
               <>
-                <div className="space-y-1">
-                  <div className="flex justify-between">
-                    <Skeleton className="h-3 w-28" />
-                    <Skeleton className="h-3 w-10" />
-                  </div>
-                  <Skeleton className="h-2 w-full" />
-                </div>
-                <div className="space-y-1">
-                  <div className="flex justify-between">
-                    <Skeleton className="h-3 w-28" />
-                    <Skeleton className="h-3 w-10" />
-                  </div>
-                  <Skeleton className="h-2 w-full" />
-                </div>
                 <div className="space-y-1">
                   <div className="flex justify-between">
                     <Skeleton className="h-3 w-28" />
@@ -196,59 +191,11 @@ function SidebarInnerContent() {
                   </div>
                   <Progress value={questionsCompletionPercentage} className="h-2" />
                 </div>
-                <div className="space-y-1">
-                  <div className="flex justify-between text-xs">
-                    <span>Documents Processed</span>
-                    <span className="font-medium">{processedDocuments}/{totalDocuments}</span>
-                  </div>
-                  <Progress value={documentsCompletionPercentage} className="h-2" />
-                </div>
-                <div className="space-y-1">
-                  <div className="flex justify-between text-xs">
-                    <span>Overall Completion</span>
-                    <span className="font-medium">{overallCompletionPercentage}%</span>
-                  </div>
-                  <Progress value={overallCompletionPercentage} className="h-2" />
-                </div>
               </>
             )}
           </div>
-          
-          <SidebarSeparator className="my-4" />
-          
-          <SidebarMenu className="space-y-1">
-            {bottomMenuItems.map((item) => (
-              <SidebarMenuItem key={item.id}>
-                <Link href={item.path} className="w-full">
-                  <SidebarMenuButton isActive={getIsActive(item.path)}>
-                    <item.icon className="h-4 w-4 mr-2" />
-                    <span>{item.label}</span>
-                  </SidebarMenuButton>
-                </Link>
-              </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
         </div>
       </SidebarContent>
-      <SidebarFooter className="border-t p-4 mt-auto">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Avatar className="h-8 w-8">
-              <AvatarImage src="/stylized-jd-initials.png" alt="User" />
-              <AvatarFallback>JD</AvatarFallback>
-            </Avatar>
-            <div className="flex flex-col">
-              <span className="text-sm font-medium">John Doe</span>
-              <span className="text-xs text-muted-foreground">Project Owner</span>
-            </div>
-          </div>
-          <Link href="/logout">
-            <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Log out">
-              <LogOut className="h-4 w-4" />
-            </Button>
-          </Link>
-        </div>
-      </SidebarFooter>
     </>
   )
 }

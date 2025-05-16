@@ -4,10 +4,11 @@ import { organizationService } from '@/lib/organization-service';
 // Get organization members
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const organizationId = params.id;
+    const { id } = await params;
+    const organizationId = id;
     const currentUser = await organizationService.getCurrentUser();
     
     if (!currentUser) {
@@ -45,10 +46,11 @@ export async function GET(
 // Add a new member to the organization
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const organizationId = params.id;
+    const { id } = await params;
+    const organizationId = id;
     const { email, role } = await request.json();
     const currentUser = await organizationService.getCurrentUser();
     
