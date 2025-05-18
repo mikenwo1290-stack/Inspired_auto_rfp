@@ -3,27 +3,86 @@ import { RfpDocument, RfpSection, RfpQuestion, AnswerSource } from '@/types/api'
 
 export const projectService = {
   // Project operations
-  async createProject(name: string, description?: string) {
+  async createProject(name: string, organizationId: string, description?: string) {
     return db.project.create({
       data: {
         name,
         description,
+        organizationId,
       },
     });
   },
 
-  async getProjects() {
+  async getProjects(organizationId?: string) {
+    // If organizationId is provided, get projects for that organization only
+    if (organizationId) {
+      return db.project.findMany({
+        where: {
+          organizationId,
+        },
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          createdAt: true,
+          updatedAt: true,
+          organizationId: true
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
+    }
+    
+    // Otherwise get all projects (mostly for admin purposes)
     return db.project.findMany({
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        createdAt: true,
+        updatedAt: true,
+        organizationId: true,
+        organization: {
+          select: {
+            id: true,
+            name: true
+          }
+        }
+      },
       orderBy: {
         createdAt: 'desc',
       },
     });
   },
 
-  async getProject(id: string) {
+  async getProject(id: string, includeRelations = false) {
+    // Basic project data without expensive relations
+    if (!includeRelations) {
+      return db.project.findUnique({
+        where: { id },
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          createdAt: true,
+          updatedAt: true,
+          organizationId: true,
+          organization: {
+            select: {
+              id: true,
+              name: true
+            }
+          }
+        }
+      });
+    }
+    
+    // Full project data with all relations when explicitly requested
     return db.project.findUnique({
       where: { id },
       include: {
+        organization: true,
         questions: {
           include: {
             answer: {
@@ -34,6 +93,19 @@ export const projectService = {
           },
         },
       },
+    });
+  },
+
+  async updateProject(id: string, data: { name?: string; description?: string }) {
+    return db.project.update({
+      where: { id },
+      data,
+    });
+  },
+
+  async deleteProject(id: string) {
+    return db.project.delete({
+      where: { id },
     });
   },
 

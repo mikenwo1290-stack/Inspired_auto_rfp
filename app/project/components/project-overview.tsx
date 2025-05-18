@@ -16,9 +16,10 @@ import { cn } from "@/lib/utils"
 interface ProjectOverviewProps {
   onViewQuestions: () => void;
   projectId: string | null;
+  orgId?: string | null;
 }
 
-export function ProjectOverview({ onViewQuestions, projectId }: ProjectOverviewProps) {
+export function ProjectOverview({ onViewQuestions, projectId, orgId }: ProjectOverviewProps) {
   const [loading, setLoading] = useState(true)
   const [project, setProject] = useState<any>(null)
   const [rfpDocument, setRfpDocument] = useState<RfpDocument | null>(null)
@@ -146,7 +147,7 @@ export function ProjectOverview({ onViewQuestions, projectId }: ProjectOverviewP
   const hasMoreSections = sortedSections.length > initialSectionsToShow
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-12">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -171,27 +172,6 @@ export function ProjectOverview({ onViewQuestions, projectId }: ProjectOverviewP
           </CardContent>
         </Card>
         
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Created</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{createdAtFormatted}</div>
-            <p className="text-xs text-muted-foreground">{formatDistanceToNow(createdAt, { addSuffix: true })}</p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Last Updated</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{updatedAtFormatted}</div>
-            <p className="text-xs text-muted-foreground">{updatedAtRelative}</p>
-          </CardContent>
-        </Card>
       </div>
 
       {answeredQuestions < totalQuestions && (
@@ -208,60 +188,7 @@ export function ProjectOverview({ onViewQuestions, projectId }: ProjectOverviewP
       )}
 
       <div className="grid gap-4 md:grid-cols-7">
-        <Card className="md:col-span-4">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>Project Sections</CardTitle>
-              <CardDescription>Topics covered in this RFP</CardDescription>
-            </div>
-            {hasMoreSections && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => setSectionsExpanded(!sectionsExpanded)}
-                className="text-xs"
-              >
-                {sectionsExpanded ? "Show less" : "Show all"}
-              </Button>
-            )}
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {sectionsToShow.map((section, index) => {
-                const totalInSection = section.questions.length;
-                const answeredInSection = section.questions.filter(q => q.answer).length;
-                const sectionPercentage = totalInSection > 0 ? Math.round((answeredInSection / totalInSection) * 100) : 0;
-                
-                return (
-                  <div key={index} className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="font-medium">{section.title}</span>
-                      <span className="text-sm text-muted-foreground">{answeredInSection}/{totalInSection}</span>
-                    </div>
-                    <Progress value={sectionPercentage} className="h-2" />
-                  </div>
-                );
-              })}
-              
-              {sectionsToShow.length < sortedSections.length && !sectionsExpanded && (
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="w-full text-sm text-muted-foreground mt-2" 
-                  onClick={() => setSectionsExpanded(true)}
-                >
-                  Show {sortedSections.length - initialSectionsToShow} more sections...
-                </Button>
-              )}
-              
-              {(!rfpDocument?.sections || rfpDocument.sections.length === 0) && (
-                <div className="text-center py-4 text-muted-foreground">
-                  No sections available
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+
 
         <Card className="md:col-span-3">
           <CardHeader>
@@ -297,119 +224,6 @@ export function ProjectOverview({ onViewQuestions, projectId }: ProjectOverviewP
         </Card>
       </div>
 
-      <Tabs defaultValue="overview">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="progress">Progress</TabsTrigger>
-        </TabsList>
-        <TabsContent value="overview">
-          <Card>
-            <CardHeader>
-              <CardTitle>Project Summary</CardTitle>
-              <CardDescription>Quick overview of project status</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex flex-col gap-2">
-                  <div className="flex justify-between">
-                    <span className="font-medium">Completion</span>
-                    <span>{completionPercentage}%</span>
-                  </div>
-                  <Progress value={completionPercentage} className="h-2" />
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm font-medium">Total Questions</p>
-                    <p className="text-2xl font-bold">{totalQuestions}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">Answered</p>
-                    <p className="text-2xl font-bold">{answeredQuestions}</p>
-                  </div>
-                </div>
-                
-                <Button className="w-full" onClick={onViewQuestions}>View All Questions</Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="progress">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Section Progress</CardTitle>
-                <CardDescription>Detailed breakdown by section</CardDescription>
-              </div>
-              {hasMoreSections && (
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => setSectionsExpanded(!sectionsExpanded)}
-                  className="text-xs"
-                >
-                  {sectionsExpanded ? "Show less" : "Show all"}
-                </Button>
-              )}
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {sectionsToShow.map((section, index) => {
-                  const totalInSection = section.questions.length;
-                  const answeredInSection = section.questions.filter(q => q.answer).length;
-                  const unansweredInSection = totalInSection - answeredInSection;
-                  const sectionPercentage = totalInSection > 0 ? Math.round((answeredInSection / totalInSection) * 100) : 0;
-                  
-                  return (
-                    <div key={index} className="border rounded-lg p-3">
-                      <div className="flex justify-between items-center mb-2">
-                        <h3 className="font-medium text-sm">{section.title}</h3>
-                        <Badge 
-                          variant={sectionPercentage === 100 ? "default" : "outline"} 
-                          className={cn(
-                            "text-xs",
-                            sectionPercentage === 100 
-                              ? "bg-green-100 text-green-800 hover:bg-green-100" 
-                              : sectionPercentage > 50
-                                ? "bg-blue-50 text-blue-700 hover:bg-blue-50"
-                                : sectionPercentage > 0
-                                  ? "bg-yellow-50 text-yellow-700 hover:bg-yellow-50"
-                                  : "bg-gray-100 text-gray-700 hover:bg-gray-100"
-                          )}
-                        >
-                          {answeredInSection}/{totalInSection}
-                        </Badge>
-                      </div>
-                      <Progress 
-                        value={sectionPercentage} 
-                        className={cn(
-                          "h-2",
-                          sectionPercentage === 100 
-                            ? "bg-green-100" 
-                            : sectionPercentage > 0 
-                              ? "bg-muted" 
-                              : "bg-gray-100"
-                        )}
-                      />
-                    </div>
-                  );
-                })}
-
-                {sectionsToShow.length < sortedSections.length && !sectionsExpanded && (
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="w-full text-sm text-muted-foreground mt-2" 
-                    onClick={() => setSectionsExpanded(true)}
-                  >
-                    Show {sortedSections.length - initialSectionsToShow} more sections...
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
     </div>
   );
 }

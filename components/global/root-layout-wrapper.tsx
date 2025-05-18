@@ -2,7 +2,7 @@
 
 import React, { useState, Suspense } from 'react'
 import { GlobalSidebar } from './sidebar'
-import { HomeSidebar } from './home-sidebar'
+import { OrganizationSidebar } from './organization-sidebar'
 import { SidebarProvider } from '@/components/ui/sidebar'
 import { Button } from '@/components/ui/button'
 import { PanelLeftIcon } from 'lucide-react'
@@ -13,29 +13,36 @@ function SidebarController({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const searchParams = useSearchParams()
   const pathname = usePathname()
-  const projectId = searchParams.get("projectId")
-  const isHomePage = pathname === '/'
+  
+  // Check if we're on an organization page or at the root/home
+  const isOrgPage = pathname.startsWith('/org/')
+  const isHomePage = pathname === '/' || pathname === '/new-organization'
+  
+  // Don't show sidebar on home/organizations page (like Supabase)
+  const showSidebar = !isHomePage
   
   return (
     <SidebarProvider 
       defaultOpen={true} 
-      open={sidebarOpen}
+      open={showSidebar && sidebarOpen}
       onOpenChange={setSidebarOpen}
     >
-      <div className="flex w-full min-h-screen">
-        <div className="flex-shrink-0">
-          {isHomePage ? <HomeSidebar /> : <GlobalSidebar />}
-        </div>
-        <div className="flex-1 overflow-auto pl-6">
+      <div className="flex w-full min-h-screen bg-background">
+        {showSidebar && (
+          <div className="flex-shrink-0">
+            {isOrgPage ? <OrganizationSidebar /> : <GlobalSidebar />}
+          </div>
+        )}
+        <div className="flex-1 overflow-auto">
           {children}
         </div>
         
         {/* Floating toggle button that appears only when sidebar is closed */}
-        {!sidebarOpen && (
+        {showSidebar && !sidebarOpen && (
           <Button
             variant="outline"
             size="icon"
-            className="fixed left-4 top-4 z-50 rounded-full shadow-md bg-white"
+            className="fixed left-4 top-4 z-50 rounded-full shadow-md bg-background"
             onClick={() => setSidebarOpen(true)}
             aria-label="Open sidebar"
           >
@@ -56,7 +63,7 @@ export default function RootLayoutWrapper({
     <Suspense fallback={
       <div className="flex min-h-screen">
         <div className="w-64 border-r bg-muted/20 animate-pulse"></div>
-        <div className="flex-1 overflow-auto pl-6">
+        <div className="flex-1 overflow-auto">
           <div className="animate-pulse space-y-4 p-6">
             <div className="h-8 w-64 bg-muted rounded"></div>
             <div className="h-32 bg-muted rounded"></div>

@@ -1,14 +1,14 @@
 "use client"
 
 import React, { useState, useEffect, Suspense } from "react"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
-import { AlertCircle, CheckCircle, Filter, Search, Sparkles, Download, Save } from "lucide-react"
+import { AlertCircle, CheckCircle, Filter, Search, Sparkles, Download, Save, Upload, Plus, FileText } from "lucide-react"
 import { QuestionNavigator } from "../../project/components/question-navigator"
 import { AISuggestionsPanel } from "../../project/components/ai-suggestions-panel"
 import { Spinner } from "@/components/ui/spinner"
@@ -24,6 +24,63 @@ import { AnswerDisplay } from "@/components/ui/answer-display"
 interface AnswerData {
   text: string;
   sources?: AnswerSource[];
+}
+
+// No Questions Available Component
+function NoQuestionsAvailable({ projectId }: { projectId: string }) {
+  const router = useRouter();
+
+  const handleUploadClick = () => {
+    router.push(`/upload?projectId=${projectId}`);
+  };
+
+  const handleAddManuallyClick = () => {
+    router.push(`/questions/create?projectId=${projectId}`);
+  };
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[500px] p-6">
+      <div className="text-center mb-8">
+        <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+        <h2 className="text-2xl font-bold mb-2">No Questions Available</h2>
+        <p className="text-muted-foreground max-w-md mx-auto">
+          Add questions to your RFP by uploading a document or creating questions manually.
+        </p>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-3xl">
+        <Card className="transition-all hover:shadow-md">
+          <CardHeader>
+            <div className="flex items-center justify-center mb-2">
+              <Upload className="h-8 w-8 text-primary" />
+            </div>
+            <CardTitle className="text-center">Upload Document</CardTitle>
+            <CardDescription className="text-center">
+              Upload an RFP document to automatically extract questions.
+            </CardDescription>
+          </CardHeader>
+          <CardFooter className="flex justify-center">
+            <Button onClick={handleUploadClick} className="w-full" size="lg">Upload File</Button>
+          </CardFooter>
+        </Card>
+        
+        <Card className="transition-all hover:shadow-md">
+          <CardHeader>
+            <div className="flex items-center justify-center mb-2">
+              <Plus className="h-8 w-8 text-primary" />
+            </div>
+            <CardTitle className="text-center">Add Manually</CardTitle>
+            <CardDescription className="text-center">
+              Create and organize questions manually for your RFP.
+            </CardDescription>
+          </CardHeader>
+          <CardFooter className="flex justify-center">
+            <Button onClick={handleAddManuallyClick} variant="outline" className="w-full" size="lg">Create Questions</Button>
+          </CardFooter>
+        </Card>
+      </div>
+    </div>
+  );
 }
 
 // Inner component that uses search params
@@ -650,6 +707,16 @@ function QuestionsSectionInner() {
         <h3 className="text-lg font-medium">Error Loading Questions</h3>
         <p className="text-muted-foreground mt-2">{error}</p>
       </div>
+    );
+  }
+
+  // Check if there are no questions and show the NoQuestionsAvailable component
+  if (!rfpDocument || rfpDocument.sections.length === 0 || 
+      rfpDocument.sections.every(section => section.questions.length === 0)) {
+    return (
+      <>
+        {projectId && <NoQuestionsAvailable projectId={projectId} />}
+      </>
     );
   }
 
