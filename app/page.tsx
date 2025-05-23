@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/use-toast";
-import { organizationService } from "@/lib/organization-service";
 
 export default function HomePage() {
   const [organizations, setOrganizations] = useState<any[]>([]);
