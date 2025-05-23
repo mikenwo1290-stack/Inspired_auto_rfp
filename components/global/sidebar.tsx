@@ -25,6 +25,7 @@ import { usePathname, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { RfpDocument } from "@/types/api"
 import { OrganizationSwitcher } from "./organization-switcher"
+import { ProjectSwitcher } from "./project-switcher"
 import { getCurrentUserEmail } from "@/app/user/actions"
 
 // Create a separate client component that uses useSearchParams
@@ -148,22 +149,12 @@ function SidebarInnerContent() {
       </SidebarHeader>
       <SidebarContent>
         <div className="px-2 py-4">
-          {/* Project info */}
-          <div className="mb-4 px-2 py-2 rounded-md border">
-            <div className="flex items-center gap-2">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src="/letter-v-floral.png" alt="Project" />
-                <AvatarFallback>
-                  {clientName ? clientName.substring(0, 2).toUpperCase() : "P"}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex flex-col">
-                <span className="text-sm font-semibold">{projectName || "Project"}</span>
-                <span className="text-xs text-muted-foreground">
-                  {currentUserEmail ? `${currentUserEmail}'s Project` : "User's Project"} 
-                </span>
-              </div>
-            </div>
+          {/* Project Switcher */}
+          <div className="mb-4">
+            <ProjectSwitcher 
+              currentProjectId={projectId || undefined}
+              organizationId={orgId || undefined}
+            />
           </div>
         
           <SidebarMenu className="space-y-1">

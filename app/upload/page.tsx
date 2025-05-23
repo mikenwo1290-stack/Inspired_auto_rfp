@@ -60,30 +60,30 @@ function UploadPage() {
   
     if (isLoading) {
       return (
-        
+        <div className="container mx-auto py-8">
           <div className="flex flex-col items-center justify-center h-64">
             <Spinner size="lg" className="mb-4" />
             <p>Loading project...</p>
           </div>
-        
+        </div>
       );
     }
   
     if (error) {
       return (
-        
+        <div className="container mx-auto py-8">
           <div className="flex flex-col items-center justify-center h-64">
             <div className="text-red-500 mb-4">{error}</div>
             <Button onClick={() => router.push("/")}>
               Back to Projects
             </Button>
           </div>
-        
+        </div>
       );
     }
   
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="container mx-auto py-8 px-4 max-w-4xl">
         <UploadComponent projectId={projectId} />
       </div>
     );
