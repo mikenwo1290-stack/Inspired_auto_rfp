@@ -16,10 +16,15 @@ import { usePathname, useParams } from 'next/navigation';
 import { HelpCircle, LogOut } from 'lucide-react';
 import { OrganizationSwitcher } from './organization-switcher';
 import Image from 'next/image';
+import { logout } from '@/app/login/actions';
+import { useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 
 export function Header() {
   const pathname = usePathname();
   const params = useParams();
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
   
   // Check if we're on an organization page
   const isOrgPage = pathname.startsWith('/org/');
@@ -67,9 +72,17 @@ export function Header() {
               <DropdownMenuItem>Profile</DropdownMenuItem>
               <DropdownMenuItem>Settings</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive">
+              <DropdownMenuItem 
+                className="text-destructive cursor-pointer"
+                onClick={() => {
+                  startTransition(async () => {
+                    await logout();
+                  });
+                }}
+                disabled={isPending}
+              >
                 <LogOut className="mr-2 h-4 w-4" />
-                <span>Log out</span>
+                <span>{isPending ? 'Logging out...' : 'Log out'}</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

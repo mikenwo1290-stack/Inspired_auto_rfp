@@ -17,9 +17,11 @@ function SidebarController({ children }: { children: React.ReactNode }) {
   // Check if we're on an organization page or at the root/home
   const isOrgPage = pathname.startsWith('/org/')
   const isHomePage = pathname === '/' || pathname === '/new-organization'
+  const isLoginPage = pathname === '/login'
+  const isLoginConfirmationPage = pathname === '/login/confirmation'
   
-  // Don't show sidebar on home/organizations page (like Supabase)
-  const showSidebar = !isHomePage
+  // Don't show sidebar on home/organizations page (like Supabase) or login page
+  const showSidebar = !isHomePage && !isLoginPage && !isLoginConfirmationPage
   
   return (
     <SidebarProvider 

@@ -25,6 +25,7 @@ import { usePathname, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { RfpDocument } from "@/types/api"
 import { OrganizationSwitcher } from "./organization-switcher"
+import { getCurrentUserEmail } from "@/app/user/actions"
 
 // Create a separate client component that uses useSearchParams
 function SidebarInnerContent() {
@@ -39,6 +40,7 @@ function SidebarInnerContent() {
   const [isLoading, setIsLoading] = useState(true)
   const [projectName, setProjectName] = useState("")
   const [clientName, setClientName] = useState("Client")
+  const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null)
   
   // Fetch project data when projectId changes
   useEffect(() => {
@@ -77,6 +79,15 @@ function SidebarInnerContent() {
       fetchProjectData()
     }
   }, [projectId])
+  
+  // Fetch current user email on mount
+  useEffect(() => {
+    const fetchEmail = async () => {
+      const email = await getCurrentUserEmail();
+      setCurrentUserEmail(email);
+    };
+    fetchEmail();
+  }, []);
   
   // Calculate metrics
   const getTotalQuestions = () => rfpDocument?.sections.reduce((total, section) => total + section.questions.length, 0) || 0
@@ -148,7 +159,9 @@ function SidebarInnerContent() {
               </Avatar>
               <div className="flex flex-col">
                 <span className="text-sm font-semibold">{projectName || "Project"}</span>
-                <span className="text-xs text-muted-foreground">zhaoqi@runllama.ai's Project</span>
+                <span className="text-xs text-muted-foreground">
+                  {currentUserEmail ? `${currentUserEmail}'s Project` : "User's Project"} 
+                </span>
               </div>
             </div>
           </div>
