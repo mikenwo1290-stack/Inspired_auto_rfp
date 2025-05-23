@@ -10,22 +10,24 @@ import {
 } from '@/components/ui/popover';
 import { SearchIcon, PlusIcon, CheckIcon } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useToast } from '@/components/ui/use-toast';
 import { Organization } from '@/types/organization';
 
 export function OrganizationSwitcher() {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [currentOrganization, setCurrentOrganization] = useState<Organization | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
   const { toast } = useToast();
 
-  // Get the current organization ID from the URL
-  const currentOrgId = searchParams.get('orgId');
-  const currentOrg = organizations.find(org => org.id === currentOrgId);
+  // Get the current organization ID from the URL or project
+  const urlOrgId = searchParams.get('orgId');
+  const projectId = searchParams.get('projectId');
 
   useEffect(() => {
     const fetchOrganizations = async () => {
@@ -52,6 +54,40 @@ export function OrganizationSwitcher() {
     fetchOrganizations();
   }, [toast]);
 
+  // Effect to determine current organization
+  useEffect(() => {
+    const determineCurrentOrganization = async () => {
+      if (urlOrgId) {
+        // If we have orgId in URL, use it
+        const org = organizations.find(org => org.id === urlOrgId);
+        setCurrentOrganization(org || null);
+      } else if (projectId && organizations.length > 0) {
+        // If we have projectId but no orgId, fetch the project to get orgId
+        try {
+          const response = await fetch(`/api/projects/${projectId}`);
+          if (response.ok) {
+            const project = await response.json();
+            const org = organizations.find(org => org.id === project.organizationId);
+            setCurrentOrganization(org || null);
+          }
+        } catch (error) {
+          console.error('Error fetching project for organization:', error);
+        }
+      } else if (pathname.startsWith('/org/')) {
+        // Extract orgId from pathname like /org/[orgId]
+        const pathOrgId = pathname.split('/')[2];
+        const org = organizations.find(org => org.id === pathOrgId);
+        setCurrentOrganization(org || null);
+      } else {
+        setCurrentOrganization(null);
+      }
+    };
+
+    if (organizations.length > 0) {
+      determineCurrentOrganization();
+    }
+  }, [urlOrgId, projectId, pathname, organizations]);
+
   // Filter organizations based on search
   const filteredOrganizations = organizations.filter(org => 
     org.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -71,10 +107,10 @@ export function OrganizationSwitcher() {
         >
           <div className="flex items-center gap-2">
             <div className="h-6 w-6 rounded-md bg-primary/10 flex items-center justify-center text-primary font-semibold text-xs">
-              {currentOrg?.name?.charAt(0).toUpperCase() || '?'}
+              {currentOrganization?.name?.charAt(0).toUpperCase() || '?'}
             </div>
             <span className="truncate max-w-[150px]">
-              {currentOrg?.name || 'Select organization'}
+              {currentOrganization?.name || 'Select organization'}
             </span>
           </div>
           <div className="ml-2 rounded-full bg-muted px-2 py-1 text-xs">
@@ -108,7 +144,7 @@ export function OrganizationSwitcher() {
                 </div>
                 <span>{org.name}</span>
               </div>
-              {org.id === currentOrgId && (
+              {org.id === currentOrganization?.id && (
                 <CheckIcon className="h-4 w-4 text-primary" />
               )}
             </button>

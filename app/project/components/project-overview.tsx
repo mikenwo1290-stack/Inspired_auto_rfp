@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
-import { AlertCircle, Calendar, CheckCircle2, Clock, FileText, FolderOpen, MessageSquare, Users } from "lucide-react"
+import { AlertCircle, Calendar, CheckCircle2, Clock, FileText, FolderOpen, MessageSquare, Users, Download } from "lucide-react"
 import { RfpDocument } from "@/types/api"
 import { formatDistanceToNow, format } from "date-fns"
 import { cn } from "@/lib/utils"
@@ -74,7 +74,7 @@ export function ProjectOverview({ onViewQuestions, projectId, orgId }: ProjectOv
 
   if (loading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 p-12">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {[...Array(4)].map((_, i) => (
             <Card key={i}>
@@ -148,6 +148,28 @@ export function ProjectOverview({ onViewQuestions, projectId, orgId }: ProjectOv
 
   return (
     <div className="space-y-6 p-12">
+      {/* Action buttons */}
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-2xl font-semibold mb-2">{project.name}</h1>
+          {project.description && (
+            <p className="text-muted-foreground">{project.description}</p>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" className="gap-1">
+            <Download className="h-4 w-4" />
+            Export
+          </Button>
+          <Button 
+            variant="outline"
+            onClick={onViewQuestions}
+          >
+            View Questions
+          </Button>
+        </div>
+      </div>
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
