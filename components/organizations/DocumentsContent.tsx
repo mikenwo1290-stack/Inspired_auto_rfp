@@ -1,15 +1,77 @@
 'use client';
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { FileIcon, FolderIcon, UploadIcon } from "lucide-react";
+import { FileIcon, FolderIcon, UploadIcon, Cloud, Settings } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { LlamaCloudConnectionDialog } from "./LlamaCloudConnectionDialog";
+import { LlamaCloudDocuments } from "./LlamaCloudDocuments";
+import { useToast } from "@/components/ui/use-toast";
 
 interface DocumentsContentProps {
   orgId: string;
 }
 
 export function DocumentsContent({ orgId }: DocumentsContentProps) {
+  const [showConnectionDialog, setShowConnectionDialog] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  const checkConnection = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch(`/api/llamacloud/documents?organizationId=${orgId}`);
+      
+      if (response.ok) {
+        setIsConnected(true);
+      } else {
+        const error = await response.json();
+        if (error.error?.includes('not connected')) {
+          setIsConnected(false);
+        }
+      }
+    } catch (error) {
+      console.error('Error checking LlamaCloud connection:', error);
+      setIsConnected(false);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const checkUserRole = async () => {
+    try {
+      const response = await fetch(`/api/organizations/${orgId}/user-role`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        setUserRole(data.role);
+      } else {
+        console.error('Error checking user role:', await response.text());
+        setUserRole(null);
+      }
+    } catch (error) {
+      console.error('Error checking user role:', error);
+      setUserRole(null);
+    }
+  };
+
+  useEffect(() => {
+    checkConnection();
+    checkUserRole();
+  }, [orgId]);
+
+  const handleConnectionSuccess = () => {
+    setIsConnected(true);
+    toast({
+      title: 'Success',
+      description: 'Successfully connected to LlamaCloud',
+    });
+  };
+
+  const canManageConnections = userRole === 'owner' || userRole === 'admin';
+
   return (
     <div className="w-full max-w-7xl mx-auto">
       <div className="py-6 px-4 sm:px-6">
@@ -23,50 +85,106 @@ export function DocumentsContent({ orgId }: DocumentsContentProps) {
             </Button>
           </div>
 
-          {/* Documents placeholder */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center">
-                  <FileIcon className="h-4 w-4 mr-2" />
-                  Document Library
-                </CardTitle>
-                <CardDescription>
-                  Shared organization documents
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  This page is under construction. Documents will be available soon.
-                </p>
-              </CardContent>
-              <CardFooter>
-                <Button variant="outline" className="w-full">View Library</Button>
-              </CardFooter>
-            </Card>
+          {/* LlamaCloud Section */}
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold">LlamaCloud Integration</h2>
+            
+            {!isConnected ? (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg flex items-center">
+                    <Cloud className="h-4 w-4 mr-2" />
+                    Connect to LlamaCloud Project
+                  </CardTitle>
+                  <CardDescription>
+                    Connect your organization to a LlamaCloud project to access pipelines and documents
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">
+                    Access and manage documents from your LlamaCloud project's pipelines directly within this platform.
+                  </p>
+                </CardContent>
+                <CardFooter>
+                  <Button 
+                    onClick={() => setShowConnectionDialog(true)}
+                    disabled={!canManageConnections}
+                    className="w-full"
+                  >
+                    <Cloud className="mr-2 h-4 w-4" />
+                    Connect to LlamaCloud Project
+                  </Button>
+                  {!canManageConnections && (
+                    <p className="text-xs text-muted-foreground mt-2 w-full text-center">
+                      Only organization owners and admins can connect to LlamaCloud
+                    </p>
+                  )}
+                </CardFooter>
+              </Card>
+            ) : (
+              <LlamaCloudDocuments 
+                organizationId={orgId} 
+                onDisconnect={() => setIsConnected(false)}
+              />
+            )}
+          </div>
 
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center">
-                  <FolderIcon className="h-4 w-4 mr-2" />
-                  RFP Templates
-                </CardTitle>
-                <CardDescription>
-                  Standard templates for RFPs
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Access standardized templates for different types of RFPs.
-                </p>
-              </CardContent>
-              <CardFooter>
-                <Button variant="outline" className="w-full">Browse Templates</Button>
-              </CardFooter>
-            </Card>
+          {/* Other Documents placeholder */}
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold">Organization Library</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg flex items-center">
+                    <FileIcon className="h-4 w-4 mr-2" />
+                    Document Library
+                  </CardTitle>
+                  <CardDescription>
+                    Shared organization documents
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">
+                    This page is under construction. Documents will be available soon.
+                  </p>
+                </CardContent>
+                <CardFooter>
+                  <Button variant="outline" className="w-full">View Library</Button>
+                </CardFooter>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg flex items-center">
+                    <FolderIcon className="h-4 w-4 mr-2" />
+                    RFP Templates
+                  </CardTitle>
+                  <CardDescription>
+                    Standard templates for RFPs
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">
+                    Access standardized templates for different types of RFPs.
+                  </p>
+                </CardContent>
+                <CardFooter>
+                  <Button variant="outline" className="w-full">Browse Templates</Button>
+                </CardFooter>
+              </Card>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Connection Dialog */}
+      <LlamaCloudConnectionDialog
+        isOpen={showConnectionDialog}
+        onOpenChange={setShowConnectionDialog}
+        organizationId={orgId}
+        onSuccess={handleConnectionSuccess}
+      />
     </div>
   );
 } 
