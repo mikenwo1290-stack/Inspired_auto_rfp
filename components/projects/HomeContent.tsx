@@ -107,9 +107,7 @@ export function HomeContent() {
                 <div className="h-32 rounded-md border border-border animate-pulse bg-muted/20" />
               ) : filteredProjects.length > 0 ? (
                 <div className="border rounded-md overflow-hidden">
-                  <div className="bg-muted/20 px-4 py-2 border-b text-sm font-medium">
-                    zhaoqi@runllama.ai's projects • aws | us-east-2
-                  </div>
+   
                   <div className="divide-y">
                     {filteredProjects.map((project) => (
                       <Link href={`/project?projectId=${project.id}`} key={project.id}>

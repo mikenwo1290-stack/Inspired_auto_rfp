@@ -86,7 +86,7 @@ export function OrganizationContent({ orgId }: OrganizationContentProps) {
             ) : filteredProjects.length > 0 ? (
               <div className="border rounded-md overflow-hidden">
                 <div className="bg-muted/20 px-4 py-2 border-b text-sm font-medium">
-                  {organization?.name || 'Organization'} • aws | us-east-2
+                  {organization?.name || 'Organization'} 
                 </div>
                 <div className="divide-y">
                   {filteredProjects.map((project) => (

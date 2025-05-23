@@ -9,7 +9,7 @@ export const metadata = {
 
 export default async function DocumentsPage() {
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="container mx-auto p-12">
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Document Repository</h1>
         <p className="text-gray-600">
