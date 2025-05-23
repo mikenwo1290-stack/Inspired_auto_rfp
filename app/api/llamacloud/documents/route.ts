@@ -88,10 +88,17 @@ export async function GET(request: NextRequest) {
       const pipelines = await pipelinesResponse.json();
       console.log('Found pipelines:', pipelines.length);
       
+      // Filter pipelines to only include those from the connected LlamaCloud project
+      const filteredPipelines = pipelines.filter((pipeline: any) => 
+        pipeline.project_id === organization.llamaCloudProjectId
+      );
+      
+      console.log(`Filtered ${pipelines.length} total pipelines to ${filteredPipelines.length} from project ${organization.llamaCloudProjectId}`);
+      
       // Fetch files for each pipeline using the pipeline files endpoint
       const allDocuments = [];
       
-      for (const pipeline of pipelines) {
+      for (const pipeline of filteredPipelines) {
         try {
           console.log('Fetching files for pipeline:', pipeline.name, '(', pipeline.id, ')');
           
@@ -133,7 +140,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         projectName: organization.llamaCloudProjectName,
         projectId: organization.llamaCloudProjectId,
-        pipelines,
+        pipelines: filteredPipelines,
         documents: allDocuments,
         connectedAt: organization.llamaCloudConnectedAt,
       });

@@ -12,6 +12,8 @@ import { AlertCircle, Calendar, CheckCircle2, Clock, FileText, FolderOpen, Messa
 import { RfpDocument } from "@/types/api"
 import { formatDistanceToNow, format } from "date-fns"
 import { cn } from "@/lib/utils"
+import { ProjectIndexSelector } from "@/components/projects/ProjectIndexSelector"
+import { ProjectDocuments } from "@/components/projects/ProjectDocuments"
 
 interface ProjectOverviewProps {
   onViewQuestions: () => void;
@@ -195,6 +197,16 @@ export function ProjectOverview({ onViewQuestions, projectId, orgId }: ProjectOv
         </Card>
         
       </div>
+
+      {/* Project Index Selection */}
+      {projectId && (
+        <ProjectIndexSelector projectId={projectId} />
+      )}
+
+      {/* Project Documents */}
+      {projectId && (
+        <ProjectDocuments projectId={projectId} />
+      )}
 
       {answeredQuestions < totalQuestions && (
         <Alert>
