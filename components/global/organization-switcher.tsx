@@ -10,20 +10,21 @@ import {
 } from '@/components/ui/popover';
 import { SearchIcon, PlusIcon, CheckIcon } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useToast } from '@/components/ui/use-toast';
+import { Organization } from '@/types/organization';
 
 export function OrganizationSwitcher() {
-  const [organizations, setOrganizations] = useState<any[]>([]);
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const router = useRouter();
-  const params = useParams();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
 
   // Get the current organization ID from the URL
-  const currentOrgId = typeof params?.orgId === 'string' ? params.orgId : null;
+  const currentOrgId = searchParams.get('orgId');
   const currentOrg = organizations.find(org => org.id === currentOrgId);
 
   useEffect(() => {

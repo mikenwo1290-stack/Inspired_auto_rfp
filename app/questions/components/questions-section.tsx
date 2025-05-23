@@ -724,7 +724,7 @@ function QuestionsSectionInner() {
   const counts = getCounts();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-12">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">RFP Questions</h2>
         <div className="flex items-center gap-2">
@@ -885,15 +885,7 @@ function QuestionsSectionInner() {
                       
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setShowAIPanel(!showAIPanel)}
-                            className="gap-1"
-                          >
-                            <Sparkles className="h-4 w-4" />
-                            {showAIPanel ? "Hide AI Suggestions" : "Get AI Suggestions"}
-                          </Button>
+
                           <Button
                             variant="outline"
                             size="sm"
@@ -1061,15 +1053,7 @@ function QuestionsSectionInner() {
                       
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setShowAIPanel(!showAIPanel)}
-                            className="gap-1"
-                          >
-                            <Sparkles className="h-4 w-4" />
-                            {showAIPanel ? "Hide AI Suggestions" : "Get AI Suggestions"}
-                          </Button>
+
                           <Button
                             variant="outline"
                             size="sm"
@@ -1227,15 +1211,7 @@ function QuestionsSectionInner() {
                       
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setShowAIPanel(!showAIPanel)}
-                            className="gap-1"
-                          >
-                            <Sparkles className="h-4 w-4" />
-                            {showAIPanel ? "Hide AI Suggestions" : "Get AI Suggestions"}
-                          </Button>
+                 
                           <Button
                             variant="outline"
                             size="sm"
@@ -1403,15 +1379,7 @@ function QuestionsSectionInner() {
                       
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setShowAIPanel(!showAIPanel)}
-                            className="gap-1"
-                          >
-                            <Sparkles className="h-4 w-4" />
-                            {showAIPanel ? "Hide AI Suggestions" : "Get AI Suggestions"}
-                          </Button>
+
                           <Button
                             variant="outline"
                             size="sm"
@@ -1482,7 +1450,7 @@ function QuestionsSectionInner() {
 export function QuestionsSection() {
   return (
     <Suspense fallback={
-      <div className="space-y-6">
+      <div className="space-y-6 p-12">
         <div className="flex items-center justify-between">
           <div className="h-8 w-36 bg-muted animate-pulse rounded"></div>
           <div className="flex items-center gap-2">
