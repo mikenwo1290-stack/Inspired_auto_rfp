@@ -4,7 +4,7 @@ import { organizationService } from '@/lib/organization-service';
 
 export async function POST(request: NextRequest) {
   try {
-    const { organizationId, apiKey } = await request.json();
+    const { organizationId, apiKey, projectId, projectName } = await request.json();
     const currentUser = await organizationService.getCurrentUser();
     
     if (!currentUser) {
@@ -14,9 +14,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!organizationId || !apiKey) {
+    if (!organizationId || !apiKey || !projectId || !projectName) {
       return NextResponse.json(
-        { error: 'Organization ID and API key are required' },
+        { error: 'Organization ID, API key, project ID, and project name are required' },
         { status: 400 }
       );
     }
@@ -34,13 +34,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Initialize variables for LlamaCloud project info
-    let llamaCloudProjectId: string | null = null;
-    let llamaCloudProjectName: string | null = null;
-
-    // Test the API key by making a request to LlamaCloud to get project info
+    // Test the API key and verify the specified project exists
     try {
-      console.log('Testing LlamaCloud API key...');
+      console.log('Testing LlamaCloud API key and verifying project access...');
       const testResponse = await fetch('https://api.cloud.llamaindex.ai/api/v1/projects', {
         method: 'GET',
         headers: {
@@ -61,18 +57,18 @@ export async function POST(request: NextRequest) {
       }
 
       const projects = await testResponse.json();
-      console.log('LlamaCloud projects:', projects);
+      console.log('LlamaCloud projects found:', projects?.length || 0);
       
-      // For project-specific API keys, there should typically be one project returned
-      if (projects && Array.isArray(projects) && projects.length > 0) {
-        // Take the first project (project-specific API keys usually return one project)
-        const project = projects[0];
-        llamaCloudProjectId = project.id;
-        llamaCloudProjectName = project.name;
-        console.log('Connected to LlamaCloud project:', llamaCloudProjectName, '(', llamaCloudProjectId, ')');
-      } else {
-        console.warn('No projects found with this API key');
+      // Verify the specified project exists and is accessible with this API key
+      const selectedProject = projects?.find((p: any) => p.id === projectId);
+      if (!selectedProject) {
+        return NextResponse.json(
+          { error: 'The specified project is not accessible with this API key' },
+          { status: 400 }
+        );
       }
+
+      console.log('Verified access to LlamaCloud project:', selectedProject.name, '(', selectedProject.id, ')');
 
     } catch (error) {
       console.error('Error verifying API key with LlamaCloud:', error);
@@ -87,16 +83,15 @@ export async function POST(request: NextRequest) {
       where: { id: organizationId },
       data: {
         llamaCloudApiKey: apiKey,
-        llamaCloudProjectId: llamaCloudProjectId,
-        llamaCloudProjectName: llamaCloudProjectName,
+        llamaCloudProjectId: projectId,
+        llamaCloudProjectName: projectName,
         llamaCloudConnectedAt: new Date(),
       },
     });
 
     return NextResponse.json({ 
       success: true,
-      llamaCloudProjectId,
-      llamaCloudProjectName 
+      organization: updatedOrganization,
     });
   } catch (error) {
     console.error('Error connecting to LlamaCloud:', error);

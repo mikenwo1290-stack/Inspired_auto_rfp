@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { LlamaCloudConnection } from "./LlamaCloudConnection";
 
 interface SettingsContentProps {
   orgId: string;
@@ -24,7 +25,7 @@ export function SettingsContent({ orgId }: SettingsContentProps) {
   const [slackWebhook, setSlackWebhook] = useState("");
   const { toast } = useToast();
 
-  const { data: orgData, isLoading: isOrgLoading, isError: isOrgError } = useOrganization(orgId);
+  const { data: orgData, isLoading: isOrgLoading, isError: isOrgError, mutate } = useOrganization(orgId);
   
   useEffect(() => {
     if (orgData) {
@@ -44,6 +45,11 @@ export function SettingsContent({ orgId }: SettingsContentProps) {
       });
     }
   }, [orgData, isOrgLoading, isOrgError, toast]);
+
+  // Force refresh of organization data when component mounts to ensure we have latest LlamaCloud data
+  useEffect(() => {
+    mutate();
+  }, [mutate]);
 
   const handleUpdateOrganization = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -83,6 +89,10 @@ export function SettingsContent({ orgId }: SettingsContentProps) {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleLlamaCloudConnectionUpdate = (updatedOrg: any) => {
+    setOrganization(updatedOrg);
   };
 
   const handleDeleteOrganization = () => {
@@ -150,37 +160,47 @@ export function SettingsContent({ orgId }: SettingsContentProps) {
             </TabsContent>
             
             <TabsContent value="integrations" className="mt-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Integrations</CardTitle>
-                  <CardDescription>
-                    Connect your organization with other services
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={handleUpdateOrganization} id="integrations-form">
-                    <div className="grid gap-4 py-2">
-                      <div className="grid gap-2">
-                        <Label htmlFor="slack">Slack Webhook URL</Label>
-                        <Input
-                          id="slack"
-                          value={slackWebhook}
-                          onChange={(e) => setSlackWebhook(e.target.value)}
-                          placeholder="https://hooks.slack.com/services/..."
-                        />
-                        <p className="text-xs text-muted-foreground">
-                          Receive notifications in Slack when important events happen
-                        </p>
+              <div className="space-y-6">
+                {/* LlamaCloud Integration */}
+                <LlamaCloudConnection 
+                  orgId={orgId}
+                  organization={organization}
+                  onConnectionUpdate={handleLlamaCloudConnectionUpdate}
+                />
+
+                {/* Slack Integration */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Slack Integration</CardTitle>
+                    <CardDescription>
+                      Receive notifications in Slack when important events happen
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <form onSubmit={handleUpdateOrganization} id="integrations-form">
+                      <div className="grid gap-4 py-2">
+                        <div className="grid gap-2">
+                          <Label htmlFor="slack">Slack Webhook URL</Label>
+                          <Input
+                            id="slack"
+                            value={slackWebhook}
+                            onChange={(e) => setSlackWebhook(e.target.value)}
+                            placeholder="https://hooks.slack.com/services/..."
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Get your webhook URL from your Slack workspace settings
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  </form>
-                </CardContent>
-                <CardFooter>
-                  <Button type="submit" form="integrations-form" disabled={isSaving}>
-                    {isSaving ? "Saving..." : "Save Changes"}
-                  </Button>
-                </CardFooter>
-              </Card>
+                    </form>
+                  </CardContent>
+                  <CardFooter>
+                    <Button type="submit" form="integrations-form" disabled={isSaving}>
+                      {isSaving ? "Saving..." : "Save Changes"}
+                    </Button>
+                  </CardFooter>
+                </Card>
+              </div>
             </TabsContent>
             
             <TabsContent value="danger" className="mt-4">

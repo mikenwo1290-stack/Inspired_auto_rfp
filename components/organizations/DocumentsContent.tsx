@@ -4,16 +4,16 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { FileIcon, FolderIcon, UploadIcon, Cloud, Settings } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { LlamaCloudConnectionDialog } from "./LlamaCloudConnectionDialog";
 import { LlamaCloudDocuments } from "./LlamaCloudDocuments";
 import { useToast } from "@/components/ui/use-toast";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import Link from "next/link";
 
 interface DocumentsContentProps {
   orgId: string;
 }
 
 export function DocumentsContent({ orgId }: DocumentsContentProps) {
-  const [showConnectionDialog, setShowConnectionDialog] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [userRole, setUserRole] = useState<string | null>(null);
@@ -62,14 +62,6 @@ export function DocumentsContent({ orgId }: DocumentsContentProps) {
     checkUserRole();
   }, [orgId]);
 
-  const handleConnectionSuccess = () => {
-    setIsConnected(true);
-    toast({
-      title: 'Success',
-      description: 'Successfully connected to LlamaCloud',
-    });
-  };
-
   const canManageConnections = userRole === 'owner' || userRole === 'admin';
 
   return (
@@ -87,40 +79,37 @@ export function DocumentsContent({ orgId }: DocumentsContentProps) {
 
           {/* LlamaCloud Section */}
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold">LlamaCloud Integration</h2>
             
-            {!isConnected ? (
+            
+            {isLoading ? (
               <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg flex items-center">
-                    <Cloud className="h-4 w-4 mr-2" />
-                    Connect to LlamaCloud Project
-                  </CardTitle>
-                  <CardDescription>
-                    Connect your organization to a LlamaCloud project to access pipelines and documents
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                    Access and manage documents from your LlamaCloud project's pipelines directly within this platform.
-                  </p>
+                <CardContent className="py-6">
+                  <div className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900"></div>
+                    <span className="ml-2 text-sm text-muted-foreground">Checking connection...</span>
+                  </div>
                 </CardContent>
-                <CardFooter>
-                  <Button 
-                    onClick={() => setShowConnectionDialog(true)}
-                    disabled={!canManageConnections}
-                    className="w-full"
-                  >
-                    <Cloud className="mr-2 h-4 w-4" />
-                    Connect to LlamaCloud Project
-                  </Button>
-                  {!canManageConnections && (
-                    <p className="text-xs text-muted-foreground mt-2 w-full text-center">
-                      Only organization owners and admins can connect to LlamaCloud
+              </Card>
+            ) : !isConnected ? (
+              <Alert>
+                <Cloud className="h-4 w-4" />
+                <AlertTitle>LlamaCloud Not Connected</AlertTitle>
+                <AlertDescription className="space-y-2">
+                  <p>Connect your organization to a LlamaCloud project to access documents and pipelines.</p>
+                  {canManageConnections ? (
+                    <Link href={`/org/${orgId}/settings`}>
+                      <Button variant="outline" size="sm" className="mt-2">
+                        <Settings className="mr-2 h-4 w-4" />
+                        Go to Organization Settings
+                      </Button>
+                    </Link>
+                  ) : (
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Contact your organization owner or admin to set up the LlamaCloud connection.
                     </p>
                   )}
-                </CardFooter>
-              </Card>
+                </AlertDescription>
+              </Alert>
             ) : (
               <LlamaCloudDocuments 
                 organizationId={orgId} 
@@ -129,7 +118,7 @@ export function DocumentsContent({ orgId }: DocumentsContentProps) {
             )}
           </div>
 
-          {/* Other Documents placeholder */}
+          {/* Organization Library */}
           <div className="space-y-4">
             <h2 className="text-lg font-semibold">Organization Library</h2>
             
@@ -177,14 +166,6 @@ export function DocumentsContent({ orgId }: DocumentsContentProps) {
           </div>
         </div>
       </div>
-
-      {/* Connection Dialog */}
-      <LlamaCloudConnectionDialog
-        isOpen={showConnectionDialog}
-        onOpenChange={setShowConnectionDialog}
-        organizationId={orgId}
-        onSuccess={handleConnectionSuccess}
-      />
     </div>
   );
 } 

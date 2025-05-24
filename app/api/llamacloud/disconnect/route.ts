@@ -47,7 +47,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ 
       success: true,
-      message: 'Successfully disconnected from LlamaCloud'
+      message: 'Successfully disconnected from LlamaCloud',
+      organization: updatedOrganization,
     });
   } catch (error) {
     console.error('Error disconnecting from LlamaCloud:', error);
