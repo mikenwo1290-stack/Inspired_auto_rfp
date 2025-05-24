@@ -6,22 +6,27 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
+import { Input } from '@/components/ui/input';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   FileText, 
-  Calendar, 
   FolderOpen, 
   ExternalLink, 
   RefreshCw,
   AlertCircle,
   Database,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  Search,
+  CheckCircle2,
+  CircleDashed
 } from 'lucide-react';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import { cn } from '@/lib/utils';
 
 interface ProjectDocument {
   id: string;
@@ -32,6 +37,7 @@ interface ProjectDocument {
   size_bytes?: number;
   indexName: string;
   indexId: string;
+  file_type?: string;
 }
 
 interface ProjectIndex {
@@ -43,7 +49,66 @@ interface ProjectDocumentsProps {
   projectId: string;
 }
 
-const INITIAL_DOCUMENTS_SHOWN = 5;
+// Styling functions from the global DocumentList
+const getDocumentCardStyles = (fileType: string): {
+  iconBgClass: string;
+  iconColorClass: string;
+  textPillBgClass: string;
+  textPillTextColorClass: string;
+} => {
+  const type = (fileType || '').toLowerCase();
+  if (type === 'pdf') {
+    return {
+      iconBgClass: 'bg-red-50',
+      iconColorClass: 'text-red-600',
+      textPillBgClass: 'bg-red-500',
+      textPillTextColorClass: 'text-white',
+    };
+  }
+  if (type === 'docx' || type === 'doc') {
+    return {
+      iconBgClass: 'bg-blue-50',
+      iconColorClass: 'text-blue-600',
+      textPillBgClass: 'bg-blue-500',
+      textPillTextColorClass: 'text-white',
+    };
+  }
+  if (type === 'csv') {
+    return {
+      iconBgClass: 'bg-green-50',
+      iconColorClass: 'text-green-600',
+      textPillBgClass: 'bg-green-500',
+      textPillTextColorClass: 'text-white',
+    };
+  }
+  if (type === 'txt' || type === 'text') {
+    return {
+      iconBgClass: 'bg-gray-50',
+      iconColorClass: 'text-gray-600',
+      textPillBgClass: 'bg-gray-500',
+      textPillTextColorClass: 'text-white',
+    };
+  }
+  return { // Fallback default
+    iconBgClass: 'bg-gray-100',
+    iconColorClass: 'text-gray-600',
+    textPillBgClass: 'bg-gray-500',
+    textPillTextColorClass: 'text-white',
+  };
+};
+
+const getPillText = (fileType: string): string => {
+  const type = (fileType || '').toLowerCase();
+  if (type === 'pdf') return 'PDF';
+  if (type === 'docx') return 'DOCX';
+  if (type === 'doc') return 'DOC';
+  if (type === 'csv') return 'CSV';
+  if (type === 'txt' || type === 'text') return 'TXT';
+  if (type.length > 0) return type.substring(0, 3).toUpperCase();
+  return 'FILE';
+};
+
+const INITIAL_DOCUMENTS_SHOWN = 12;
 
 export function ProjectDocuments({ projectId }: ProjectDocumentsProps) {
   const [documents, setDocuments] = useState<ProjectDocument[]>([]);
@@ -51,9 +116,25 @@ export function ProjectDocuments({ projectId }: ProjectDocumentsProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [organizationConnected, setOrganizationConnected] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState('all');
   const [expandedIndexes, setExpandedIndexes] = useState<Record<string, boolean>>({});
   const [shownDocuments, setShownDocuments] = useState<Record<string, number>>({});
   const { toast } = useToast();
+
+  // Helper function to determine file type from filename
+  const getFileTypeFromFilename = (filename: string): string => {
+    const extension = filename.split('.').pop()?.toLowerCase() || '';
+    const fileTypeMap: Record<string, string> = {
+      'pdf': 'pdf',
+      'doc': 'doc',
+      'docx': 'docx',
+      'csv': 'csv',
+      'txt': 'text',
+      'json': 'json'
+    };
+    return fileTypeMap[extension] || 'other';
+  };
 
   const fetchProjectDocuments = async () => {
     try {
@@ -117,6 +198,7 @@ export function ProjectDocuments({ projectId }: ProjectDocumentsProps) {
         created_at: doc.created_at,
         updated_at: doc.updated_at,
         size_bytes: doc.file_size,
+        file_type: doc.file_type || getFileTypeFromFilename(doc.file_name || doc.name || ''),
       }));
 
       setDocuments(filteredDocuments);
@@ -198,8 +280,6 @@ export function ProjectDocuments({ projectId }: ProjectDocumentsProps) {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
     });
   };
 
@@ -218,6 +298,17 @@ export function ProjectDocuments({ projectId }: ProjectDocumentsProps) {
         return 'bg-gray-100 text-gray-800';
     }
   };
+
+  // Filter documents based on search term and active tab
+  const filteredDocuments = documents.filter(doc => {
+    const matchesSearch = doc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         doc.indexName?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesTab = activeTab === 'all' || doc.file_type === activeTab;
+    return matchesSearch && matchesTab;
+  });
+
+  // Extract unique file types for tab filters
+  const fileTypes = Array.from(new Set(documents.map(doc => doc.file_type).filter(Boolean))) as string[];
 
   if (isLoading) {
     return (
@@ -320,7 +411,7 @@ export function ProjectDocuments({ projectId }: ProjectDocumentsProps) {
   }
 
   // Group documents by index
-  const documentsByIndex = documents.reduce((acc, doc) => {
+  const documentsByIndex = filteredDocuments.reduce((acc, doc) => {
     if (!acc[doc.indexName]) {
       acc[doc.indexName] = [];
     }
@@ -357,95 +448,166 @@ export function ProjectDocuments({ projectId }: ProjectDocumentsProps) {
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {Object.entries(documentsByIndex).map(([indexName, indexDocs]) => {
-              const isExpanded = expandedIndexes[indexName] || false;
-              const shownCount = shownDocuments[indexName] || INITIAL_DOCUMENTS_SHOWN;
-              const hasMore = indexDocs.length > shownCount;
-              const visibleDocs = indexDocs.slice(0, shownCount);
+          <div className="space-y-6">
+            {/* Search and Filter Controls */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-between">
+              <div className="relative w-full sm:w-96">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                <Input
+                  placeholder="Search documents and indexes..."
+                  className="pl-10"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
               
-              return (
-                <Card key={indexName} className="border-l-4 border-l-blue-500">
-                  <Collapsible open={isExpanded} onOpenChange={() => toggleIndex(indexName)}>
-                    <CollapsibleTrigger asChild>
-                      <CardHeader className="pb-3 cursor-pointer hover:bg-muted/50 transition-colors">
-                        <CardTitle className="text-base flex items-center">
-                          {isExpanded ? (
-                            <ChevronDown className="mr-2 h-4 w-4" />
-                          ) : (
-                            <ChevronRight className="mr-2 h-4 w-4" />
-                          )}
-                          <Database className="mr-2 h-4 w-4" />
-                          {indexName}
-                          <Badge variant="secondary" className="ml-2">
-                            {indexDocs.length} {indexDocs.length === 1 ? 'document' : 'documents'}
-                          </Badge>
-                        </CardTitle>
-                      </CardHeader>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      <CardContent className="pt-0">
-                        <div className="space-y-3">
-                          {visibleDocs.map((doc) => (
-                            <div
-                              key={doc.id}
-                              className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors"
-                            >
-                              <div className="flex items-center space-x-3 min-w-0 flex-1">
-                                <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                                <div className="min-w-0 flex-1">
-                                  <p className="font-medium truncate">{doc.name}</p>
-                                  <div className="flex items-center space-x-3 text-sm text-muted-foreground">
-                                    <span className="flex items-center">
-                                      <Calendar className="mr-1 h-3 w-3" />
-                                      {formatDate(doc.updated_at)}
-                                    </span>
-                                    <span>{formatFileSize(doc.size_bytes)}</span>
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <Badge className={getStatusColor(doc.status)}>
-                                  {doc.status}
-                                </Badge>
-                                <Button variant="ghost" size="sm" asChild>
-                                  <a
-                                    href={`https://cloud.llamaindex.ai/project/${doc.indexId}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                  >
-                                    <ExternalLink className="h-3 w-3" />
-                                  </a>
+              {fileTypes.length > 0 && (
+                <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full sm:w-auto">
+                  <TabsList>
+                    <TabsTrigger value="all">All</TabsTrigger>
+                    {fileTypes.map(type => (
+                      <TabsTrigger key={type} value={type}>
+                        {type.charAt(0).toUpperCase() + type.slice(1)}
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                </Tabs>
+              )}
+            </div>
+
+            {/* Documents Grid */}
+            {filteredDocuments.length === 0 ? (
+              <div className="text-center py-8">
+                <FileText className="mx-auto h-8 w-8 text-muted-foreground mb-3" />
+                <h3 className="text-lg font-medium mb-2">No documents found</h3>
+                <p className="text-muted-foreground">
+                  Try adjusting your search or filters
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {Object.entries(documentsByIndex).map(([indexName, indexDocs]) => {
+                  const isExpanded = expandedIndexes[indexName] || false;
+                  const shownCount = shownDocuments[indexName] || INITIAL_DOCUMENTS_SHOWN;
+                  const hasMore = indexDocs.length > shownCount;
+                  const visibleDocs = indexDocs.slice(0, shownCount);
+                  
+                  return (
+                    <Card key={indexName} className="border-l-4 border-l-blue-500">
+                      <Collapsible open={isExpanded} onOpenChange={() => toggleIndex(indexName)}>
+                        <CollapsibleTrigger asChild>
+                          <CardHeader className="pb-3 cursor-pointer hover:bg-muted/50 transition-colors">
+                            <CardTitle className="text-base flex items-center">
+                              {isExpanded ? (
+                                <ChevronDown className="mr-2 h-4 w-4" />
+                              ) : (
+                                <ChevronRight className="mr-2 h-4 w-4" />
+                              )}
+                              <Database className="mr-2 h-4 w-4" />
+                              {indexName}
+                              <Badge variant="secondary" className="ml-2">
+                                {indexDocs.length} {indexDocs.length === 1 ? 'document' : 'documents'}
+                              </Badge>
+                            </CardTitle>
+                          </CardHeader>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <CardContent className="pt-0">
+                            {/* Beautiful Card Grid */}
+                            <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-5">
+                              {visibleDocs.map((doc) => {
+                                const styles = getDocumentCardStyles(doc.file_type || '');
+                                const pillText = getPillText(doc.file_type || '');
+                                const displayName = doc.name;
+
+                                return (
+                                  <Card key={doc.id} className="rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out flex flex-col bg-white">
+                                    <CardContent className="flex flex-col items-center p-5 text-center flex-grow w-full">
+                                      {/* Icon Area */}
+                                      <div className={cn(
+                                          "w-[80px] h-[100px] mb-4 rounded-md flex flex-col items-center justify-center pt-2 pb-1 px-1 relative shrink-0",
+                                          styles.iconBgClass
+                                      )}>
+                                        <FileText size={36} className={cn("mb-auto", styles.iconColorClass)} />
+                                        <div className={cn(
+                                            "text-[10px] font-bold leading-none py-1 px-2 rounded shadow-sm",
+                                            styles.textPillBgClass, styles.textPillTextColorClass
+                                        )}>
+                                          {pillText}
+                                        </div>
+                                        {/* Status indicator */}
+                                        {doc.status === 'success' || doc.status === 'completed' ? (
+                                          <div className="absolute top-[calc(50%-13px)] right-[5px] bg-white rounded-full p-0.5 shadow-md">
+                                            <CheckCircle2 size={16} className="text-green-500 block" />
+                                          </div>
+                                        ) : doc.status === 'processing' ? (
+                                          <div className="absolute top-[calc(50%-13px)] right-[5px] bg-white rounded-full p-0.5 shadow-md flex items-center justify-center">
+                                            <CircleDashed size={16} className="text-blue-500 block" />
+                                          </div>
+                                        ) : null}
+                                      </div>
+
+                                      <h3 className="text-sm font-semibold mb-1 leading-tight truncate w-full px-1" title={displayName}>
+                                        {displayName}
+                                      </h3>
+                                      
+                                      {/* Status Badge */}
+                                      <div className="mb-1">
+                                        <Badge variant="outline" className={cn("text-xs px-1.5 py-0.5", getStatusColor(doc.status))}>
+                                          {doc.status}
+                                        </Badge>
+                                      </div>
+                                      
+                                      <p className="text-xs text-gray-500 mb-3">{formatDate(doc.created_at)}</p>
+
+                                      {/* File size info */}
+                                      <div className="flex items-center text-xs text-gray-600 mt-auto pt-1 min-h-[20px]">
+                                        <span className="text-gray-400 text-[11px]">{formatFileSize(doc.size_bytes)}</span>
+                                      </div>
+                                      
+                                      {/* External link button */}
+                                      <Button variant="ghost" size="sm" className="mt-2 w-full" asChild>
+                                        <a
+                                          href={`https://cloud.llamaindex.ai/project/${doc.indexId}`}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                        >
+                                          <ExternalLink className="h-3 w-3 mr-1" />
+                                          View in LlamaCloud
+                                        </a>
+                                      </Button>
+                                    </CardContent>
+                                  </Card>
+                                );
+                              })}
+                            </div>
+                            
+                            {hasMore && (
+                              <div className="flex justify-center space-x-2 pt-6 border-t mt-6">
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  onClick={() => showMoreDocuments(indexName)}
+                                >
+                                  Show {Math.min(INITIAL_DOCUMENTS_SHOWN, indexDocs.length - shownCount)} more
+                                </Button>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  onClick={() => showAllDocuments(indexName, indexDocs.length)}
+                                >
+                                  Show all ({indexDocs.length})
                                 </Button>
                               </div>
-                            </div>
-                          ))}
-                          
-                          {hasMore && (
-                            <div className="flex justify-center space-x-2 pt-4 border-t">
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                onClick={() => showMoreDocuments(indexName)}
-                              >
-                                Show {Math.min(INITIAL_DOCUMENTS_SHOWN, indexDocs.length - shownCount)} more
-                              </Button>
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                onClick={() => showAllDocuments(indexName, indexDocs.length)}
-                              >
-                                Show all ({indexDocs.length})
-                              </Button>
-                            </div>
-                          )}
-                        </div>
-                      </CardContent>
-                    </CollapsibleContent>
-                  </Collapsible>
-                </Card>
-              );
-            })}
+                            )}
+                          </CardContent>
+                        </CollapsibleContent>
+                      </Collapsible>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
       </CardContent>

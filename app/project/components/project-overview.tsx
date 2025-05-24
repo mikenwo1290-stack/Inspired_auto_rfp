@@ -12,8 +12,6 @@ import { AlertCircle, Calendar, CheckCircle2, Clock, FileText, FolderOpen, Messa
 import { RfpDocument } from "@/types/api"
 import { formatDistanceToNow, format } from "date-fns"
 import { cn } from "@/lib/utils"
-import { ProjectIndexSelector } from "@/components/projects/ProjectIndexSelector"
-import { ProjectDocuments } from "@/components/projects/ProjectDocuments"
 
 interface ProjectOverviewProps {
   onViewQuestions: () => void;
@@ -198,29 +196,6 @@ export function ProjectOverview({ onViewQuestions, projectId, orgId }: ProjectOv
         
       </div>
 
-      {/* Project Index Selection */}
-      {projectId && (
-        <ProjectIndexSelector projectId={projectId} />
-      )}
-
-      {/* Project Documents */}
-      {projectId && (
-        <ProjectDocuments projectId={projectId} />
-      )}
-
-      {answeredQuestions < totalQuestions && (
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Attention Required</AlertTitle>
-          <AlertDescription>
-            {totalQuestions - answeredQuestions} {totalQuestions - answeredQuestions === 1 ? 'question needs' : 'questions need'} to be answered.
-            <Button size="sm" variant="link" className="p-0 ml-2" onClick={onViewQuestions}>
-              View Questions
-            </Button>
-          </AlertDescription>
-        </Alert>
-      )}
-
       <div className="grid gap-4 md:grid-cols-7">
 
 
@@ -257,6 +232,19 @@ export function ProjectOverview({ onViewQuestions, projectId, orgId }: ProjectOv
           </CardContent>
         </Card>
       </div>
+
+      {answeredQuestions < totalQuestions && (
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Attention Required</AlertTitle>
+          <AlertDescription>
+            {totalQuestions - answeredQuestions} {totalQuestions - answeredQuestions === 1 ? 'question needs' : 'questions need'} to be answered.
+            <Button size="sm" variant="link" className="p-0 ml-2" onClick={onViewQuestions}>
+              View Questions
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
 
     </div>
   );
