@@ -169,7 +169,7 @@ export function SettingsContent({ orgId }: SettingsContentProps) {
                 />
 
                 {/* Slack Integration */}
-                <Card>
+                {/* <Card>
                   <CardHeader>
                     <CardTitle>Slack Integration</CardTitle>
                     <CardDescription>
@@ -199,7 +199,7 @@ export function SettingsContent({ orgId }: SettingsContentProps) {
                       {isSaving ? "Saving..." : "Save Changes"}
                     </Button>
                   </CardFooter>
-                </Card>
+                </Card> */}
               </div>
             </TabsContent>
             
