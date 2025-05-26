@@ -99,7 +99,7 @@ export default function NewOrganizationPage() {
                   required
                 />
               </div>
-              <div className="grid gap-2">
+              <div className="grid gap-2 mb-4">
                 <Label htmlFor="description">Description (optional)</Label>
                 <Textarea
                   id="description"
