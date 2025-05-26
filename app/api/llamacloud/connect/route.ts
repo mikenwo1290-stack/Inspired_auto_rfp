@@ -4,7 +4,7 @@ import { organizationService } from '@/lib/organization-service';
 
 export async function POST(request: NextRequest) {
   try {
-    const { organizationId, apiKey, projectId, projectName } = await request.json();
+    const { organizationId, apiKey, projectId, projectName, llamaCloudOrgName } = await request.json();
     const currentUser = await organizationService.getCurrentUser();
     
     if (!currentUser) {
@@ -85,6 +85,7 @@ export async function POST(request: NextRequest) {
         llamaCloudApiKey: apiKey,
         llamaCloudProjectId: projectId,
         llamaCloudProjectName: projectName,
+        llamaCloudOrgName: llamaCloudOrgName,
         llamaCloudConnectedAt: new Date(),
       },
     });

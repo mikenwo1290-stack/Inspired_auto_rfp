@@ -39,6 +39,7 @@ model Organization {
   llamaCloudApiKey       String?   @db.Text
   llamaCloudProjectId    String?
   llamaCloudProjectName  String?
+  llamaCloudOrgName      String?
   llamaCloudConnectedAt  DateTime?
 
   // Relationships

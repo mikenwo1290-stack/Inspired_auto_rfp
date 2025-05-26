@@ -2,35 +2,76 @@ import { env, validateEnv } from "./env";
 import { documentStore } from "./document-service";
 import { LlamaCloudIndex, ContextChatEngine } from "llamaindex";
 
+interface LlamaIndexConfig {
+  apiKey?: string;
+  projectName?: string;
+  indexNames?: string[];
+}
+
 /**
  * Service for interacting with LlamaIndex Cloud API
  */
 export class LlamaIndexService {
   private apiKey: string;
-  private index: LlamaCloudIndex;
+  private projectName: string;
+  private indexNames?: string[];
+  private indexes: LlamaCloudIndex[] = [];
   
-  constructor() {
-    if (!validateEnv()) {
-      throw new Error('Required environment variables are missing');
+  constructor(config?: LlamaIndexConfig) {
+    if (config?.apiKey) {
+      // Use provided configuration (dynamic mode)
+      this.apiKey = config.apiKey;
+      this.projectName = config.projectName || 'Default';
+      this.indexNames = config.indexNames;
+    } else {
+      // Fallback to environment variables (for default responses)
+      if (!validateEnv()) {
+        throw new Error('Required environment variables are missing');
+      }
+      this.apiKey = env.LLAMA_CLOUD_API_KEY.apiKey;
+      this.projectName = 'Default';
     }
-    
-    this.apiKey = env.LLAMA_CLOUD_API_KEY.apiKey;
 
-    // Connect to existing LlamaCloud index
-    this.index = new LlamaCloudIndex({
-      name: "rfp_docs_new", // Update this to your actual index name
-      projectName: "Default", // Update this to your actual project name
-      apiKey: this.apiKey,
-    });
+    // Initialize indexes if specific names are provided
+    if (this.indexNames && this.indexNames.length > 0) {
+      this.indexes = this.indexNames.map(indexName => 
+        new LlamaCloudIndex({
+          name: indexName,
+          projectName: this.projectName,
+          apiKey: this.apiKey,
+        })
+      );
+    } else if (!config?.apiKey) {
+      // Only create default index if using environment config (backward compatibility)
+      this.indexes = [new LlamaCloudIndex({
+        name: "rfp_docs_new", // Keep for backward compatibility
+        projectName: this.projectName,
+        apiKey: this.apiKey,
+      })];
+    }
   }
   
   /**
    * Generate a response to a question using the specified documents
    */
-  async generateResponse(question: string, documentIds?: string[]) {
+  async generateResponse(question: string, options?: {
+    documentIds?: string[];
+    selectedIndexIds?: string[];
+    useAllIndexes?: boolean;
+  }) {
     try {
+      // Check if we have any indexes to work with
+      if (this.indexes.length === 0) {
+        console.log('No indexes available, falling back to default response');
+        return this.generateDefaultResponse(question);
+      }
+
+      // For now, use the first available index
+      // In the future, this could be enhanced to query multiple indexes and combine results
+      const index = this.indexes[0];
+      
       // Create a retriever with a specific top-k value
-      const retriever = this.index.asRetriever({
+      const retriever = index.asRetriever({
         similarityTopK: 5,
       });
 
@@ -103,7 +144,7 @@ export class LlamaIndexService {
    * Generate a default response when no documents are available
    * or when an error occurs
    */
-  private generateDefaultResponse(question: string) {
+  generateDefaultResponse(question: string) {
     // Sample responses based on question keywords
     const responses: Record<string, string> = {
       default: "Our solution provides comprehensive capabilities designed to meet and exceed your requirements. We employ industry best practices and leverage cutting-edge technology to deliver superior outcomes. Our team has extensive experience in implementing similar solutions across various industries.",

@@ -154,6 +154,7 @@ export function LlamaCloudConnection({ orgId, organization, onConnectionUpdate }
           apiKey: apiKey.trim(),
           projectId: selectedProjectId,
           projectName: selectedProject?.name || 'Unknown Project',
+          llamaCloudOrgName: selectedProject?.organization_name || 'Unknown Organization',
         }),
       });
 
@@ -254,14 +255,22 @@ export function LlamaCloudConnection({ orgId, organization, onConnectionUpdate }
               <CheckCircle2 className="h-4 w-4" />
               <AlertTitle>Connected to LlamaCloud</AlertTitle>
               <AlertDescription>
-                Your organization is connected to the LlamaCloud project "{connectedProjectName}"
+                {organization?.llamaCloudOrgName && organization?.llamaCloudProjectName ? 
+                  `Connected to ${organization.llamaCloudOrgName} - ${organization.llamaCloudProjectName}` :
+                  `Your organization is connected to the LlamaCloud project "${connectedProjectName}"`
+                }
               </AlertDescription>
             </Alert>
 
             <div className="flex items-center justify-between p-4 border rounded-lg">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="font-medium">{connectedProjectName}</span>
+                  <span className="font-medium">
+                    {organization?.llamaCloudOrgName 
+                      ? `${organization.llamaCloudOrgName} - ${connectedProjectName}`
+                      : connectedProjectName
+                    }
+                  </span>
                   <Badge variant="secondary">Connected</Badge>
                 </div>
                 <p className="text-sm text-muted-foreground">
