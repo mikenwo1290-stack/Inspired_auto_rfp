@@ -4,11 +4,12 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Calendar, FileText, Search, CheckCircle2, CircleDashed, Users } from 'lucide-react'
+import { Calendar, FileText, Search, CheckCircle2, CircleDashed, Users, AlertCircle } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Input } from '@/components/ui/input'
 import DocumentDetail from './DocumentDetail'
 import { cn } from '@/lib/utils'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 
 interface DocumentData {
   id: string
@@ -17,16 +18,15 @@ interface DocumentData {
   file_type: string
   size_bytes: number
   metadata?: Record<string, any>
+  organizationName?: string
+  organizationId?: string
 }
 
-// NOTE: For production use, create a .env.local file with the following variables:
-// NEXT_PUBLIC_LLAMAINDEX_API_KEY=your_api_key_here
-// NEXT_PUBLIC_LLAMAINDEX_PROJECT_ID=your_project_id_here
-// NEXT_PUBLIC_LLAMAINDEX_ORGANIZATION_ID=your_organization_id_here
-const PROJECT_ID = process.env.NEXT_PUBLIC_LLAMAINDEX_PROJECT_ID || ''
-const ORGANIZATION_ID = process.env.NEXT_PUBLIC_LLAMAINDEX_ORGANIZATION_ID || ''
-const API_BASE_URL = 'https://api.cloud.llamaindex.ai/api/v1'
-const LLAMA_CLOUD_API_KEY = process.env.LLAMA_CLOUD_API_KEY || ''
+interface OrganizationData {
+  id: string
+  name: string
+  llamaCloudConnectedAt: string | null
+}
 
 // Helper functions for new card design
 const getDocumentCardStyles = (fileType: string): {
@@ -90,6 +90,7 @@ const getPillText = (fileType: string): string => {
 
 export default function DocumentList() {
   const [documents, setDocuments] = useState<DocumentData[]>([])
+  const [organizations, setOrganizations] = useState<OrganizationData[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
@@ -97,49 +98,92 @@ export default function DocumentList() {
   const [activeTab, setActiveTab] = useState('all')
 
   useEffect(() => {
-    const fetchDocuments = async () => {
+    const fetchUserOrganizations = async () => {
       try {
-        const response = await fetch(
-          `${API_BASE_URL}/files?project_id=${PROJECT_ID}&organization_id=${ORGANIZATION_ID}`, 
-          {
-            headers: {
-              'Authorization': `Bearer ${LLAMA_CLOUD_API_KEY}`,
-              'Content-Type': 'application/json'
-            }
-          }
-        )
+        const response = await fetch('/api/organizations')
         
         if (!response.ok) {
-          throw new Error(`API error: ${response.status}`)
+          throw new Error(`Failed to fetch organizations: ${response.status}`)
         }
         
-        const data = await response.json()
+        const orgData = await response.json()
         
-        // Transform the API response to match our DocumentData interface
-        const documentList: DocumentData[] = data.map((file: any) => ({
-          id: file.id,
-          filename: file.name || `document-${file.id}`,
-          created_at: file.created_at || new Date().toISOString(),
-          file_type: file.file_type || getFileTypeFromFilename(file.name || ''),
-          size_bytes: file.file_size || 0,
-          metadata: {
-            external_file_id: file.external_file_id,
-            project_id: file.project_id,
-            last_modified_at: file.last_modified_at,
-            ...file.resource_info
+        // Filter organizations that have LlamaCloud connections
+        const connectedOrgs = orgData.filter((org: OrganizationData) => org.llamaCloudConnectedAt)
+        setOrganizations(connectedOrgs)
+        
+        return connectedOrgs
+      } catch (err) {
+        console.error('Error fetching organizations:', err)
+        throw err
+      }
+    }
+
+    const fetchDocumentsFromOrganizations = async (orgs: OrganizationData[]) => {
+      const allDocuments: DocumentData[] = []
+      
+      // Fetch documents from each connected organization
+      for (const org of orgs) {
+        try {
+          const response = await fetch(`/api/llamacloud/documents?organizationId=${org.id}`)
+          
+          if (response.ok) {
+            const data = await response.json()
+            
+            // Transform documents and add organization context
+            const orgDocuments = (data.documents || []).map((doc: any) => ({
+              id: `${org.id}-${doc.id}`, // Make unique across organizations
+              filename: doc.name,
+              created_at: doc.created_at,
+              file_type: doc.file_type || getFileTypeFromFilename(doc.name || ''),
+              size_bytes: doc.size_bytes || 0,
+              metadata: {
+                pipelineName: doc.pipelineName,
+                pipelineId: doc.pipelineId,
+                status: doc.status,
+                originalId: doc.id,
+                ...doc
+              },
+              organizationName: org.name,
+              organizationId: org.id
+            }))
+            
+            allDocuments.push(...orgDocuments)
           }
-        }))
+        } catch (orgError) {
+          console.error(`Error fetching documents for organization ${org.name}:`, orgError)
+          // Continue with other organizations even if one fails
+        }
+      }
+      
+      return allDocuments
+    }
+
+    const fetchAllData = async () => {
+      try {
+        setIsLoading(true)
+        setError(null)
         
-        setDocuments(documentList)
-        setIsLoading(false)
+        const connectedOrgs = await fetchUserOrganizations()
+        
+        if (connectedOrgs.length === 0) {
+          setDocuments([])
+          setIsLoading(false)
+          return
+        }
+        
+        const allDocuments = await fetchDocumentsFromOrganizations(connectedOrgs)
+        setDocuments(allDocuments)
+        
       } catch (err) {
         console.error('Error fetching documents:', err)
         setError('Failed to fetch documents. Please try again later.')
+      } finally {
         setIsLoading(false)
       }
     }
 
-    fetchDocuments()
+    fetchAllData()
   }, [])
 
   // Helper function to determine file type from filename if not provided by API
@@ -160,7 +204,8 @@ export default function DocumentList() {
 
   // Filter documents based on search term and active tab
   const filteredDocuments = documents.filter(doc => {
-    const matchesSearch = doc.filename.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch = doc.filename.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         doc.organizationName?.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesTab = activeTab === 'all' || doc.file_type === activeTab
     return matchesSearch && matchesTab
   })
@@ -248,13 +293,39 @@ export default function DocumentList() {
   // Extract unique file types for tab filters
   const fileTypes = Array.from(new Set(documents.map(doc => doc.file_type)))
 
+  if (filteredDocuments.length === 0) {
+    if (organizations.length === 0) {
+      return (
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>No Connected Organizations</AlertTitle>
+          <AlertDescription>
+            No organizations with LlamaCloud connections found. Connect an organization to LlamaCloud to view documents.
+          </AlertDescription>
+        </Alert>
+      )
+    }
+    
+    return (
+      <Card className="w-full">
+        <CardContent className="pt-6">
+          <div className="flex flex-col items-center justify-center h-64">
+            <FileText className="text-gray-400 mb-4" size={48} />
+            <p className="text-xl font-medium text-gray-600">No documents found</p>
+            <p className="text-gray-400">Try adjusting your search or filters</p>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row gap-4 justify-between">
         <div className="relative w-full sm:w-96">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
           <Input
-            placeholder="Search documents..."
+            placeholder="Search documents and organizations..."
             className="pl-10"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -273,17 +344,7 @@ export default function DocumentList() {
         </Tabs>
       </div>
 
-      {filteredDocuments.length === 0 ? (
-        <Card className="w-full">
-          <CardContent className="pt-6">
-            <div className="flex flex-col items-center justify-center h-64">
-              <FileText className="text-gray-400 mb-4" size={48} />
-              <p className="text-xl font-medium text-gray-600">No documents found</p>
-              <p className="text-gray-400">Try adjusting your search or filters</p>
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
+      {filteredDocuments.length > 0 && (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-5">
           {filteredDocuments.map((doc) => {
             const styles = getDocumentCardStyles(doc.file_type);
@@ -325,6 +386,16 @@ export default function DocumentList() {
                   <h3 className="text-sm font-semibold mb-1 leading-tight truncate w-full px-1" title={displayName}>
                     {displayName}
                   </h3>
+                  
+                  {/* Organization Badge */}
+                  {doc.organizationName && (
+                    <div className="mb-1">
+                      <Badge variant="outline" className="text-xs px-1.5 py-0.5">
+                        {doc.organizationName}
+                      </Badge>
+                    </div>
+                  )}
+                  
                   <p className="text-xs text-gray-500 mb-3">{formatDate(doc.created_at)}</p>
 
                   {/* User Info Placeholder - adapt if data is in metadata */}

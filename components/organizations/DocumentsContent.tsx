@@ -79,8 +79,6 @@ export function DocumentsContent({ orgId }: DocumentsContentProps) {
 
           {/* LlamaCloud Section */}
           <div className="space-y-4">
-            
-            
             {isLoading ? (
               <Card>
                 <CardContent className="py-6">

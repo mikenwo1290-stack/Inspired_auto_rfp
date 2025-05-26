@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
-import { AlertCircle, CheckCircle, Filter, Search, Sparkles, Download, Save, Upload, Plus, FileText } from "lucide-react"
+import { AlertCircle, CheckCircle, Filter, Search, Sparkles, Download, Save, Upload, Plus, FileText, Database, Settings } from "lucide-react"
 import { QuestionNavigator } from "../../project/components/question-navigator"
 import { AISuggestionsPanel } from "../../project/components/ai-suggestions-panel"
 import { Spinner } from "@/components/ui/spinner"
@@ -19,11 +19,30 @@ import { cn } from "@/lib/utils"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { AnswerDisplay } from "@/components/ui/answer-display"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Checkbox } from "@/components/ui/checkbox"
 
 // Interface for answer data
 interface AnswerData {
   text: string;
   sources?: AnswerSource[];
+}
+
+// Interface for project indexes
+interface ProjectIndex {
+  id: string;
+  name: string;
+}
+
+interface AnswerGenerationSettings {
+  selectedIndexIds: string[];
+  useAllIndexes: boolean;
 }
 
 // No Questions Available Component
@@ -110,6 +129,11 @@ function QuestionsSectionInner() {
   const [selectedSource, setSelectedSource] = useState<AnswerSource | null>(null)
   const [isSourceModalOpen, setIsSourceModalOpen] = useState(false)
   const [isTextTabActive, setIsTextTabActive] = useState(true)
+  const [selectedIndexes, setSelectedIndexes] = useState<Set<string>>(new Set())
+  const [availableIndexes, setAvailableIndexes] = useState<ProjectIndex[]>([])
+  const [isLoadingIndexes, setIsLoadingIndexes] = useState(false)
+  const [organizationConnected, setOrganizationConnected] = useState(false)
+  const [showIndexSelector, setShowIndexSelector] = useState(false)
 
   // Load project data and questions when component mounts
   useEffect(() => {
@@ -132,6 +156,54 @@ function QuestionsSectionInner() {
         console.error("Error loading project:", error);
         setError("Failed to load project. Please try again.");
         setIsLoading(false);
+      }
+    };
+
+    // Fetch available indexes for the project
+    const fetchIndexes = async () => {
+      setIsLoadingIndexes(true);
+      try {
+        const response = await fetch(`/api/projects/${projectId}/indexes`);
+        if (response.ok) {
+          const data = await response.json();
+          setOrganizationConnected(data.organizationConnected);
+          if (data.organizationConnected) {
+            // Use availableIndexes for the full list of what's available
+            const indexes = data.availableIndexes || [] as ProjectIndex[];
+            setAvailableIndexes(indexes);
+            
+            // Use currentIndexes (saved project configuration) for auto-selection
+            const currentIndexes = data.currentIndexes || [] as ProjectIndex[];
+            const currentIndexIds = new Set(currentIndexes.map((index: ProjectIndex) => index.id)) as Set<string>;
+            setSelectedIndexes(currentIndexIds);
+          }
+        } else {
+          // Handle API errors gracefully
+          const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+          console.error("Error response from indexes API:", errorData);
+          
+          // If there's an index validation error, clear the selected indexes
+          if (errorData.error?.includes('Invalid index IDs')) {
+            setSelectedIndexes(new Set());
+            toast({
+              title: "Index Sync Issue",
+              description: "Some project indexes are out of sync. Please reconfigure your document indexes in project settings.",
+              variant: "destructive",
+            });
+          }
+          
+          // Still set organization as connected if it's a validation error (not a connection error)
+          setOrganizationConnected(true);
+          setAvailableIndexes([]);
+        }
+      } catch (error) {
+        console.error("Error loading indexes:", error);
+        // On network errors, assume not connected
+        setOrganizationConnected(false);
+        setAvailableIndexes([]);
+        setSelectedIndexes(new Set());
+      } finally {
+        setIsLoadingIndexes(false);
       }
     };
 
@@ -175,10 +247,32 @@ function QuestionsSectionInner() {
     };
 
     // Fetch both project and questions
-    Promise.all([fetchProject(), fetchQuestions()]).catch(error => {
+    Promise.all([fetchProject(), fetchIndexes(), fetchQuestions()]).catch(error => {
       console.error("Error in parallel loading:", error);
     });
   }, [projectId]);
+
+  // Handle index selection
+  const handleIndexToggle = (indexId: string) => {
+    setSelectedIndexes(prev => {
+      const newSelected = new Set(prev);
+      if (newSelected.has(indexId)) {
+        newSelected.delete(indexId);
+      } else {
+        newSelected.add(indexId);
+      }
+      return newSelected;
+    });
+  };
+
+  // Toggle all indexes
+  const handleSelectAllIndexes = () => {
+    if (selectedIndexes.size === availableIndexes.length) {
+      setSelectedIndexes(new Set());
+    } else {
+      setSelectedIndexes(new Set(availableIndexes.map(index => index.id)));
+    }
+  };
 
   // Handle answer changes
   const handleAnswerChange = (questionId: string, value: string) => {
@@ -326,7 +420,10 @@ function QuestionsSectionInner() {
         },
         body: JSON.stringify({
           question: question.question,
-          documentIds: project?.documentIds || []
+          documentIds: project?.documentIds || [],
+          selectedIndexIds: Array.from(selectedIndexes),
+          useAllIndexes: false,
+          projectId: projectId
         }),
       });
       
@@ -396,7 +493,10 @@ function QuestionsSectionInner() {
             },
             body: JSON.stringify({
               question: question.question,
-              documentIds: project?.documentIds || []
+              documentIds: project?.documentIds || [],
+              selectedIndexIds: Array.from(selectedIndexes),
+              useAllIndexes: false,
+              projectId: projectId
             }),
           });
           
@@ -770,6 +870,7 @@ function QuestionsSectionInner() {
             className="gap-1"
             onClick={handleGenerateAllAnswers}
             disabled={isGeneratingAll}
+            title={selectedIndexes.size === 0 ? "No indexes selected - will use default responses" : `Will use ${selectedIndexes.size} selected ${selectedIndexes.size === 1 ? 'index' : 'indexes'}`}
           >
             {isGeneratingAll ? (
               <>
@@ -780,11 +881,128 @@ function QuestionsSectionInner() {
               <>
                 <Sparkles className="h-4 w-4" />
                 Generate All
+                {selectedIndexes.size > 0 && (
+                  <Badge variant="secondary" className="ml-1 text-xs bg-white/20">
+                    {selectedIndexes.size} {selectedIndexes.size === 1 ? 'index' : 'indexes'}
+                  </Badge>
+                )}
               </>
             )}
           </Button>
         </div>
       </div>
+
+      {/* Index Selection Panel */}
+      {organizationConnected && availableIndexes.length > 0 && (
+        <Card className="mb-6">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Database className="h-5 w-5 text-muted-foreground" />
+                <CardTitle className="text-base">
+                  {availableIndexes.length === 1 
+                    ? availableIndexes[0].name
+                    : `${availableIndexes.length} Document Indexes`
+                  }
+                </CardTitle>
+                <Badge variant="outline" className="text-xs">
+                  {selectedIndexes.size} of {availableIndexes.length} selected
+                </Badge>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowIndexSelector(!showIndexSelector)}
+              >
+                <Settings className="h-4 w-4 mr-1" />
+                {showIndexSelector ? 'Hide' : 'Configure'}
+              </Button>
+            </div>
+            {selectedIndexes.size === 0 && (
+              <p className="text-sm text-amber-600 mt-2">
+                ⚠️ No indexes selected. AI generation will use default responses.
+              </p>
+            )}
+          </CardHeader>
+          
+          {showIndexSelector && (
+            <CardContent className="pt-0">
+              <div className="space-y-4">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                  <p className="text-sm text-blue-800">
+                    <strong>Note:</strong> This selection is temporary for AI generation in this session. 
+                    To permanently configure project indexes, use the <strong>Documents</strong> tab.
+                  </p>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-muted-foreground">
+                    Select which document indexes to use when generating AI answers:
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSelectAllIndexes}
+                  >
+                    {selectedIndexes.size === availableIndexes.length ? 'Deselect All' : 'Select All'}
+                  </Button>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {availableIndexes.map((index) => (
+                    <div
+                      key={index.id}
+                      className={cn(
+                        "flex items-center space-x-3 p-3 border rounded-lg cursor-pointer transition-colors",
+                        selectedIndexes.has(index.id)
+                          ? "border-primary bg-primary/5"
+                          : "border-muted hover:border-muted-foreground/30"
+                      )}
+                      onClick={() => handleIndexToggle(index.id)}
+                    >
+                      <Checkbox
+                        checked={selectedIndexes.has(index.id)}
+                        onChange={() => handleIndexToggle(index.id)}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <Database className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                          <span className="font-medium text-sm truncate">{index.name}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                {selectedIndexes.size > 0 && (
+                  <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-sm text-green-800">
+                      ✓ AI will use documents from {selectedIndexes.size} selected {selectedIndexes.size === 1 ? 'index' : 'indexes'} to generate answers.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          )}
+        </Card>
+      )}
+
+      {/* No LlamaCloud Connection Warning */}
+      {!organizationConnected && (
+        <Card className="mb-6 border-amber-200 bg-amber-50">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="h-5 w-5 text-amber-600" />
+              <div>
+                <p className="font-medium text-amber-800">No Document Indexes Available</p>
+                <p className="text-sm text-amber-700">
+                  Connect your organization to LlamaCloud and select document indexes in the project settings to enable AI-powered answer generation.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {unsavedQuestions.size > 0 && (
         <div className="text-sm text-amber-600 flex items-center justify-end">
@@ -795,11 +1013,23 @@ function QuestionsSectionInner() {
       <SourceDetailsDialog />
 
       <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-4">
-          <TabsTrigger value="all">All Questions ({counts.all})</TabsTrigger>
-          <TabsTrigger value="answered">Answered ({counts.answered})</TabsTrigger>
-          <TabsTrigger value="unanswered">Unanswered ({counts.unanswered})</TabsTrigger>
-          <TabsTrigger value="flagged">Needs Review ({counts.flagged})</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="all" className="gap-1">
+            All Questions
+            <Badge variant="secondary" className="ml-1">{counts.all}</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="answered" className="gap-1">
+            Answered
+            <Badge variant="secondary" className="ml-1">{counts.answered}</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="unanswered" className="gap-1">
+            Unanswered
+            <Badge variant="secondary" className="ml-1">{counts.unanswered}</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="flagged" className="gap-1">
+            Needs Review
+            <Badge variant="secondary" className="ml-1">{counts.flagged}</Badge>
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="all" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-3">
@@ -902,9 +1132,20 @@ function QuestionsSectionInner() {
                               <>
                                 <Sparkles className="h-4 w-4" />
                                 Generate Answer
+                                {selectedIndexes.size > 0 && (
+                                  <Badge variant="secondary" className="ml-1 text-xs">
+                                    {selectedIndexes.size} {selectedIndexes.size === 1 ? 'index' : 'indexes'}
+                                  </Badge>
+                                )}
                               </>
                             )}
                           </Button>
+                          
+                          {selectedIndexes.size === 0 && (
+                            <span className="text-xs text-amber-600">
+                              No indexes selected - will use default responses
+                            </span>
+                          )}
                         </div>
                         <div className="flex items-center gap-2">
                           <Button 
@@ -1070,6 +1311,11 @@ function QuestionsSectionInner() {
                               <>
                                 <Sparkles className="h-4 w-4" />
                                 Generate Answer
+                                {selectedIndexes.size > 0 && (
+                                  <Badge variant="secondary" className="ml-1 text-xs">
+                                    {selectedIndexes.size} {selectedIndexes.size === 1 ? 'index' : 'indexes'}
+                                  </Badge>
+                                )}
                               </>
                             )}
                           </Button>
@@ -1211,7 +1457,7 @@ function QuestionsSectionInner() {
                       
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                 
+
                           <Button
                             variant="outline"
                             size="sm"
@@ -1228,6 +1474,11 @@ function QuestionsSectionInner() {
                               <>
                                 <Sparkles className="h-4 w-4" />
                                 Generate Answer
+                                {selectedIndexes.size > 0 && (
+                                  <Badge variant="secondary" className="ml-1 text-xs">
+                                    {selectedIndexes.size} {selectedIndexes.size === 1 ? 'index' : 'indexes'}
+                                  </Badge>
+                                )}
                               </>
                             )}
                           </Button>
@@ -1396,6 +1647,11 @@ function QuestionsSectionInner() {
                               <>
                                 <Sparkles className="h-4 w-4" />
                                 Generate Answer
+                                {selectedIndexes.size > 0 && (
+                                  <Badge variant="secondary" className="ml-1 text-xs">
+                                    {selectedIndexes.size} {selectedIndexes.size === 1 ? 'index' : 'indexes'}
+                                  </Badge>
+                                )}
                               </>
                             )}
                           </Button>

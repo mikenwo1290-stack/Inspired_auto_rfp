@@ -108,11 +108,31 @@ export async function GET(
         created_at: pipeline.created_at,
       }));
 
-      // Get current project indexes
-      const currentIndexes = project.projectIndexes.map(projectIndex => ({
-        id: projectIndex.indexId,
-        name: projectIndex.indexName,
-      }));
+      // Get current project indexes and filter out any that no longer exist in LlamaCloud
+      const availableIndexIds = new Set(availableIndexes.map((index: { id: string }) => index.id));
+      const currentIndexes = project.projectIndexes
+        .filter(projectIndex => availableIndexIds.has(projectIndex.indexId))
+        .map(projectIndex => ({
+          id: projectIndex.indexId,
+          name: projectIndex.indexName,
+        }));
+
+      // If we found stale indexes, clean them up in the database
+      const staleIndexes = project.projectIndexes.filter(
+        projectIndex => !availableIndexIds.has(projectIndex.indexId)
+      );
+      
+      if (staleIndexes.length > 0) {
+        console.log(`Cleaning up ${staleIndexes.length} stale project indexes`);
+        await db.projectIndex.deleteMany({
+          where: {
+            projectId,
+            indexId: {
+              in: staleIndexes.map(projectIndex => projectIndex.indexId)
+            }
+          }
+        });
+      }
 
       return NextResponse.json({
         project: {
@@ -259,6 +279,7 @@ export async function POST(
           { status: 400 }
         );
       }
+      
 
       // Remove existing project indexes
       await db.projectIndex.deleteMany({
