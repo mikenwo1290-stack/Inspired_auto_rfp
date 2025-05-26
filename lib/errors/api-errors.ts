@@ -69,6 +69,16 @@ export class DatabaseError extends ApiError {
   }
 }
 
+/**
+ * Configuration-related errors
+ */
+export class ConfigurationError extends ApiError {
+  constructor(message: string) {
+    super(message, 500, 'CONFIGURATION_ERROR');
+    this.name = 'ConfigurationError';
+  }
+}
+
 export function isApiError(error: unknown): error is ApiError {
   return error instanceof ApiError;
 } 
