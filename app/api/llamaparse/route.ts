@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     
     // Process the file using service layer
     const result = await llamaParseProcessingService.processFile(validatedRequest);
-    
+
     // Log success
     console.log(`Successfully processed file: ${validatedRequest.file.name} -> Document: ${result.documentId}`);
     

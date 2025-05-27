@@ -31,15 +31,15 @@ export class LlamaIndexService implements ILlamaIndexService {
       };
     } else {
       // Fallback to environment variables (for default responses)
-      if (!validateEnv()) {
-        throw new Error('Required environment variables are missing');
-      }
+    if (!validateEnv()) {
+      throw new Error('Required environment variables are missing');
+    }
       this.config = {
         apiKey: env.LLAMA_CLOUD_API_KEY.apiKey,
         projectName: 'Default',
       };
-    }
-
+  }
+  
     this.initializeIndexes();
   }
 
@@ -59,8 +59,8 @@ export class LlamaIndexService implements ILlamaIndexService {
       } else {
         // No specific indexes configured - will use default responses
         console.log('No specific indexes configured, will use default responses when needed');
-      }
-    } catch (error) {
+          }
+        } catch (error) {
       console.error('Failed to initialize LlamaCloud indexes:', error);
       // Don't throw here - allow fallback to default responses
     }
@@ -99,7 +99,7 @@ export class LlamaIndexService implements ILlamaIndexService {
       return this.generateDefaultResponse(question);
     }
   }
-
+  
   private async queryIndex(index: LlamaCloudIndex, question: string) {
     const retriever = index.asRetriever({
       similarityTopK: 5,

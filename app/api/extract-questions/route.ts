@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
     
     // Process document using service layer
     const result = await questionExtractionService.processDocument(validatedRequest);
-    
+
     // Log success metrics
     const stats = questionExtractionService.getExtractionStats(result);
     console.log(`Successfully extracted ${stats.sectionCount} sections and ${stats.questionCount} questions for project ${validatedRequest.projectId}`);
