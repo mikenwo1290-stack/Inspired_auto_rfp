@@ -55,13 +55,10 @@ export class LlamaIndexService implements ILlamaIndexService {
             })
           )
         );
-      } else if (!this.config.indexNames) {
-        // Only create default index if using environment config (backward compatibility)
-        this.indexes.push(new LlamaCloudIndex({
-          name: "rfp_docs_new", // Keep for backward compatibility
-          projectName: this.config.projectName,
-          apiKey: this.config.apiKey,
-        }));
+        console.log(`Initialized ${this.indexes.length} LlamaCloud indexes:`, this.config.indexNames);
+      } else {
+        // No specific indexes configured - will use default responses
+        console.log('No specific indexes configured, will use default responses when needed');
       }
     } catch (error) {
       console.error('Failed to initialize LlamaCloud indexes:', error);
@@ -75,10 +72,12 @@ export class LlamaIndexService implements ILlamaIndexService {
   ): Promise<ResponseResult> {
     try {
       if (this.indexes.length === 0) {
-        console.log('No indexes available, falling back to default response');
+        console.log('No LlamaCloud indexes configured, using default response service');
         return this.generateDefaultResponse(question);
       }
 
+      console.log(`Using LlamaCloud index: ${this.config.indexNames?.[0] || 'unknown'} (from ${this.indexes.length} available indexes)`);
+      
       // For now, use the first available index
       // TODO: Enhance to query multiple indexes and combine results
       const index = this.indexes[0];
@@ -96,6 +95,7 @@ export class LlamaIndexService implements ILlamaIndexService {
       }
       
       // Fallback to default response for other errors
+      console.log('Falling back to default response due to error');
       return this.generateDefaultResponse(question);
     }
   }

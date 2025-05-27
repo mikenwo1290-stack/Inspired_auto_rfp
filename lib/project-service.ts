@@ -133,7 +133,7 @@ export const projectService = {
                 // Check if question already exists to avoid duplicates
                 const existing = await tx.question.findFirst({
                   where: {
-                    id: questionItem.id,
+                    referenceId: questionItem.id,
                     projectId,
                   }
                 });
@@ -141,13 +141,15 @@ export const projectService = {
                 if (!existing) {
                   await tx.question.create({
                     data: {
-                      id: questionItem.id,
+                      referenceId: questionItem.id,
                       text: questionItem.question,
                       topic: section.title,
                       projectId,
                     },
                   });
                   questionsCreated++;
+                } else {
+                  console.log(`Question with referenceId ${questionItem.id} already exists, skipping`);
                 }
               } catch (error) {
                 console.error(`Error creating question ${questionItem.id}:`, error);
@@ -232,8 +234,9 @@ export const projectService = {
         acc[topic].push({
           id: question.id,
           question: question.text,
-          answer: question.answer?.text, // Get answer if exists
+          answer: question.answer?.text,
           sources: sources.length > 0 ? sources : undefined,
+          referenceId: question.referenceId ?? undefined,
         });
         
         return acc;

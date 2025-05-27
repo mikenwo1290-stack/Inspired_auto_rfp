@@ -100,9 +100,20 @@ export class ResponseGenerationService {
   }
 
   private getSelectedIndexNames(request: GenerateResponseRequest, project: ProjectWithOrganization): string[] {
-    return project.projectIndexes
-      .filter(projectIndex => request.selectedIndexIds!.includes(projectIndex.indexId))
+    console.log('DEBUG: getSelectedIndexNames called');
+    console.log('DEBUG: request.selectedIndexIds:', request.selectedIndexIds);
+    console.log('DEBUG: project.projectIndexes:', project.projectIndexes);
+    
+    const selectedIndexNames = project.projectIndexes
+      .filter(projectIndex => {
+        const isSelected = request.selectedIndexIds!.includes(projectIndex.indexId);
+        console.log(`DEBUG: Checking ${projectIndex.indexName} (${projectIndex.indexId}): ${isSelected}`);
+        return isSelected;
+      })
       .map(projectIndex => projectIndex.indexName);
+    
+    console.log('DEBUG: Final selectedIndexNames:', selectedIndexNames);
+    return selectedIndexNames;
   }
 
   private async generateDefaultResponse(question: string, note?: string): Promise<GenerateResponseResponse> {

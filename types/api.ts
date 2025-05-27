@@ -43,10 +43,11 @@ export interface ApiErrorResponse {
 
 // RFP Question structure
 export interface RfpQuestion {
-  id: string;
+  id: string; // Database primary key (CUID)
   question: string;
   answer?: string;
   sources?: AnswerSource[];
+  referenceId?: string; // AI-generated reference ID for document structure (e.g., "q_1234567890_1_1")
 }
 
 export interface RfpSection {
