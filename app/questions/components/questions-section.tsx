@@ -121,13 +121,23 @@ function QuestionsSectionInner() {
   const [useMultiStep, setUseMultiStep] = useState(false)
   const [multiStepDialogOpen, setMultiStepDialogOpen] = useState(false)
   const [currentQuestionForMultiStep, setCurrentQuestionForMultiStep] = useState<string | null>(null)
-  const { 
-    isGenerating: isMultiStepGenerating, 
-    response: multiStepResponse, 
-    error: multiStepError, 
-    generateResponse: generateMultiStepResponse, 
+  const [currentQuestionText, setCurrentQuestionText] = useState<string>("")
+  
+  // Use the new streaming multi-step response hook
+  const {
+    generateResponse: generateMultiStepResponse,
+    isGenerating: isMultiStepGenerating,
+    currentSteps: multiStepSteps,
+    finalResponse: multiStepFinalResponse,
+    sources: multiStepSources,
     reset: resetMultiStepResponse 
-  } = useMultiStepResponse()
+  } = useMultiStepResponse({
+    projectId: projectId || "",
+    indexIds: Array.from(selectedIndexes),
+    onComplete: (finalResponse, steps, sources) => {
+      handleAcceptMultiStepResponse(finalResponse, sources);
+    }
+  })
 
   // Load project data and questions when component mounts
   useEffect(() => {
@@ -306,6 +316,7 @@ function QuestionsSectionInner() {
     if (useMultiStep) {
       // Use multi-step reasoning
       setCurrentQuestionForMultiStep(questionId);
+      setCurrentQuestionText(question.question);
       setMultiStepDialogOpen(true);
       resetMultiStepResponse();
       
@@ -319,12 +330,7 @@ function QuestionsSectionInner() {
         return;
       }
       
-      await generateMultiStepResponse({
-        question: question.question,
-        questionId: questionId,
-        projectId: projectId,
-        indexIds: Array.from(selectedIndexes),
-      });
+      await generateMultiStepResponse(question.question);
     } else {
       // Use traditional single-step generation
       setIsGenerating(prev => ({ ...prev, [questionId]: true }));
@@ -423,16 +429,12 @@ function QuestionsSectionInner() {
     });
     
     try {
-      const response = await fetch(`/api/questions/${projectId}/answers`, {
+      const response = await fetch(`/api/questions/${projectId}/answers/${questionId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          questionId: questionId,
-          answer: answers[questionId]?.text || "",
-          sources: answers[questionId]?.sources || []
-        }),
+        body: JSON.stringify(answers[questionId]),
       });
       
       if (response.ok) {
@@ -1844,13 +1846,14 @@ function QuestionsSectionInner() {
       
       {/* Multi-step response dialog */}
       <MultiStepResponseDialog
-        open={multiStepDialogOpen}
-        onOpenChange={setMultiStepDialogOpen}
-        response={multiStepResponse}
-        isLoading={isMultiStepGenerating}
-        error={multiStepError}
-        onAcceptResponse={handleAcceptMultiStepResponse}
+        isOpen={multiStepDialogOpen}
         onClose={handleCloseMultiStepDialog}
+        questionText={currentQuestionText}
+        isGenerating={isMultiStepGenerating}
+        currentSteps={multiStepSteps}
+        finalResponse={multiStepFinalResponse}
+        sources={multiStepSources}
+        onAcceptResponse={handleAcceptMultiStepResponse}
       />
       
       <Toaster />
