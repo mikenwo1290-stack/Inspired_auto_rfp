@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, Suspense } from "react"
+import React, { useState, useEffect, Suspense, useMemo } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
-import { AlertCircle, CheckCircle, Filter, Search, Sparkles, Download, Save, Upload, Plus, FileText, Database, Settings } from "lucide-react"
+import { AlertCircle, CheckCircle, Filter, Search, Sparkles, Download, Save, Upload, Plus, FileText, Database, Settings, ChevronLeft, ChevronRight, MessageSquare, Brain } from "lucide-react"
 import { QuestionNavigator } from "../../project/components/question-navigator"
 import { AISuggestionsPanel } from "../../project/components/ai-suggestions-panel"
 import { Spinner } from "@/components/ui/spinner"
@@ -16,7 +16,7 @@ import { toast } from "@/components/ui/use-toast"
 import { Toaster } from "@/components/ui/toaster"
 import { RfpDocument, AnswerSource } from "@/types/api"
 import { cn } from "@/lib/utils"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogClose, DialogFooter } from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { AnswerDisplay } from "@/components/ui/answer-display"
 import {
@@ -27,6 +27,10 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
+import { useMultiStepResponse } from "@/hooks/use-multi-step-response"
+import { MultiStepResponseDialog } from "@/components/ui/multi-step-response-dialog"
+import { Label } from "@/components/ui/label"
+import { Switch } from "@/components/ui/switch"
 
 // Interface for answer data
 interface AnswerData {
@@ -58,45 +62,23 @@ function NoQuestionsAvailable({ projectId }: { projectId: string }) {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[500px] p-6">
-      <div className="text-center mb-8">
-        <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-        <h2 className="text-2xl font-bold mb-2">No Questions Available</h2>
-        <p className="text-muted-foreground max-w-md mx-auto">
-          Add questions to your RFP by uploading a document or creating questions manually.
+    <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed border-gray-300 rounded-lg">
+      <div className="text-center max-w-md">
+        <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+        <h3 className="text-lg font-medium text-gray-900 mb-2">No Questions Available</h3>
+        <p className="text-gray-500 mb-6">
+          To get started, upload documents for AI to extract questions automatically, or add questions manually.
         </p>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-3xl">
-        <Card className="transition-all hover:shadow-md">
-          <CardHeader>
-            <div className="flex items-center justify-center mb-2">
-              <Upload className="h-8 w-8 text-primary" />
-            </div>
-            <CardTitle className="text-center">Upload Document</CardTitle>
-            <CardDescription className="text-center">
-              Upload an RFP document to automatically extract questions.
-            </CardDescription>
-          </CardHeader>
-          <CardFooter className="flex justify-center">
-            <Button onClick={handleUploadClick} className="w-full" size="lg">Upload File</Button>
-          </CardFooter>
-        </Card>
-        
-        <Card className="transition-all hover:shadow-md">
-          <CardHeader>
-            <div className="flex items-center justify-center mb-2">
-              <Plus className="h-8 w-8 text-primary" />
-            </div>
-            <CardTitle className="text-center">Add Manually</CardTitle>
-            <CardDescription className="text-center">
-              Create and organize questions manually for your RFP.
-            </CardDescription>
-          </CardHeader>
-          <CardFooter className="flex justify-center">
-            <Button onClick={handleAddManuallyClick} variant="outline" className="w-full" size="lg">Create Questions</Button>
-          </CardFooter>
-        </Card>
+        <div className="flex gap-3 justify-center">
+          <Button onClick={handleUploadClick} className="gap-2">
+            <Upload className="h-4 w-4" />
+            Upload Documents
+          </Button>
+          <Button variant="outline" onClick={handleAddManuallyClick} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Add Manually
+          </Button>
+        </div>
       </div>
     </div>
   );
@@ -135,6 +117,18 @@ function QuestionsSectionInner() {
   const [organizationConnected, setOrganizationConnected] = useState(false)
   const [showIndexSelector, setShowIndexSelector] = useState(false)
 
+  // Multi-step response state
+  const [useMultiStep, setUseMultiStep] = useState(false)
+  const [multiStepDialogOpen, setMultiStepDialogOpen] = useState(false)
+  const [currentQuestionForMultiStep, setCurrentQuestionForMultiStep] = useState<string | null>(null)
+  const { 
+    isGenerating: isMultiStepGenerating, 
+    response: multiStepResponse, 
+    error: multiStepError, 
+    generateResponse: generateMultiStepResponse, 
+    reset: resetMultiStepResponse 
+  } = useMultiStepResponse()
+
   // Load project data and questions when component mounts
   useEffect(() => {
     if (!projectId) {
@@ -163,6 +157,7 @@ function QuestionsSectionInner() {
     const fetchIndexes = async () => {
       setIsLoadingIndexes(true);
       try {
+        // Use the project-specific indexes API instead of the generic documents API
         const response = await fetch(`/api/projects/${projectId}/indexes`);
         if (response.ok) {
           const data = await response.json();
@@ -295,6 +290,127 @@ function QuestionsSectionInner() {
     });
   };
 
+  // Modified generate answer handler to support multi-step
+  const handleGenerateAnswer = async (questionId: string) => {
+    const question = rfpDocument?.sections.flatMap(s => s.questions).find(q => q.id === questionId);
+    
+    if (!question) {
+      toast({
+        title: "Error",
+        description: "Question not found",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (useMultiStep) {
+      // Use multi-step reasoning
+      setCurrentQuestionForMultiStep(questionId);
+      setMultiStepDialogOpen(true);
+      resetMultiStepResponse();
+      
+      // Use the projectId from component scope, not from URL parsing
+      if (!projectId) {
+        toast({
+          title: "Error",
+          description: "Project ID not available",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      await generateMultiStepResponse({
+        question: question.question,
+        questionId: questionId,
+        projectId: projectId,
+        indexIds: Array.from(selectedIndexes),
+      });
+    } else {
+      // Use traditional single-step generation
+      setIsGenerating(prev => ({ ...prev, [questionId]: true }));
+      
+      try {
+        const response = await fetch('/api/generate-response', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            question: question.question,
+            documentIds: project?.documentIds || [],
+            selectedIndexIds: Array.from(selectedIndexes),
+            useAllIndexes: false,
+            projectId: project?.id
+          }),
+        });
+        
+        if (!response.ok) {
+          throw new Error("Failed to generate answer");
+        }
+        
+        const result = await response.json();
+        
+        setAnswers(prev => ({
+          ...prev,
+          [questionId]: {
+            text: result.response,
+            sources: result.sources
+          }
+        }));
+
+        setUnsavedQuestions(prev => {
+          const updated = new Set(prev);
+          updated.add(questionId);
+          return updated;
+        });
+        
+        toast({
+          title: "Answer Generated",
+          description: "AI-generated answer has been created. Please review and save it.",
+        });
+      } catch (error) {
+        console.error('Error generating answer:', error);
+        toast({
+          title: "Generation Error",
+          description: "Failed to generate answer. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsGenerating(prev => ({ ...prev, [questionId]: false }));
+      }
+    }
+  };
+
+  // Handler for accepting multi-step response
+  const handleAcceptMultiStepResponse = (response: string, sources: any[]) => {
+    if (currentQuestionForMultiStep) {
+      setAnswers(prev => ({
+        ...prev,
+        [currentQuestionForMultiStep]: {
+          text: response,
+          sources: sources
+        }
+      }));
+
+      setUnsavedQuestions(prev => {
+        const updated = new Set(prev);
+        updated.add(currentQuestionForMultiStep);
+        return updated;
+      });
+      
+      toast({
+        title: "Multi-Step Answer Generated",
+        description: "AI-generated answer with step-by-step reasoning has been created. Please review and save it.",
+      });
+    }
+  };
+
+  const handleCloseMultiStepDialog = () => {
+    setMultiStepDialogOpen(false);
+    setCurrentQuestionForMultiStep(null);
+    resetMultiStepResponse();
+  };
+
   // Save a single answer
   const saveAnswer = async (questionId: string) => {
     if (!projectId || !answers[questionId]) return;
@@ -307,12 +423,16 @@ function QuestionsSectionInner() {
     });
     
     try {
-      const response = await fetch(`/api/questions/${projectId}/answers/${questionId}`, {
+      const response = await fetch(`/api/questions/${projectId}/answers`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(answers[questionId]),
+        body: JSON.stringify({
+          questionId: questionId,
+          answer: answers[questionId]?.text || "",
+          sources: answers[questionId]?.sources || []
+        }),
       });
       
       if (response.ok) {
@@ -401,72 +521,7 @@ function QuestionsSectionInner() {
     }
   };
 
-  // Handle answer generation for a single question
-  const handleGenerateAnswer = async (questionId: string) => {
-    setIsGenerating(prev => ({ ...prev, [questionId]: true }));
-    
-    try {
-      const question = rfpDocument?.sections.flatMap(s => s.questions).find(q => q.id === questionId);
-      
-      if (!question) {
-        throw new Error("Question not found");
-      }
-      
-      // Call the API to generate a response
-      const response = await fetch('/api/generate-response', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          question: question.question,
-          documentIds: project?.documentIds || [],
-          selectedIndexIds: Array.from(selectedIndexes),
-          useAllIndexes: false,
-          projectId: projectId
-        }),
-      });
-      
-      if (!response.ok) {
-        throw new Error("Failed to generate answer");
-      }
-      
-      const result = await response.json();
-      
-      // Update the answer with the generated response and sources
-      setAnswers(prev => ({
-        ...prev,
-        [questionId]: {
-          text: result.response,
-          sources: result.sources
-        }
-      }));
-
-      // Mark this question as unsaved
-      setUnsavedQuestions(prev => {
-        const updated = new Set(prev);
-        updated.add(questionId);
-        return updated;
-      });
-      
-      // Show toast notification for successful generation
-      toast({
-        title: "Answer Generated",
-        description: "AI-generated answer has been created. Please review and save it.",
-      });
-    } catch (error) {
-      console.error('Error generating answer:', error);
-      toast({
-        title: "Generation Error",
-        description: "Failed to generate answer. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsGenerating(prev => ({ ...prev, [questionId]: false }));
-    }
-  };
-
-  // Handle generating answers for all questions
+  // Handle answer generation for all questions
   const handleGenerateAllAnswers = async () => {
     if (isGeneratingAll) return;
     
@@ -486,44 +541,7 @@ function QuestionsSectionInner() {
         
         try {
           // Generate answer for each question
-          const response = await fetch('/api/generate-response', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              question: question.question,
-              documentIds: project?.documentIds || [],
-              selectedIndexIds: Array.from(selectedIndexes),
-              useAllIndexes: false,
-              projectId: projectId
-            }),
-          });
-          
-          if (!response.ok) {
-            throw new Error("Failed to generate answer");
-          }
-          
-          const result = await response.json();
-          
-          // Update the answer with the generated response and sources
-          setAnswers(prev => ({
-            ...prev,
-            [question.id]: {
-              text: result.response,
-              sources: result.sources
-            }
-          }));
-
-          // Mark this question as unsaved
-          setUnsavedQuestions(prev => {
-            const updated = new Set(prev);
-            updated.add(question.id);
-            return updated;
-          });
-          
-          // Small delay between questions to avoid rate limiting
-          await new Promise(resolve => setTimeout(resolve, 500));
+          await handleGenerateAnswer(question.id);
         } catch (error) {
           console.error(`Error generating answer for question ${question.id}:`, error);
         } finally {
@@ -1079,6 +1097,16 @@ function QuestionsSectionInner() {
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
+                      {/* Index warning moved to top */}
+                      {selectedIndexes.size === 0 && (
+                        <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-md text-sm">
+                          <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0" />
+                          <span className="text-amber-700">
+                            No document indexes selected - AI will use default responses
+                          </span>
+                        </div>
+                      )}
+
                       <Textarea
                         placeholder="Enter your answer here..."
                         className="min-h-[200px]"
@@ -1113,62 +1141,79 @@ function QuestionsSectionInner() {
                         </div>
                       )}
                       
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
+                      {/* Redesigned action area */}
+                      <div className="flex items-center justify-between pt-4 border-t">
+                        <div className="flex items-center gap-3">
+                          {/* AI Generation Section */}
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant={useMultiStep ? "default" : "outline"}
+                              size="sm"
+                              className="gap-2"
+                              onClick={() => handleGenerateAnswer(selectedQuestion)}
+                              disabled={isGenerating[selectedQuestion] || isMultiStepGenerating}
+                            >
+                              {(isGenerating[selectedQuestion] || isMultiStepGenerating) ? (
+                                <>
+                                  <Spinner className="h-4 w-4" />
+                                  Generating...
+                                </>
+                              ) : (
+                                <>
+                                  {useMultiStep ? <Brain className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
+                                  {useMultiStep ? 'Reasoning Mode' : 'Generate'}
+                                </>
+                              )}
+                            </Button>
+                            
+                            {/* Compact multi-step toggle */}
+                            <div className="flex items-center gap-1.5" title="Enable step-by-step reasoning">
+                              <Brain className="h-4 w-4 text-muted-foreground" />
+                              <Switch 
+                                checked={useMultiStep}
+                                onCheckedChange={setUseMultiStep}
+                              />
+                            </div>
+                          </div>
 
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="gap-1"
-                            onClick={() => handleGenerateAnswer(selectedQuestion)}
-                            disabled={isGenerating[selectedQuestion]}
-                          >
-                            {isGenerating[selectedQuestion] ? (
-                              <>
-                                <Spinner className="h-4 w-4" />
-                                Generating...
-                              </>
-                            ) : (
-                              <>
-                                <Sparkles className="h-4 w-4" />
-                                Generate Answer
-                                {selectedIndexes.size > 0 && (
-                                  <Badge variant="secondary" className="ml-1 text-xs">
-                                    {selectedIndexes.size} {selectedIndexes.size === 1 ? 'index' : 'indexes'}
-                                  </Badge>
-                                )}
-                              </>
-                            )}
-                          </Button>
-                          
-                          {selectedIndexes.size === 0 && (
-                            <span className="text-xs text-amber-600">
-                              No indexes selected - will use default responses
-                            </span>
+                          {/* Index count badge */}
+                          {selectedIndexes.size > 0 && (
+                            <Badge variant="secondary" className="text-xs">
+                              {selectedIndexes.size} {selectedIndexes.size === 1 ? 'index' : 'indexes'}
+                            </Badge>
                           )}
                         </div>
+
+                        {/* Save Actions */}
                         <div className="flex items-center gap-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleSaveDraft(selectedQuestion)}
-                            disabled={isQuestionSaving(selectedQuestion) || !unsavedQuestions.has(selectedQuestion)}
-                          >
-                            {isQuestionSaving(selectedQuestion) ? (
-                              <>
-                                <Spinner className="h-4 w-4 mr-2" />
-                                Saving...
-                              </>
-                            ) : "Save Answer"}
-                          </Button>
+                          {unsavedQuestions.has(selectedQuestion) && (
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleSaveDraft(selectedQuestion)}
+                              disabled={isQuestionSaving(selectedQuestion)}
+                            >
+                              {isQuestionSaving(selectedQuestion) ? (
+                                <>
+                                  <Spinner className="h-4 w-4 mr-1" />
+                                  Saving...
+                                </>
+                              ) : (
+                                <>
+                                  <Save className="h-4 w-4 mr-1" />
+                                  Save
+                                </>
+                              )}
+                            </Button>
+                          )}
+                          
                           <Button 
                             size="sm" 
-                            className="gap-1"
                             onClick={() => handleMarkComplete(selectedQuestion)}
                             disabled={isQuestionSaving(selectedQuestion)}
                           >
-                            <CheckCircle className="h-4 w-4" />
-                            Mark as Complete
+                            <CheckCircle className="h-4 w-4 mr-1" />
+                            Complete
                           </Button>
                         </div>
                       </div>
@@ -1258,6 +1303,16 @@ function QuestionsSectionInner() {
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
+                      {/* Index warning moved to top */}
+                      {selectedIndexes.size === 0 && (
+                        <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-md text-sm">
+                          <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0" />
+                          <span className="text-amber-700">
+                            No document indexes selected - AI will use default responses
+                          </span>
+                        </div>
+                      )}
+
                       <Textarea
                         placeholder="Enter your answer here..."
                         className="min-h-[200px]"
@@ -1292,56 +1347,79 @@ function QuestionsSectionInner() {
                         </div>
                       )}
                       
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
+                      {/* Redesigned action area */}
+                      <div className="flex items-center justify-between pt-4 border-t">
+                        <div className="flex items-center gap-3">
+                          {/* AI Generation Section */}
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant={useMultiStep ? "default" : "outline"}
+                              size="sm"
+                              className="gap-2"
+                              onClick={() => handleGenerateAnswer(selectedQuestion)}
+                              disabled={isGenerating[selectedQuestion] || isMultiStepGenerating}
+                            >
+                              {(isGenerating[selectedQuestion] || isMultiStepGenerating) ? (
+                                <>
+                                  <Spinner className="h-4 w-4" />
+                                  Generating...
+                                </>
+                              ) : (
+                                <>
+                                  {useMultiStep ? <Brain className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
+                                  {useMultiStep ? 'Reasoning Mode' : 'Generate'}
+                                </>
+                              )}
+                            </Button>
+                            
+                            {/* Compact multi-step toggle */}
+                            <div className="flex items-center gap-1.5" title="Enable step-by-step reasoning">
+                              <Brain className="h-4 w-4 text-muted-foreground" />
+                              <Switch 
+                                checked={useMultiStep}
+                                onCheckedChange={setUseMultiStep}
+                              />
+                            </div>
+                          </div>
 
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="gap-1"
-                            onClick={() => handleGenerateAnswer(selectedQuestion)}
-                            disabled={isGenerating[selectedQuestion]}
-                          >
-                            {isGenerating[selectedQuestion] ? (
-                              <>
-                                <Spinner className="h-4 w-4" />
-                                Generating...
-                              </>
-                            ) : (
-                              <>
-                                <Sparkles className="h-4 w-4" />
-                                Generate Answer
-                                {selectedIndexes.size > 0 && (
-                                  <Badge variant="secondary" className="ml-1 text-xs">
-                                    {selectedIndexes.size} {selectedIndexes.size === 1 ? 'index' : 'indexes'}
-                                  </Badge>
-                                )}
-                              </>
-                            )}
-                          </Button>
+                          {/* Index count badge */}
+                          {selectedIndexes.size > 0 && (
+                            <Badge variant="secondary" className="text-xs">
+                              {selectedIndexes.size} {selectedIndexes.size === 1 ? 'index' : 'indexes'}
+                            </Badge>
+                          )}
                         </div>
+
+                        {/* Save Actions */}
                         <div className="flex items-center gap-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleSaveDraft(selectedQuestion)}
-                            disabled={isQuestionSaving(selectedQuestion) || !unsavedQuestions.has(selectedQuestion)}
-                          >
-                            {isQuestionSaving(selectedQuestion) ? (
-                              <>
-                                <Spinner className="h-4 w-4 mr-2" />
-                                Saving...
-                              </>
-                            ) : "Save Answer"}
-                          </Button>
+                          {unsavedQuestions.has(selectedQuestion) && (
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleSaveDraft(selectedQuestion)}
+                              disabled={isQuestionSaving(selectedQuestion)}
+                            >
+                              {isQuestionSaving(selectedQuestion) ? (
+                                <>
+                                  <Spinner className="h-4 w-4 mr-1" />
+                                  Saving...
+                                </>
+                              ) : (
+                                <>
+                                  <Save className="h-4 w-4 mr-1" />
+                                  Save
+                                </>
+                              )}
+                            </Button>
+                          )}
+                          
                           <Button 
                             size="sm" 
-                            className="gap-1"
                             onClick={() => handleMarkComplete(selectedQuestion)}
                             disabled={isQuestionSaving(selectedQuestion)}
                           >
-                            <CheckCircle className="h-4 w-4" />
-                            Mark as Complete
+                            <CheckCircle className="h-4 w-4 mr-1" />
+                            Complete
                           </Button>
                         </div>
                       </div>
@@ -1421,6 +1499,16 @@ function QuestionsSectionInner() {
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
+                      {/* Index warning moved to top */}
+                      {selectedIndexes.size === 0 && (
+                        <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-md text-sm">
+                          <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0" />
+                          <span className="text-amber-700">
+                            No document indexes selected - AI will use default responses
+                          </span>
+                        </div>
+                      )}
+
                       <Textarea
                         placeholder="Enter your answer here..."
                         className="min-h-[200px]"
@@ -1455,56 +1543,79 @@ function QuestionsSectionInner() {
                         </div>
                       )}
                       
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
+                      {/* Redesigned action area */}
+                      <div className="flex items-center justify-between pt-4 border-t">
+                        <div className="flex items-center gap-3">
+                          {/* AI Generation Section */}
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant={useMultiStep ? "default" : "outline"}
+                              size="sm"
+                              className="gap-2"
+                              onClick={() => handleGenerateAnswer(selectedQuestion)}
+                              disabled={isGenerating[selectedQuestion] || isMultiStepGenerating}
+                            >
+                              {(isGenerating[selectedQuestion] || isMultiStepGenerating) ? (
+                                <>
+                                  <Spinner className="h-4 w-4" />
+                                  Generating...
+                                </>
+                              ) : (
+                                <>
+                                  {useMultiStep ? <Brain className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
+                                  {useMultiStep ? 'Reasoning Mode' : 'Generate'}
+                                </>
+                              )}
+                            </Button>
+                            
+                            {/* Compact multi-step toggle */}
+                            <div className="flex items-center gap-1.5" title="Enable step-by-step reasoning">
+                              <Brain className="h-4 w-4 text-muted-foreground" />
+                              <Switch 
+                                checked={useMultiStep}
+                                onCheckedChange={setUseMultiStep}
+                              />
+                            </div>
+                          </div>
 
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="gap-1"
-                            onClick={() => handleGenerateAnswer(selectedQuestion)}
-                            disabled={isGenerating[selectedQuestion]}
-                          >
-                            {isGenerating[selectedQuestion] ? (
-                              <>
-                                <Spinner className="h-4 w-4" />
-                                Generating...
-                              </>
-                            ) : (
-                              <>
-                                <Sparkles className="h-4 w-4" />
-                                Generate Answer
-                                {selectedIndexes.size > 0 && (
-                                  <Badge variant="secondary" className="ml-1 text-xs">
-                                    {selectedIndexes.size} {selectedIndexes.size === 1 ? 'index' : 'indexes'}
-                                  </Badge>
-                                )}
-                              </>
-                            )}
-                          </Button>
+                          {/* Index count badge */}
+                          {selectedIndexes.size > 0 && (
+                            <Badge variant="secondary" className="text-xs">
+                              {selectedIndexes.size} {selectedIndexes.size === 1 ? 'index' : 'indexes'}
+                            </Badge>
+                          )}
                         </div>
+
+                        {/* Save Actions */}
                         <div className="flex items-center gap-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleSaveDraft(selectedQuestion)}
-                            disabled={isQuestionSaving(selectedQuestion) || !unsavedQuestions.has(selectedQuestion)}
-                          >
-                            {isQuestionSaving(selectedQuestion) ? (
-                              <>
-                                <Spinner className="h-4 w-4 mr-2" />
-                                Saving...
-                              </>
-                            ) : "Save Answer"}
-                          </Button>
+                          {unsavedQuestions.has(selectedQuestion) && (
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleSaveDraft(selectedQuestion)}
+                              disabled={isQuestionSaving(selectedQuestion)}
+                            >
+                              {isQuestionSaving(selectedQuestion) ? (
+                                <>
+                                  <Spinner className="h-4 w-4 mr-1" />
+                                  Saving...
+                                </>
+                              ) : (
+                                <>
+                                  <Save className="h-4 w-4 mr-1" />
+                                  Save
+                                </>
+                              )}
+                            </Button>
+                          )}
+                          
                           <Button 
                             size="sm" 
-                            className="gap-1"
                             onClick={() => handleMarkComplete(selectedQuestion)}
                             disabled={isQuestionSaving(selectedQuestion)}
                           >
-                            <CheckCircle className="h-4 w-4" />
-                            Mark as Complete
+                            <CheckCircle className="h-4 w-4 mr-1" />
+                            Complete
                           </Button>
                         </div>
                       </div>
@@ -1594,6 +1705,16 @@ function QuestionsSectionInner() {
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
+                      {/* Index warning moved to top */}
+                      {selectedIndexes.size === 0 && (
+                        <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-md text-sm">
+                          <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0" />
+                          <span className="text-amber-700">
+                            No document indexes selected - AI will use default responses
+                          </span>
+                        </div>
+                      )}
+
                       <Textarea
                         placeholder="Enter your answer here..."
                         className="min-h-[200px]"
@@ -1628,56 +1749,79 @@ function QuestionsSectionInner() {
                         </div>
                       )}
                       
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
+                      {/* Redesigned action area */}
+                      <div className="flex items-center justify-between pt-4 border-t">
+                        <div className="flex items-center gap-3">
+                          {/* AI Generation Section */}
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant={useMultiStep ? "default" : "outline"}
+                              size="sm"
+                              className="gap-2"
+                              onClick={() => handleGenerateAnswer(selectedQuestion)}
+                              disabled={isGenerating[selectedQuestion] || isMultiStepGenerating}
+                            >
+                              {(isGenerating[selectedQuestion] || isMultiStepGenerating) ? (
+                                <>
+                                  <Spinner className="h-4 w-4" />
+                                  Generating...
+                                </>
+                              ) : (
+                                <>
+                                  {useMultiStep ? <Brain className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
+                                  {useMultiStep ? 'Reasoning Mode' : 'Generate'}
+                                </>
+                              )}
+                            </Button>
+                            
+                            {/* Compact multi-step toggle */}
+                            <div className="flex items-center gap-1.5" title="Enable step-by-step reasoning">
+                              <Brain className="h-4 w-4 text-muted-foreground" />
+                              <Switch 
+                                checked={useMultiStep}
+                                onCheckedChange={setUseMultiStep}
+                              />
+                            </div>
+                          </div>
 
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="gap-1"
-                            onClick={() => handleGenerateAnswer(selectedQuestion)}
-                            disabled={isGenerating[selectedQuestion]}
-                          >
-                            {isGenerating[selectedQuestion] ? (
-                              <>
-                                <Spinner className="h-4 w-4" />
-                                Generating...
-                              </>
-                            ) : (
-                              <>
-                                <Sparkles className="h-4 w-4" />
-                                Generate Answer
-                                {selectedIndexes.size > 0 && (
-                                  <Badge variant="secondary" className="ml-1 text-xs">
-                                    {selectedIndexes.size} {selectedIndexes.size === 1 ? 'index' : 'indexes'}
-                                  </Badge>
-                                )}
-                              </>
-                            )}
-                          </Button>
+                          {/* Index count badge */}
+                          {selectedIndexes.size > 0 && (
+                            <Badge variant="secondary" className="text-xs">
+                              {selectedIndexes.size} {selectedIndexes.size === 1 ? 'index' : 'indexes'}
+                            </Badge>
+                          )}
                         </div>
+
+                        {/* Save Actions */}
                         <div className="flex items-center gap-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleSaveDraft(selectedQuestion)}
-                            disabled={isQuestionSaving(selectedQuestion) || !unsavedQuestions.has(selectedQuestion)}
-                          >
-                            {isQuestionSaving(selectedQuestion) ? (
-                              <>
-                                <Spinner className="h-4 w-4 mr-2" />
-                                Saving...
-                              </>
-                            ) : "Save Answer"}
-                          </Button>
+                          {unsavedQuestions.has(selectedQuestion) && (
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleSaveDraft(selectedQuestion)}
+                              disabled={isQuestionSaving(selectedQuestion)}
+                            >
+                              {isQuestionSaving(selectedQuestion) ? (
+                                <>
+                                  <Spinner className="h-4 w-4 mr-1" />
+                                  Saving...
+                                </>
+                              ) : (
+                                <>
+                                  <Save className="h-4 w-4 mr-1" />
+                                  Save
+                                </>
+                              )}
+                            </Button>
+                          )}
+                          
                           <Button 
                             size="sm" 
-                            className="gap-1"
                             onClick={() => handleMarkComplete(selectedQuestion)}
                             disabled={isQuestionSaving(selectedQuestion)}
                           >
-                            <CheckCircle className="h-4 w-4" />
-                            Mark as Complete
+                            <CheckCircle className="h-4 w-4 mr-1" />
+                            Complete
                           </Button>
                         </div>
                       </div>
@@ -1697,6 +1841,18 @@ function QuestionsSectionInner() {
           </div>
         </TabsContent>
       </Tabs>
+      
+      {/* Multi-step response dialog */}
+      <MultiStepResponseDialog
+        open={multiStepDialogOpen}
+        onOpenChange={setMultiStepDialogOpen}
+        response={multiStepResponse}
+        isLoading={isMultiStepGenerating}
+        error={multiStepError}
+        onAcceptResponse={handleAcceptMultiStepResponse}
+        onClose={handleCloseMultiStepDialog}
+      />
+      
       <Toaster />
     </div>
   )

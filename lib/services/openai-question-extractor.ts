@@ -72,6 +72,7 @@ export class OpenAIQuestionExtractor implements IAIQuestionExtractor {
    * Get the system prompt for question extraction
    */
   private getSystemPrompt(): string {
+    const timestamp = Date.now();
     return `
 You are an expert at analyzing RFP (Request for Proposal) documents and extracting structured information.
 Given a document that contains RFP questions, extract all sections and questions into a structured format.
@@ -85,12 +86,12 @@ Format the output as a JSON object with the following structure:
 {
   "sections": [
     {
-      "id": "unique_id",
+      "id": "section_${timestamp}_1",
       "title": "Section Title",
       "description": "Optional description text for the section",
       "questions": [
         {
-          "id": "question_id",
+          "id": "q_${timestamp}_1_1",
           "question": "The exact text of the question"
         }
       ]
@@ -99,11 +100,13 @@ Format the output as a JSON object with the following structure:
 }
 
 Requirements:
-- Generate unique IDs for each section and question
+- Generate unique reference IDs using the format: q_${timestamp}_<section>_<question> for questions
+- Generate unique reference IDs using the format: section_${timestamp}_<number> for sections  
 - Preserve the exact text of questions
 - Include all questions found in the document
 - Group questions correctly under their sections
 - If a section has subsections, create separate sections for each subsection
+- The timestamp prefix (${timestamp}) ensures uniqueness across different document uploads
     `.trim();
   }
 

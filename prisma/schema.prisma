@@ -108,17 +108,19 @@ model ProjectIndex {
 }
 
 model Question {
-  id        String   @id @default(cuid())
-  text      String
-  topic     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  answer    Answer?
+  id          String   @id @default(cuid())
+  referenceId String?  // AI-generated ID like "question_1.10.1" for document structure reference
+  text        String
+  topic       String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  answer      Answer?
   
   projectId String
   project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
+  @@index([projectId, referenceId]) // Composite index for efficient lookups
   @@map("questions")
 }
 

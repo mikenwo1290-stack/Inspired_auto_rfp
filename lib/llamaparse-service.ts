@@ -77,12 +77,26 @@ export class LlamaParseService {
       
       // Log successful parsing
       console.log("Document parsed successfully");
+      console.log(`Number of documents returned: ${documents.length}`);
+      
+      if (documents.length > 0) {
+        console.log(`First document text length: ${documents[0]?.text?.length || 0}`);
+        console.log(`First document text preview: ${documents[0]?.text?.substring(0, 200) || 'No text content'}`);
+      } else {
+        console.log("WARNING: No documents were returned from LlamaParse");
+      }
       
       // Step 7: Clean up the temporary file
       await fs.promises.unlink(filePath);
       
       // Step 8: Get the parsed content
       const documentText = documents[0]?.text || '';
+      
+      // Log final content for debugging
+      console.log(`Final document text length: ${documentText.length}`);
+      if (documentText.length === 0) {
+        console.error("ERROR: Document content is empty after parsing!");
+      }
       
       // Step 9: Return the result
       return {
