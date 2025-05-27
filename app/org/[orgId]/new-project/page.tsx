@@ -86,59 +86,59 @@ export default function NewProjectPage({ params }: NewProjectPageProps) {
       <div className="container max-w-2xl mx-auto py-8">
         <div className="flex flex-col items-center space-y-6">
           <div className="w-full">
-            <Button
-              variant="ghost"
-              className="gap-1 mb-4"
-              onClick={handleCancel}
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to projects
-            </Button>
+        <Button
+          variant="ghost"
+          className="gap-1 mb-4"
+          onClick={handleCancel}
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to projects
+        </Button>
           </div>
           
           <div className="text-center space-y-2">
             <h1 className="text-3xl font-bold">Create a new project</h1>
-            <p className="text-muted-foreground">Add details to create your new RFP project</p>
-          </div>
-          
+        <p className="text-muted-foreground">Add details to create your new RFP project</p>
+      </div>
+      
           <div className="w-full max-w-lg">
-            <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit}>
               <Card className="shadow-lg">
                 <CardHeader className="text-center">
-                  <CardTitle>Project details</CardTitle>
-                  <CardDescription>
-                    Enter the information for your new project
-                  </CardDescription>
-                </CardHeader>
+            <CardTitle>Project details</CardTitle>
+            <CardDescription>
+              Enter the information for your new project
+            </CardDescription>
+          </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="space-y-2">
-                    <label htmlFor="name" className="text-sm font-medium">
-                      Name <span className="text-red-500">*</span>
-                    </label>
-                    <Input
-                      id="name"
-                      value={projectName}
-                      onChange={(e) => setProjectName(e.target.value)}
-                      placeholder="Enter project name"
-                      required
+              <label htmlFor="name" className="text-sm font-medium">
+                Name <span className="text-red-500">*</span>
+              </label>
+              <Input
+                id="name"
+                value={projectName}
+                onChange={(e) => setProjectName(e.target.value)}
+                placeholder="Enter project name"
+                required
                       className="h-11"
-                    />
-                  </div>
-                  
+              />
+            </div>
+            
                   <div className="space-y-2">
-                    <label htmlFor="description" className="text-sm font-medium">
-                      Description
-                    </label>
-                    <Textarea
-                      id="description"
-                      value={projectDescription}
-                      onChange={(e) => setProjectDescription(e.target.value)}
-                      placeholder="Enter project description (optional)"
-                      rows={4}
+              <label htmlFor="description" className="text-sm font-medium">
+                Description
+              </label>
+              <Textarea
+                id="description"
+                value={projectDescription}
+                onChange={(e) => setProjectDescription(e.target.value)}
+                placeholder="Enter project description (optional)"
+                rows={4}
                       className="resize-none"
-                    />
-                  </div>
-                </CardContent>
+              />
+            </div>
+          </CardContent>
                 <CardFooter className="flex justify-between gap-4">
                   <Button 
                     type="button" 
@@ -146,25 +146,25 @@ export default function NewProjectPage({ params }: NewProjectPageProps) {
                     onClick={handleCancel}
                     className="flex-1"
                   >
-                    Cancel
-                  </Button>
+              Cancel
+            </Button>
                   <Button 
                     type="submit" 
                     disabled={isSubmitting}
                     className="flex-1"
                   >
-                    {isSubmitting ? (
-                      <>
-                        <Spinner className="mr-2 h-4 w-4" />
-                        Creating...
-                      </>
-                    ) : (
-                      "Create Project"
-                    )}
-                  </Button>
-                </CardFooter>
-              </Card>
-            </form>
+              {isSubmitting ? (
+                <>
+                  <Spinner className="mr-2 h-4 w-4" />
+                  Creating...
+                </>
+              ) : (
+                "Create Project"
+              )}
+            </Button>
+          </CardFooter>
+        </Card>
+      </form>
           </div>
         </div>
       </div>

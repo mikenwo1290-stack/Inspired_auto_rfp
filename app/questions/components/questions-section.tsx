@@ -78,7 +78,7 @@ function NoQuestionsAvailable({ projectId }: { projectId: string }) {
             <Plus className="h-4 w-4" />
             Add Manually
           </Button>
-        </div>
+      </div>
       </div>
     </div>
   );
@@ -1145,27 +1145,27 @@ function QuestionsSectionInner() {
                       <div className="flex items-center justify-between pt-4 border-t">
                         <div className="flex items-center gap-3">
                           {/* AI Generation Section */}
-                          <div className="flex items-center gap-2">
-                            <Button
+                        <div className="flex items-center gap-2">
+                          <Button
                               variant={useMultiStep ? "default" : "outline"}
-                              size="sm"
+                            size="sm"
                               className="gap-2"
-                              onClick={() => handleGenerateAnswer(selectedQuestion)}
+                            onClick={() => handleGenerateAnswer(selectedQuestion)}
                               disabled={isGenerating[selectedQuestion] || isMultiStepGenerating}
-                            >
+                          >
                               {(isGenerating[selectedQuestion] || isMultiStepGenerating) ? (
-                                <>
-                                  <Spinner className="h-4 w-4" />
-                                  Generating...
-                                </>
-                              ) : (
-                                <>
+                              <>
+                                <Spinner className="h-4 w-4" />
+                                Generating...
+                              </>
+                            ) : (
+                              <>
                                   {useMultiStep ? <Brain className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
                                   {useMultiStep ? 'Reasoning Mode' : 'Generate'}
-                                </>
-                              )}
-                            </Button>
-                            
+                              </>
+                            )}
+                          </Button>
+                          
                             {/* Compact multi-step toggle */}
                             <div className="flex items-center gap-1.5" title="Enable step-by-step reasoning">
                               <Brain className="h-4 w-4 text-muted-foreground" />
@@ -1187,24 +1187,24 @@ function QuestionsSectionInner() {
                         {/* Save Actions */}
                         <div className="flex items-center gap-2">
                           {unsavedQuestions.has(selectedQuestion) && (
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => handleSaveDraft(selectedQuestion)}
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleSaveDraft(selectedQuestion)}
                               disabled={isQuestionSaving(selectedQuestion)}
-                            >
-                              {isQuestionSaving(selectedQuestion) ? (
-                                <>
+                          >
+                            {isQuestionSaving(selectedQuestion) ? (
+                              <>
                                   <Spinner className="h-4 w-4 mr-1" />
-                                  Saving...
-                                </>
+                                Saving...
+                              </>
                               ) : (
                                 <>
                                   <Save className="h-4 w-4 mr-1" />
                                   Save
                                 </>
                               )}
-                            </Button>
+                          </Button>
                           )}
                           
                           <Button 
@@ -1351,21 +1351,21 @@ function QuestionsSectionInner() {
                       <div className="flex items-center justify-between pt-4 border-t">
                         <div className="flex items-center gap-3">
                           {/* AI Generation Section */}
-                          <div className="flex items-center gap-2">
-                            <Button
+                        <div className="flex items-center gap-2">
+                          <Button
                               variant={useMultiStep ? "default" : "outline"}
-                              size="sm"
+                            size="sm"
                               className="gap-2"
-                              onClick={() => handleGenerateAnswer(selectedQuestion)}
+                            onClick={() => handleGenerateAnswer(selectedQuestion)}
                               disabled={isGenerating[selectedQuestion] || isMultiStepGenerating}
-                            >
+                          >
                               {(isGenerating[selectedQuestion] || isMultiStepGenerating) ? (
-                                <>
-                                  <Spinner className="h-4 w-4" />
-                                  Generating...
-                                </>
-                              ) : (
-                                <>
+                              <>
+                                <Spinner className="h-4 w-4" />
+                                Generating...
+                              </>
+                            ) : (
+                              <>
                                   {useMultiStep ? <Brain className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
                                   {useMultiStep ? 'Reasoning Mode' : 'Generate'}
                                 </>
@@ -1383,34 +1383,34 @@ function QuestionsSectionInner() {
                           </div>
 
                           {/* Index count badge */}
-                          {selectedIndexes.size > 0 && (
+                                {selectedIndexes.size > 0 && (
                             <Badge variant="secondary" className="text-xs">
-                              {selectedIndexes.size} {selectedIndexes.size === 1 ? 'index' : 'indexes'}
-                            </Badge>
-                          )}
+                                    {selectedIndexes.size} {selectedIndexes.size === 1 ? 'index' : 'indexes'}
+                                  </Badge>
+                                )}
                         </div>
 
                         {/* Save Actions */}
                         <div className="flex items-center gap-2">
                           {unsavedQuestions.has(selectedQuestion) && (
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => handleSaveDraft(selectedQuestion)}
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleSaveDraft(selectedQuestion)}
                               disabled={isQuestionSaving(selectedQuestion)}
-                            >
-                              {isQuestionSaving(selectedQuestion) ? (
-                                <>
+                          >
+                            {isQuestionSaving(selectedQuestion) ? (
+                              <>
                                   <Spinner className="h-4 w-4 mr-1" />
-                                  Saving...
-                                </>
+                                Saving...
+                              </>
                               ) : (
                                 <>
                                   <Save className="h-4 w-4 mr-1" />
                                   Save
                                 </>
                               )}
-                            </Button>
+                          </Button>
                           )}
                           
                           <Button 
@@ -1547,21 +1547,21 @@ function QuestionsSectionInner() {
                       <div className="flex items-center justify-between pt-4 border-t">
                         <div className="flex items-center gap-3">
                           {/* AI Generation Section */}
-                          <div className="flex items-center gap-2">
-                            <Button
+                        <div className="flex items-center gap-2">
+                          <Button
                               variant={useMultiStep ? "default" : "outline"}
-                              size="sm"
+                            size="sm"
                               className="gap-2"
-                              onClick={() => handleGenerateAnswer(selectedQuestion)}
+                            onClick={() => handleGenerateAnswer(selectedQuestion)}
                               disabled={isGenerating[selectedQuestion] || isMultiStepGenerating}
-                            >
+                          >
                               {(isGenerating[selectedQuestion] || isMultiStepGenerating) ? (
-                                <>
-                                  <Spinner className="h-4 w-4" />
-                                  Generating...
-                                </>
-                              ) : (
-                                <>
+                              <>
+                                <Spinner className="h-4 w-4" />
+                                Generating...
+                              </>
+                            ) : (
+                              <>
                                   {useMultiStep ? <Brain className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
                                   {useMultiStep ? 'Reasoning Mode' : 'Generate'}
                                 </>
@@ -1579,34 +1579,34 @@ function QuestionsSectionInner() {
                           </div>
 
                           {/* Index count badge */}
-                          {selectedIndexes.size > 0 && (
+                                {selectedIndexes.size > 0 && (
                             <Badge variant="secondary" className="text-xs">
-                              {selectedIndexes.size} {selectedIndexes.size === 1 ? 'index' : 'indexes'}
-                            </Badge>
-                          )}
+                                    {selectedIndexes.size} {selectedIndexes.size === 1 ? 'index' : 'indexes'}
+                                  </Badge>
+                                )}
                         </div>
 
                         {/* Save Actions */}
                         <div className="flex items-center gap-2">
                           {unsavedQuestions.has(selectedQuestion) && (
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => handleSaveDraft(selectedQuestion)}
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleSaveDraft(selectedQuestion)}
                               disabled={isQuestionSaving(selectedQuestion)}
-                            >
-                              {isQuestionSaving(selectedQuestion) ? (
-                                <>
+                          >
+                            {isQuestionSaving(selectedQuestion) ? (
+                              <>
                                   <Spinner className="h-4 w-4 mr-1" />
-                                  Saving...
-                                </>
+                                Saving...
+                              </>
                               ) : (
                                 <>
                                   <Save className="h-4 w-4 mr-1" />
                                   Save
                                 </>
                               )}
-                            </Button>
+                          </Button>
                           )}
                           
                           <Button 
@@ -1753,21 +1753,21 @@ function QuestionsSectionInner() {
                       <div className="flex items-center justify-between pt-4 border-t">
                         <div className="flex items-center gap-3">
                           {/* AI Generation Section */}
-                          <div className="flex items-center gap-2">
-                            <Button
+                        <div className="flex items-center gap-2">
+                          <Button
                               variant={useMultiStep ? "default" : "outline"}
-                              size="sm"
+                            size="sm"
                               className="gap-2"
-                              onClick={() => handleGenerateAnswer(selectedQuestion)}
+                            onClick={() => handleGenerateAnswer(selectedQuestion)}
                               disabled={isGenerating[selectedQuestion] || isMultiStepGenerating}
-                            >
+                          >
                               {(isGenerating[selectedQuestion] || isMultiStepGenerating) ? (
-                                <>
-                                  <Spinner className="h-4 w-4" />
-                                  Generating...
-                                </>
-                              ) : (
-                                <>
+                              <>
+                                <Spinner className="h-4 w-4" />
+                                Generating...
+                              </>
+                            ) : (
+                              <>
                                   {useMultiStep ? <Brain className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
                                   {useMultiStep ? 'Reasoning Mode' : 'Generate'}
                                 </>
@@ -1785,34 +1785,34 @@ function QuestionsSectionInner() {
                           </div>
 
                           {/* Index count badge */}
-                          {selectedIndexes.size > 0 && (
+                                {selectedIndexes.size > 0 && (
                             <Badge variant="secondary" className="text-xs">
-                              {selectedIndexes.size} {selectedIndexes.size === 1 ? 'index' : 'indexes'}
-                            </Badge>
-                          )}
+                                    {selectedIndexes.size} {selectedIndexes.size === 1 ? 'index' : 'indexes'}
+                                  </Badge>
+                                )}
                         </div>
 
                         {/* Save Actions */}
                         <div className="flex items-center gap-2">
                           {unsavedQuestions.has(selectedQuestion) && (
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => handleSaveDraft(selectedQuestion)}
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleSaveDraft(selectedQuestion)}
                               disabled={isQuestionSaving(selectedQuestion)}
-                            >
-                              {isQuestionSaving(selectedQuestion) ? (
-                                <>
+                          >
+                            {isQuestionSaving(selectedQuestion) ? (
+                              <>
                                   <Spinner className="h-4 w-4 mr-1" />
-                                  Saving...
-                                </>
+                                Saving...
+                              </>
                               ) : (
                                 <>
                                   <Save className="h-4 w-4 mr-1" />
                                   Save
                                 </>
                               )}
-                            </Button>
+                          </Button>
                           )}
                           
                           <Button 

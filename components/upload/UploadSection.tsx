@@ -27,11 +27,11 @@ export function UploadSection({
         
         {/* Upload Section */}
         <div className="w-full max-w-2xl">
-          <FileUploader 
-            onFileProcessed={onFileProcessed}
-            processingStatus={processingStatus}
-            updateProcessingStatus={updateProcessingStatus}
-          />
+              <FileUploader 
+                onFileProcessed={onFileProcessed}
+                processingStatus={processingStatus}
+                updateProcessingStatus={updateProcessingStatus}
+              />
         </div>
       </div>
     </div>

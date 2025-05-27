@@ -16,10 +16,10 @@ export async function GET(request: NextRequest) {
     
     // Get authenticated user
     const user = await organizationAuth.getAuthenticatedMember(validatedRequest.organizationId);
-    
+      
     // Fetch documents using service layer
     const result = await llamaCloudDocumentsService.getDocuments(validatedRequest, user.id);
-    
+      
     // Log success
     console.log(`Successfully fetched ${result.documents.length} documents from ${result.pipelines.length} pipelines for organization ${validatedRequest.organizationId}`);
     

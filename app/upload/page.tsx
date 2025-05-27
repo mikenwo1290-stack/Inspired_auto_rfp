@@ -84,9 +84,9 @@ function UploadPage() {
   
     return (
       <div className="min-h-screen bg-background">
-        <div className="container mx-auto py-8 px-4 max-w-4xl">
+      <div className="container mx-auto py-8 px-4 max-w-4xl">
           <div className="flex flex-col items-center">
-            <UploadComponent projectId={projectId} />
+        <UploadComponent projectId={projectId} />
           </div>
         </div>
       </div>

@@ -113,9 +113,9 @@ export async function GET(
       const currentIndexes = project.projectIndexes
         .filter(projectIndex => availableIndexIds.has(projectIndex.indexId))
         .map(projectIndex => ({
-          id: projectIndex.indexId,
-          name: projectIndex.indexName,
-        }));
+        id: projectIndex.indexId,
+        name: projectIndex.indexName,
+      }));
 
       // If we found stale indexes, clean them up in the database
       const staleIndexes = project.projectIndexes.filter(
