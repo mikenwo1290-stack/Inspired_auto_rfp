@@ -221,21 +221,49 @@ export const organizationService = {
 
   // User methods
   async createUserIfNotExists(id: string, email: string, name: string | null = null) {
-    const user = await db.user.findUnique({
+    // First check if user exists by ID (primary check)
+    const existingUserById = await db.user.findUnique({
       where: { id },
     });
 
-    if (user) {
-      return user;
+    if (existingUserById) {
+      return existingUserById;
     }
 
-    return db.user.create({
-      data: {
-        id,
-        email,
-        name,
-      },
+    // Then check if user exists by email (to prevent unique constraint violation)
+    const existingUserByEmail = await db.user.findUnique({
+      where: { email },
     });
+
+    if (existingUserByEmail) {
+      // User exists with same email but different ID - this shouldn't happen in normal Supabase flow
+      // but if it does, we should return the existing user to avoid constraint violation
+      console.warn(`User with email ${email} already exists with different ID. Existing: ${existingUserByEmail.id}, Requested: ${id}`);
+      return existingUserByEmail;
+    }
+
+    // User doesn't exist by either ID or email, safe to create
+    try {
+      return await db.user.create({
+        data: {
+          id,
+          email,
+          name,
+        },
+      });
+    } catch (error) {
+      // Handle race condition: if user was created between our checks and create attempt
+      const raceConditionUser = await db.user.findUnique({
+        where: { email },
+      });
+      
+      if (raceConditionUser) {
+        return raceConditionUser;
+      }
+      
+      // If it's not a race condition, re-throw the error
+      throw error;
+    }
   },
 
   async getCurrentUser() {
