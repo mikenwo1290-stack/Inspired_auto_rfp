@@ -54,8 +54,8 @@ function HeaderContent() {
   }
   
   return (
-    <header className="border-b bg-background">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
+    <header className="bg-background">
+      <div className="container mx-auto flex h-16 items-center justify-end px-4 space-x-4">
         <div className="flex items-center gap-4">
           <Link href="/" className="flex items-center">
             <Image src="/llamaindex_logo.jpeg" alt="AutoRFP" width={32} height={32} />
@@ -110,7 +110,7 @@ function HeaderContent() {
 export function Header() {
   return (
     <Suspense fallback={
-      <header className="border-b bg-background">
+      <header className=" bg-background">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <div className="flex items-center gap-4">
             <div className="h-8 w-32 animate-pulse bg-muted rounded"></div>

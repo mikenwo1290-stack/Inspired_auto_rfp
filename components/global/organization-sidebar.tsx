@@ -123,10 +123,10 @@ function OrganizationSidebarContent() {
 
 export function OrganizationSidebar() {
   return (
-    <Sidebar className="border-r z-10">
+    <Sidebar className="z-10">
       <Suspense fallback={
         <div className="p-4 flex flex-col h-screen">
-          <div className="h-16 border-b mb-4"></div>
+          <div className="h-16 mb-4"></div>
           <div className="flex-1 space-y-4">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <div key={i} className="h-10 w-full animate-pulse bg-muted rounded"></div>

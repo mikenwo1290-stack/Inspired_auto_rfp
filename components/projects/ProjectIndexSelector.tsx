@@ -14,7 +14,9 @@ import {
   AlertCircle,
   RefreshCw,
   ExternalLink,
-  FolderOpen
+  FolderOpen,
+  Edit3,
+  X
 } from 'lucide-react';
 
 interface ProjectIndex {
@@ -39,6 +41,7 @@ export function ProjectIndexSelector({ projectId }: ProjectIndexSelectorProps) {
   const [projectName, setProjectName] = useState('');
   const [organizationName, setOrganizationName] = useState('');
   const [llamaCloudProjectName, setLlamaCloudProjectName] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
   const { toast } = useToast();
 
   const fetchProjectIndexes = async () => {
@@ -77,11 +80,23 @@ export function ProjectIndexSelector({ projectId }: ProjectIndexSelectorProps) {
   }, [projectId]);
 
   const handleIndexToggle = (indexId: string, checked: boolean) => {
+    if (!isEditing) return; // Only allow changes in edit mode
+    
     if (checked) {
       setSelectedIndexIds(prev => [...prev, indexId]);
     } else {
       setSelectedIndexIds(prev => prev.filter(id => id !== indexId));
     }
+  };
+
+  const handleEdit = () => {
+    setIsEditing(true);
+  };
+
+  const handleCancel = () => {
+    // Reset to current indexes
+    setSelectedIndexIds(currentIndexes.map(index => index.id));
+    setIsEditing(false);
   };
 
   const handleSave = async () => {
@@ -106,6 +121,7 @@ export function ProjectIndexSelector({ projectId }: ProjectIndexSelectorProps) {
       const data = await response.json();
       
       setCurrentIndexes(data.projectIndexes || []);
+      setIsEditing(false); // Exit edit mode after successful save
       
       toast({
         title: 'Success',
@@ -227,6 +243,12 @@ export function ProjectIndexSelector({ projectId }: ProjectIndexSelectorProps) {
         </CardTitle>
         <CardDescription>
           Select which indexes from {organizationName}'s LlamaCloud project "{llamaCloudProjectName}" this project can access
+          {isEditing && (
+            <span className="inline-flex items-center gap-1 ml-2 text-blue-600 font-medium">
+              <Edit3 className="h-3 w-3" />
+              Editing
+            </span>
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -249,17 +271,22 @@ export function ProjectIndexSelector({ projectId }: ProjectIndexSelectorProps) {
                 return (
                   <div
                     key={index.id}
-                    className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+                    className={`flex items-start space-x-3 p-3 border rounded-lg transition-colors ${
+                      isEditing 
+                        ? 'hover:bg-muted/50 border-blue-200' 
+                        : 'hover:bg-muted/20'
+                    }`}
                   >
                     <Checkbox
                       id={`index-${index.id}`}
                       checked={isSelected}
+                      disabled={!isEditing}
                       onCheckedChange={(checked) => handleIndexToggle(index.id, checked as boolean)}
                     />
                     <div className="flex-1 min-w-0">
                       <label
                         htmlFor={`index-${index.id}`}
-                        className="block font-medium cursor-pointer"
+                        className={`block font-medium ${isEditing ? 'cursor-pointer' : 'cursor-default'}`}
                       >
                         {index.name}
                       </label>
@@ -294,28 +321,51 @@ export function ProjectIndexSelector({ projectId }: ProjectIndexSelectorProps) {
                   variant="outline"
                   size="sm"
                   onClick={fetchProjectIndexes}
-                  disabled={isSaving}
+                  disabled={isSaving || isEditing}
                 >
                   <RefreshCw className="mr-2 h-4 w-4" />
                   Refresh
                 </Button>
-                <Button
-                  onClick={handleSave}
-                  disabled={!hasChanges() || isSaving}
-                  size="sm"
-                >
-                  {isSaving ? (
-                    <>
-                      <Settings className="mr-2 h-4 w-4 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Check className="mr-2 h-4 w-4" />
-                      Save Changes
-                    </>
-                  )}
-                </Button>
+                
+                {!isEditing ? (
+                  <Button
+                    onClick={handleEdit}
+                    size="sm"
+                    variant="outline"
+                  >
+                    <Edit3 className="mr-2 h-4 w-4" />
+                    Edit
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      onClick={handleCancel}
+                      size="sm"
+                      variant="outline"
+                      disabled={isSaving}
+                    >
+                      <X className="mr-2 h-4 w-4" />
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleSave}
+                      disabled={!hasChanges() || isSaving}
+                      size="sm"
+                    >
+                      {isSaving ? (
+                        <>
+                          <Settings className="mr-2 h-4 w-4 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Check className="mr-2 h-4 w-4" />
+                          Save Changes
+                        </>
+                      )}
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </>
