@@ -125,7 +125,7 @@ export class LlamaCloudClient implements ILlamaCloudClient {
     }
   }
 
-  /**
+    /**
    * Fetch files for a specific pipeline
    */
   async fetchFilesForPipeline(apiKey: string, pipelineId: string): Promise<LlamaCloudFile[]> {
@@ -138,8 +138,6 @@ export class LlamaCloudClient implements ILlamaCloudClient {
       });
 
       if (!response.ok) {
-        // Return empty array for failed pipeline file fetches instead of throwing
-        // This allows other pipelines to continue processing
         console.warn(`Failed to fetch files for pipeline ${pipelineId} (status: ${response.status})`);
         return [];
       }

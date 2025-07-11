@@ -18,9 +18,9 @@ export const LlamaCloudDisconnectRequestSchema = z.object({
 export const LlamaCloudProjectSchema = z.object({
   id: z.string(),
   name: z.string(),
-  description: z.string().optional(),
-  created_at: z.string().optional(),
-  updated_at: z.string().optional(),
+  description: z.string().nullish(),
+  created_at: z.string().nullish(),
+  updated_at: z.string().nullish(),
 });
 
 // Connect response validation schema
@@ -61,24 +61,44 @@ export const LlamaCloudPipelineSchema = z.object({
   id: z.string(),
   name: z.string(),
   project_id: z.string(),
-  description: z.string().optional(),
-  created_at: z.string().optional(),
-  updated_at: z.string().optional(),
-  status: z.string().optional(),
+  description: z.string().nullish(),
+  created_at: z.string().nullish(),
+  updated_at: z.string().nullish(),
+  status: z.string().nullish(),
 });
 
 // LlamaCloud file/document schema
 export const LlamaCloudFileSchema = z.object({
-  id: z.string().optional(),
-  file_name: z.string(),
-  name: z.string().optional(),
-  status: z.string().optional(),
-  created_at: z.string().optional(),
-  updated_at: z.string().optional(),
-  file_size: z.number().optional(),
-  size_bytes: z.number().optional(),
-  pipelineName: z.string().optional(),
-  pipelineId: z.string().optional(),
+  id: z.string().nullish(),
+  name: z.string(), // This is the actual field name from the API
+  external_file_id: z.string().nullish(),
+  file_size: z.number().nullish(),
+  file_type: z.string().nullish(),
+  project_id: z.string().nullish(),
+  last_modified_at: z.string().nullish(),
+  resource_info: z.object({
+    file_size: z.number().nullish(),
+    last_modified_at: z.string().nullish(),
+  }).nullish(),
+  permission_info: z.any().nullish(),
+  data_source_id: z.string().nullish(),
+  file_id: z.string().nullish(),
+  pipeline_id: z.string().nullish(),
+  custom_metadata: z.any().nullish(),
+  config_hash: z.object({
+    parsing_config_hash: z.string().nullish(),
+    embedding_config_hash: z.string().nullish(),
+    transform_config_hash: z.string().nullish(),
+  }).nullish(),
+  indexed_page_count: z.number().nullish(),
+  status: z.string().nullish(),
+  status_updated_at: z.string().nullish(),
+  created_at: z.string().nullish(),
+  updated_at: z.string().nullish(),
+  // Keep these for backward compatibility
+  size_bytes: z.number().nullish(),
+  pipelineName: z.string().nullish(),
+  pipelineId: z.string().nullish(),
 });
 
 // Documents response validation schema

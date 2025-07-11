@@ -22,12 +22,6 @@ function ProjectContentInner() {
     setActiveSection(section)
   }
 
-  // Function to navigate back to organization
-  const navigateToOrganization = () => {
-    if (orgId) {
-      router.push(`/org/${orgId}`)
-    }
-  }
 
   // This would be connected to the sidebar navigation in a real implementation
   const renderContent = () => {

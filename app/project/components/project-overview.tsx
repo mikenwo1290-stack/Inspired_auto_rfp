@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
-import { AlertCircle, Calendar, CheckCircle2, Clock, FileText, FolderOpen, MessageSquare, Users, Download } from "lucide-react"
+import { AlertCircle, Calendar, CheckCircle2, Clock, FileText, FolderOpen, MessageSquare, Users, Download, Info } from "lucide-react"
 import { RfpDocument } from "@/types/api"
 import { formatDistanceToNow, format } from "date-fns"
 import { cn } from "@/lib/utils"
@@ -146,6 +146,8 @@ export function ProjectOverview({ onViewQuestions, projectId, orgId }: ProjectOv
   const sectionsToShow = sectionsExpanded ? sortedSections : sortedSections.slice(0, initialSectionsToShow)
   const hasMoreSections = sortedSections.length > initialSectionsToShow
 
+  const unansweredQuestions = totalQuestions - answeredQuestions
+
   return (
     <div className="space-y-6 p-12">
       {/* Action buttons */}
@@ -170,7 +172,9 @@ export function ProjectOverview({ onViewQuestions, projectId, orgId }: ProjectOv
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {/* Main metrics cards - 2x2 grid */}
+      <div className="grid gap-4 md:grid-cols-2">
+        {/* Questions card */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Questions</CardTitle>
@@ -183,6 +187,7 @@ export function ProjectOverview({ onViewQuestions, projectId, orgId }: ProjectOv
           </CardContent>
         </Card>
         
+        {/* Sections card */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Sections</CardTitle>
@@ -193,58 +198,75 @@ export function ProjectOverview({ onViewQuestions, projectId, orgId }: ProjectOv
             <p className="text-xs text-muted-foreground">Topic categories</p>
           </CardContent>
         </Card>
-        
-      </div>
 
-      <div className="grid gap-4 md:grid-cols-7">
-
-
-        <Card className="md:col-span-3">
-          <CardHeader>
-            <CardTitle>Project Details</CardTitle>
-            <CardDescription>Key information about this RFP</CardDescription>
+        {/* Project Details card */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Project Details</CardTitle>
+            <Info className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="grid grid-cols-3 gap-1 text-sm">
-                <div className="col-span-1 font-medium">Project ID:</div>
-                <div className="col-span-2">{project.id}</div>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Project ID:</span>
+                <span className="font-mono text-xs">{project.id.slice(0, 8)}...</span>
               </div>
-              <div className="grid grid-cols-3 gap-1 text-sm">
-                <div className="col-span-1 font-medium">Name:</div>
-                <div className="col-span-2">{project.name}</div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Name:</span>
+                <span className="truncate ml-2">{project.name}</span>
               </div>
-              {project.description && (
-                <div className="grid grid-cols-3 gap-1 text-sm">
-                  <div className="col-span-1 font-medium">Description:</div>
-                  <div className="col-span-2">{project.description}</div>
-                </div>
-              )}
-              <div className="grid grid-cols-3 gap-1 text-sm">
-                <div className="col-span-1 font-medium">Created:</div>
-                <div className="col-span-2">{createdAtFormatted}</div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Created:</span>
+                <span>{createdAtFormatted}</span>
               </div>
-              <div className="grid grid-cols-3 gap-1 text-sm">
-                <div className="col-span-1 font-medium">Updated:</div>
-                <div className="col-span-2">{updatedAtFormatted} ({updatedAtRelative})</div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Updated:</span>
+                <span>{updatedAtFormatted}</span>
               </div>
             </div>
           </CardContent>
         </Card>
-      </div>
 
-      {answeredQuestions < totalQuestions && (
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Attention Required</AlertTitle>
-          <AlertDescription>
-            {totalQuestions - answeredQuestions} {totalQuestions - answeredQuestions === 1 ? 'question needs' : 'questions need'} to be answered.
-            <Button size="sm" variant="link" className="p-0 ml-2" onClick={onViewQuestions}>
-              View Questions
-            </Button>
-          </AlertDescription>
-        </Alert>
-      )}
+        {/* Attention Required card */}
+        <Card className={cn(
+          "border-l-4",
+          unansweredQuestions > 0 ? "border-l-orange-500 bg-orange-50/30" : "border-l-green-500 bg-green-50/30"
+        )}>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">
+              {unansweredQuestions > 0 ? "Attention Required" : "All Complete"}
+            </CardTitle>
+            {unansweredQuestions > 0 ? (
+              <AlertCircle className="h-4 w-4 text-orange-500" />
+            ) : (
+              <CheckCircle2 className="h-4 w-4 text-green-500" />
+            )}
+          </CardHeader>
+          <CardContent>
+            {unansweredQuestions > 0 ? (
+              <>
+                <div className="text-2xl font-bold text-orange-600">{unansweredQuestions}</div>
+                <p className="text-xs text-muted-foreground mb-3">
+                  {unansweredQuestions === 1 ? 'question needs' : 'questions need'} to be answered
+                </p>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="w-full text-xs"
+                  onClick={onViewQuestions}
+                >
+                  View Questions
+                </Button>
+              </>
+            ) : (
+              <>
+                <div className="text-2xl font-bold text-green-600">✓</div>
+                <p className="text-xs text-muted-foreground">All questions answered</p>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
     </div>
   );

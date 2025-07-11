@@ -116,7 +116,7 @@ export class LlamaCloudDocumentsService implements ILlamaCloudDocumentsService {
           pipelineName: pipeline.name,
           pipelineId: pipeline.id,
           // Normalize file properties for consistency
-          name: file.file_name || file.name || 'Unknown',
+          name: file.name || 'Unknown', // API returns 'name' field directly
           status: file.status || 'unknown',
           size_bytes: file.file_size || file.size_bytes,
         }));
