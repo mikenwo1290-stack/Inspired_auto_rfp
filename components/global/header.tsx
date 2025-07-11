@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense } from 'react';
+import React, { Suspense, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,6 +20,7 @@ import Image from 'next/image';
 import { logout } from '@/app/login/actions';
 import { useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import { getCurrentUserEmail } from '@/app/user/actions';
 
 function HeaderContent() {
   const pathname = usePathname();
@@ -27,6 +28,7 @@ function HeaderContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   
   // Check if we're on different page types
   const isOrgPage = pathname.startsWith('/org/');
@@ -36,6 +38,15 @@ function HeaderContent() {
   // Get current project and org IDs from URL params
   const currentProjectId = searchParams.get('projectId');
   const currentOrgId = searchParams.get('orgId') || params.orgId as string;
+
+  // Fetch user email on component mount
+  useEffect(() => {
+    const fetchUserEmail = async () => {
+      const email = await getCurrentUserEmail();
+      setUserEmail(email);
+    };
+    fetchUserEmail();
+  }, []);
   
   // Don't show if we're not on the home page, org page, or project page
   if (!showOnHomePage && !isOrgPage && !isProjectPage) {
@@ -53,24 +64,28 @@ function HeaderContent() {
         </div>
         
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm">
-            <HelpCircle className="mr-2 h-4 w-4" />
-            Help
-          </Button>
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="rounded-full">
                 <Avatar className="h-8 w-8">
-                  <AvatarFallback>U</AvatarFallback>
+                  <AvatarFallback>
+                    {userEmail ? userEmail.charAt(0).toUpperCase() : 'U'}
+                  </AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>Profile</DropdownMenuItem>
-              <DropdownMenuItem>Settings</DropdownMenuItem>
+              <DropdownMenuLabel>
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none">My Account</p>
+                  {userEmail && (
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {userEmail}
+                    </p>
+                  )}
+                </div>
+              </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem 
                 className="text-destructive cursor-pointer"

@@ -61,7 +61,7 @@ function OrganizationSidebarContent() {
     { id: "projects", label: "Projects", icon: LayoutGrid, path: `/org/${orgId}` },
     { id: "team", label: "Team", icon: Users, path: `/org/${orgId}/team` },
     { id: "documents", label: "Documents", icon: FolderOpen, path: `/org/${orgId}/documents` },
-    { id: "settings", label: "Organization Settings", icon: Settings, path: `/org/${orgId}/settings` },
+    { id: "settings", label: "Settings", icon: Settings, path: `/org/${orgId}/settings` },
   ]
   
   return (

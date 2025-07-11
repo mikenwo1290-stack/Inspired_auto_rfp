@@ -193,12 +193,12 @@ export function ProjectDocuments({ projectId }: ProjectDocumentsProps) {
         indexName: doc.pipelineName,
         indexId: doc.pipelineId,
         // Map file properties to document properties for consistency
-        name: doc.file_name || doc.name,
+        name: doc.name || 'Unknown',
         status: doc.status || 'unknown',
         created_at: doc.created_at,
         updated_at: doc.updated_at,
         size_bytes: doc.file_size,
-        file_type: doc.file_type || getFileTypeFromFilename(doc.file_name || doc.name || ''),
+        file_type: doc.file_type || getFileTypeFromFilename(doc.name || ''),
       }));
 
       setDocuments(filteredDocuments);
