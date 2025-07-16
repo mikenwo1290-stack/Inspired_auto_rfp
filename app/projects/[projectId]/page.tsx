@@ -16,17 +16,17 @@ function ProjectPageLoading() {
 
 // Main page component with Suspense boundary
 interface ProjectPageProps {
-  params: Promise<{ id: string }>;
+  params: Promise<{ projectId: string }>;
 }
 
 export default async function ProjectPage({ params }: ProjectPageProps) {
-  const { id } = await params;
+  const { projectId } = await params;
   
   return (
-    <ProjectPageProvider projectId={id}>
+    <ProjectPageProvider projectId={projectId}>
       <Suspense fallback={<ProjectPageLoading />}>
         <ProjectLayout>
-          <ProjectContent projectId={id} />
+          <ProjectContent projectId={projectId} />
         </ProjectLayout>
       </Suspense>
     </ProjectPageProvider>

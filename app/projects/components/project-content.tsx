@@ -2,7 +2,7 @@
 
 import React, { useState, Suspense } from "react"
 import { ProjectOverview } from "./project-overview"
-import { QuestionsSection } from "../../questions/components/questions-section"
+import { QuestionsSection } from "../[projectId]/questions/components"
 import { DocumentsSection } from "./documents-section"
 import { TeamSection } from "./team-section"
 import { useSearchParams, useRouter } from "next/navigation"
@@ -26,7 +26,7 @@ function ProjectContentInner({ projectId }: { projectId: string }) {
   const renderContent = () => {
     switch (activeSection) {
       case "questions":
-        return <QuestionsSection />
+        return <QuestionsSection projectId={projectId} />
       case "documents":
         return <DocumentsSection />
       case "team":

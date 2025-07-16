@@ -70,7 +70,7 @@ export function OrganizationProjectSwitcher() {
       setCurrentProject(null); // Reset project when changing org
       
       // Navigate to the organization's projects page
-      router.push(`/organizations/${organization.slug}`);
+      router.push(`/organizations/${organization.id}`);
     },
     [router, setCurrentOrganization, setCurrentProject]
   );

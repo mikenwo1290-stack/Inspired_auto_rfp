@@ -76,40 +76,41 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, slug, description, aiProcessingEnabled, autoApprovalThreshold } = body;
+    const { name, slug, description } = body;
 
     // Validate required fields
-    if (!name || !slug) {
+    if (!name) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Name and slug are required'
+          error: 'Name is required'
         },
         { status: 400 }
       );
     }
 
-    // Check if slug is unique
-    const existingOrg = await db.organization.findUnique({
-      where: { slug }
-    });
-
-    if (existingOrg) {
+    // Get current authenticated user
+    const currentUser = await organizationService.getCurrentUser();
+    if (!currentUser) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Organization slug already exists'
+          error: 'User not authenticated'
         },
-        { status: 409 }
+        { status: 401 }
       );
     }
 
-    const organization = await db.organization.create({
-      data: {
-        name,
-        slug,
-        description,
-      },
+    // Use the organization service to create organization and user relationship
+    const organization = await organizationService.createOrganization(
+      name,
+      description || null,
+      currentUser.id
+    );
+
+    // Fetch the complete organization data with relationships for response
+    const completeOrganization = await db.organization.findUnique({
+      where: { id: organization.id },
       include: {
         organizationUsers: {
           include: {
@@ -134,7 +135,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      data: organization
+      data: completeOrganization
     });
   } catch (error) {
     console.error('Failed to create organization:', error);

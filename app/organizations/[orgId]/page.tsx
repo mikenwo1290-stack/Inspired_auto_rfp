@@ -10,24 +10,37 @@ import { PlusCircle, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/components/ui/use-toast';
 
-export default function OrganizationPage() {
-  const params = useParams();
-  const slug = params.slug as string;
+// Main page component with Suspense boundary
+interface OrganizationPageProps {
+  params: Promise<{ orgId: string }>;
+}
+
+export default function OrganizationPage({ params }: OrganizationPageProps) {
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreateProjectOpen, setIsCreateProjectOpen] = useState(false);
+  const [organizationId, setOrganizationId] = useState<string | null>(null);
   const { toast } = useToast();
+
+  // Handle async params
+  useEffect(() => {
+    const handleParams = async () => {
+      const { orgId } = await params;
+      setOrganizationId(orgId);
+    };
+    
+    handleParams();
+  }, [params]);
 
   useEffect(() => {
     const fetchOrganization = async () => {
+      if (!organizationId) return;
+      
       try {
         setIsLoading(true);
-
-        console.log("fetching organization by slug");
-        console.log("slug is ", slug);
         
         // First fetch the organization by slug
-        const orgResponse = await fetch(`/api/organizations/by-slug/${slug}`);
+        const orgResponse = await fetch(`/api/organizations/${organizationId}`);
         
         if (!orgResponse.ok) {
           throw new Error('Failed to fetch organization');
@@ -49,10 +62,10 @@ export default function OrganizationPage() {
       }
     };
 
-    if (slug) {
+    if (organizationId) {
       fetchOrganization();
     }
-  }, [slug, toast]);
+  }, [organizationId, toast]);
 
   if (isLoading) {
     return (
@@ -88,7 +101,7 @@ export default function OrganizationPage() {
           )}
         </div>
         <div className="flex gap-2">
-          <Link href={`/organizations/${slug}/members`}>
+          <Link href={`/organization/${organizationId}/members`}>
             <Button variant="outline">
               <Users className="mr-2 h-4 w-4" />
               Members

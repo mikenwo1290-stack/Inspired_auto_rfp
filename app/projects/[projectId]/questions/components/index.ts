@@ -5,4 +5,4 @@ export { SourceDetailsDialog } from './source-details-dialog';
 export { QuestionEditor } from './question-editor';
 export { QuestionsFilter } from './questions-filter';
 export { QuestionsTabsContent } from './questions-tabs-content';
-export { QuestionsSection } from './questions-section-refactored'; 
+export { QuestionsSection } from './questions-section'; 

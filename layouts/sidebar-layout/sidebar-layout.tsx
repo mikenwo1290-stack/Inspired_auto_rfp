@@ -61,14 +61,6 @@ function AppSidebar() {
       };
     }
     
-    // Check for project-specific query params (like questions, upload, etc.)
-    if ((pathname.includes('/questions') || pathname.includes('/upload') || pathname.includes('/documents')) && currentProject) {
-      return {
-        type: 'project',
-        id: currentProject.id,
-        name: currentProject.name
-      };
-    }
     
     // Check if we're in an organization-specific route
     if ((pathname.includes('/org/') || pathname.includes('/organizations/')) && currentOrganization) {
@@ -103,28 +95,23 @@ function AppSidebar() {
       title: "Organization",
       items: [
         {
-          title: "Overview",
-          url: `/org/${orgId}`,
-          icon: Home,
-        },
-        {
           title: "Projects",
-          url: `/org/${orgId}`,
+          url: `/organizations/${orgId}`,
           icon: FolderOpen,
         },
         {
           title: "Documents",
-          url: `/org/${orgId}/documents`,
+          url: `/organizations/${orgId}/documents`,
           icon: FileText,
         },
         {
           title: "Team",
-          url: `/org/${orgId}/team`,
+          url: `/organizations/${orgId}/team`,
           icon: Users,
         },
         {
           title: "Settings",
-          url: `/org/${orgId}/settings`,
+          url: `/organizations/${orgId}/settings`,
           icon: Settings,
         },
       ],
@@ -143,18 +130,8 @@ function AppSidebar() {
         },
         {
           title: "Questions",
-          url: `/questions?projectId=${projectId}`,
+          url: `/projects/${projectId}/questions`,
           icon: MessageSquare,
-        },
-        {
-          title: "Documents", 
-          url: `/documents?projectId=${projectId}`,
-          icon: FileText,
-        },
-        {
-          title: "Team",
-          url: `/projects/${projectId}/team`,
-          icon: Users,
         },
       ],
     },

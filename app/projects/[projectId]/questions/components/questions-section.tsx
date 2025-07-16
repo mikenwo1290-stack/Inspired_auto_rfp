@@ -37,10 +37,13 @@ interface QuestionWithSection {
   sectionId: string;
 }
 
+interface QuestionsSectionProps {
+  projectId: string;
+}
+
+
 // Inner component that uses search params
-function QuestionsSectionInner() {
-  const searchParams = useSearchParams()
-  const projectId = searchParams.get("projectId")
+function QuestionsSectionInner({ projectId }: QuestionsSectionProps) {
   
   // UI state
   const [showAIPanel, setShowAIPanel] = useState(false)
@@ -711,7 +714,7 @@ function QuestionsSectionInner() {
 }
 
 // Main export that wraps the inner component with Suspense
-export function QuestionsSection() {
+export function QuestionsSection({ projectId }: QuestionsSectionProps) {
   return (
     <Suspense fallback={
       <div className="space-y-6 p-12">
@@ -727,7 +730,7 @@ export function QuestionsSection() {
         <div className="h-[500px] bg-muted animate-pulse rounded"></div>
       </div>
     }>
-      <QuestionsSectionInner />
+      <QuestionsSectionInner projectId={projectId} />
     </Suspense>
   )
 } 

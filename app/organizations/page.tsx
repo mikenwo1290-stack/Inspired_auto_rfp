@@ -45,7 +45,6 @@ interface Organization {
 
 interface CreateOrganizationData {
   name: string;
-  slug: string;
   description: string;
 }
 
@@ -57,7 +56,6 @@ export default function OrganizationsPage() {
 
   const [formData, setFormData] = useState<CreateOrganizationData>({
     name: "",
-    slug: "",
     description: "",
   });
 
@@ -99,7 +97,6 @@ export default function OrganizationsPage() {
         setCreateDialogOpen(false);
         setFormData({
           name: "",
-          slug: "",
           description: "",
         });
         fetchOrganizations();
@@ -162,7 +159,6 @@ export default function OrganizationsPage() {
     setEditingOrg(org);
     setFormData({
       name: org.name,
-      slug: org.slug,
       description: org.description || "",
     });
   };
@@ -176,230 +172,220 @@ export default function OrganizationsPage() {
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Organizations</h1>
-        </div>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {[...Array(3)].map((_, i) => (
-            <Card key={i} className="animate-pulse">
-              <CardHeader>
-                <div className="h-6 bg-gray-200 rounded w-3/4"></div>
-                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="h-4 bg-gray-200 rounded"></div>
-                  <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+      <div className="w-full max-w-7xl mx-auto">
+        <div className="py-6 px-4 sm:px-6">
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h1 className="text-3xl font-bold">Organizations</h1>
+            </div>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {[...Array(3)].map((_, i) => (
+                <Card key={i} className="animate-pulse">
+                  <CardHeader>
+                    <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+                    <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <div className="h-4 bg-gray-200 rounded"></div>
+                      <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Organizations</h1>
-          <p className="text-muted-foreground">
-            Manage organizations and their settings
-          </p>
-        </div>
-        <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Create Organization
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>Create New Organization</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Organization Name</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => {
-                    const name = e.target.value;
-                    setFormData(prev => ({
-                      ...prev,
-                      name,
-                      slug: generateSlugFromName(name)
-                    }));
-                  }}
-                  placeholder="My Organization"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="slug">Slug</Label>
-                <Input
-                  id="slug"
-                  value={formData.slug}
-                  onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
-                  placeholder="my-organization"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="Organization description..."
-                />
-              </div>
-
-              <div className="flex justify-end space-x-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setCreateDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button onClick={handleCreateOrganization}>
-                  Create Organization
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      {organizations.length === 0 ? (
-        <Card className="text-center p-8">
-          <CardContent className="space-y-4">
-            <FolderOpen className="mx-auto h-12 w-12 text-muted-foreground" />
+    <div className="w-full max-w-7xl mx-auto">
+      <div className="py-6 px-4 sm:px-6">
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-semibold">No organizations yet</h3>
+              <h1 className="text-3xl font-bold">Organizations</h1>
               <p className="text-muted-foreground">
-                Create your first organization to get started
+                Manage organizations and their settings
               </p>
             </div>
-            <Button onClick={() => setCreateDialogOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Create Organization
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {organizations.map((org) => (
-            <Card key={org.id} className="hover:shadow-md transition-shadow">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle className="text-lg">{org.name}</CardTitle>
-                    <CardDescription>@{org.slug}</CardDescription>
+            <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Create Organization
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[500px]">
+                <DialogHeader>
+                  <DialogTitle>Create New Organization</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Organization Name</Label>
+                    <Input
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) => {
+                        setFormData(prev => ({
+                          ...prev,
+                          name: e.target.value
+                        }));
+                      }}
+                      placeholder="My Organization"
+                    />
                   </div>
-                  <div className="flex space-x-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => openEditDialog(org)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeleteOrganization(org)}
-                      disabled={org._count.projects > 0 || org._count.organizationUsers > 0}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {org.description && (
-                  <p className="text-sm text-muted-foreground line-clamp-2">
-                    {org.description}
-                  </p>
-                )}
-                
-                <div className="flex flex-wrap gap-2">
-                  <Badge variant="secondary">
-                    <Users className="mr-1 h-3 w-3" />
-                    {org._count.organizationUsers} users
-                  </Badge>
-                  <Badge variant="secondary">
-                    <FolderOpen className="mr-1 h-3 w-3" />
-                    {org._count.projects} projects
-                  </Badge>
-                </div>
 
-                <div className="pt-2">
-                  <Button 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => window.location.href = `/organizations/${org.slug}/projects`}
-                  >
-                    <Settings className="mr-2 h-4 w-4" />
-                    Visit Organization
-                  </Button>
+                  <div className="space-y-2">
+                    <Label htmlFor="description">Description</Label>
+                    <Textarea
+                      id="description"
+                      value={formData.description}
+                      onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                      placeholder="Organization description..."
+                    />
+                  </div>
+
+                  <div className="flex justify-end space-x-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => setCreateDialogOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button onClick={handleCreateOrganization}>
+                      Create Organization
+                    </Button>
+                  </div>
                 </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          {organizations.length === 0 ? (
+            <Card className="text-center p-8">
+              <CardContent className="space-y-4">
+                <FolderOpen className="mx-auto h-12 w-12 text-muted-foreground" />
+                <div>
+                  <h3 className="text-lg font-semibold">No organizations yet</h3>
+                  <p className="text-muted-foreground">
+                    Create your first organization to get started
+                  </p>
+                </div>
+                <Button onClick={() => setCreateDialogOpen(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Create Organization
+                </Button>
               </CardContent>
             </Card>
-          ))}
+          ) : (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {organizations.map((org) => (
+                <Card key={org.id} className="hover:shadow-md transition-shadow">
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <CardTitle className="text-lg">{org.name}</CardTitle>
+                        <CardDescription>@{org.slug}</CardDescription>
+                      </div>
+                      <div className="flex space-x-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => openEditDialog(org)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteOrganization(org)}
+                          disabled={org._count.projects > 0 || org._count.organizationUsers > 0}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {org.description && (
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {org.description}
+                      </p>
+                    )}
+                    
+                    <div className="flex flex-wrap gap-2">
+                      <Badge variant="secondary">
+                        <Users className="mr-1 h-3 w-3" />
+                        {org._count.organizationUsers} users
+                      </Badge>
+                      <Badge variant="secondary">
+                        <FolderOpen className="mr-1 h-3 w-3" />
+                        {org._count.projects} projects
+                      </Badge>
+                    </div>
+
+                    <div className="pt-2">
+                      <Button 
+                        variant="outline" 
+                        className="w-full"
+                        onClick={() => window.location.href = `/organizations/${org.id}`}
+                      >
+                        <Settings className="mr-2 h-4 w-4" />
+                        Visit Organization
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+
+          {/* Edit Dialog */}
+          <Dialog open={!!editingOrg} onOpenChange={() => setEditingOrg(null)}>
+            <DialogContent className="sm:max-w-[500px]">
+              <DialogHeader>
+                <DialogTitle>Edit Organization</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-name">Organization Name</Label>
+                  <Input
+                    id="edit-name"
+                    value={formData.name}
+                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="My Organization"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-description">Description</Label>
+                  <Textarea
+                    id="edit-description"
+                    value={formData.description}
+                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="Organization description..."
+                  />
+                </div>
+
+                <div className="flex justify-end space-x-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setEditingOrg(null)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button onClick={handleUpdateOrganization}>
+                    Update Organization
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
-      )}
-
-      {/* Edit Dialog */}
-      <Dialog open={!!editingOrg} onOpenChange={() => setEditingOrg(null)}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Edit Organization</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="edit-name">Organization Name</Label>
-              <Input
-                id="edit-name"
-                value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                placeholder="My Organization"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-slug">Slug</Label>
-              <Input
-                id="edit-slug"
-                value={formData.slug}
-                onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
-                placeholder="my-organization"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-description">Description</Label>
-              <Textarea
-                id="edit-description"
-                value={formData.description}
-                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="Organization description..."
-              />
-            </div>
-
-            <div className="flex justify-end space-x-2">
-              <Button
-                variant="outline"
-                onClick={() => setEditingOrg(null)}
-              >
-                Cancel
-              </Button>
-              <Button onClick={handleUpdateOrganization}>
-                Update Organization
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      </div>
     </div>
   );
 } 

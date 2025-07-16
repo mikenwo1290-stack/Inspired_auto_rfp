@@ -1,22 +1,8 @@
-"use client";
-
-import React, { useEffect, useState, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
-import { RfpDocument, AnswerSource } from "@/types/api";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import React, { Suspense } from "react";
 import { Spinner } from "@/components/ui/spinner";
-import { toast } from "@/components/ui/use-toast";
 import { Toaster } from "@/components/ui/toaster";
-import { QuestionsSection } from "./components/questions-section";
 
-// Interface for answer data
-interface AnswerData {
-  text: string;
-  sources?: AnswerSource[];
-}
-
+import { QuestionsSection } from "./components";
 
 function QuestionsLoadingFallback() {
   return (
@@ -36,11 +22,13 @@ function QuestionsLoadingFallback() {
   );
 }
 
-export default function QuestionsPage() {
+export default async function QuestionsPage( { params }: { params: Promise<{ projectId: string }> } ) {
+  const { projectId } = await params;
+
   return (
     
       <Suspense fallback={<QuestionsLoadingFallback />}>
-        <QuestionsSection />
+        <QuestionsSection projectId={projectId} />
         <Toaster />
       </Suspense>
     

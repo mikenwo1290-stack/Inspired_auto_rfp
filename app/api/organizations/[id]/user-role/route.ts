@@ -8,8 +8,12 @@ export async function GET(
   try {
     const { id } = await params;
     const organizationId = id;
+
+    console.log("user-role debugging 123456 ", id)
+
     const currentUser = await organizationService.getCurrentUser();
     
+    console.log("user-role debugging 234567 ", currentUser)
     if (!currentUser) {
       return NextResponse.json(
         { error: 'Unauthorized' },
