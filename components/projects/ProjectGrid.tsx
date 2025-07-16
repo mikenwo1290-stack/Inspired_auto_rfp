@@ -1,6 +1,5 @@
 import React from "react";
 import { ProjectCard } from "./ProjectCard";
-import { CreateProjectCard } from "./CreateProjectCard";
 import { ProjectCardSkeleton } from "./ProjectCardSkeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
@@ -42,8 +41,6 @@ export function ProjectGrid({ projects, isLoading, showCreateCard = true }: Proj
       {projects.map((project) => (
         <ProjectCard key={project.id} project={project} />
       ))}
-      
-      {showCreateCard && <CreateProjectCard />}
     </div>
   );
 } 

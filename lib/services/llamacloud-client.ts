@@ -109,6 +109,10 @@ export class LlamaCloudClient implements ILlamaCloudClient {
       const PipelinesArraySchema = z.array(LlamaCloudPipelineSchema);
       const validatedPipelines = PipelinesArraySchema.parse(pipelines || []);
 
+      console.log("from llamacloud-client 'validatedPipelines'", validatedPipelines)
+
+      console.log("from llamacloud-client 'projectId'", projectId)
+
       // Filter pipelines to only include those from the specified project
       const filteredPipelines = validatedPipelines.filter(pipeline => 
         pipeline.project_id === projectId

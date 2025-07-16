@@ -7,13 +7,16 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+
+    console.log("fetching organization by id");
+
     const { id } = await params;
+    console.log("id is ", id);
+
     const organizationId = id;
     
-    // Get include parameter from query string
-    const { searchParams } = new URL(request.url);
-    const includeRelations = searchParams.get('include') === 'all';
-    
+    console.log("organizationId is ", organizationId);
+
     // Get user from auth service - only once
     const currentUser = await organizationService.getCurrentUser();
     
@@ -36,9 +39,13 @@ export async function GET(
         { status: 403 }
       );
     }
+
+    console.log("isMember is ", isMember);
     
     // Use the optimized query with selective loading
-    const organization = await organizationService.getOrganization(organizationId, includeRelations);
+    const organization = await organizationService.getOrganization(organizationId, true);
+
+    console.log("organization is ", organization);
     
     if (!organization) {
       return NextResponse.json(
@@ -46,7 +53,7 @@ export async function GET(
         { status: 404 }
       );
     }
-    
+
     return NextResponse.json(organization);
   } catch (error) {
     console.error('Error fetching organization:', error);

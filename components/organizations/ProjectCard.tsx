@@ -30,7 +30,7 @@ export function ProjectCard({ project, orgId }: ProjectCardProps) {
         <p className="text-sm text-muted-foreground mb-4">
           {project.description || 'No description'}
         </p>
-        <Link href={`/project?projectId=${project.id}&orgId=${orgId}`}>
+        <Link href={`/project/${project.id}?orgId=${orgId}`}>
           <Button className="w-full">
             Open Project
           </Button>

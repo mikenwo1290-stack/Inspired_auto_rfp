@@ -9,6 +9,8 @@ export async function GET(request: NextRequest) {
     // Parse and validate query parameters
     const { searchParams } = new URL(request.url);
     const organizationId = searchParams.get('organizationId');
+
+    console.log('organizationId from /api/llamacloud/documents', organizationId)
     
     const validatedRequest = LlamaCloudDocumentsRequestSchema.parse({
       organizationId,

@@ -10,10 +10,10 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Link from "next/link";
 
 interface DocumentsContentProps {
-  orgId: string;
+  id: string;
 }
 
-export function DocumentsContent({ orgId }: DocumentsContentProps) {
+export function DocumentsContent({  id }: DocumentsContentProps) {
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [userRole, setUserRole] = useState<string | null>(null);
@@ -22,7 +22,7 @@ export function DocumentsContent({ orgId }: DocumentsContentProps) {
   const checkConnection = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(`/api/llamacloud/documents?organizationId=${orgId}`);
+      const response = await fetch(`/api/llamacloud/documents?organizationId=${id}`);
       
       if (response.ok) {
         setIsConnected(true);
@@ -42,7 +42,9 @@ export function DocumentsContent({ orgId }: DocumentsContentProps) {
 
   const checkUserRole = async () => {
     try {
-      const response = await fetch(`/api/organizations/${orgId}/user-role`);
+
+      console.log("checkUserRole debugging 123456 ", id)
+      const response = await fetch(`/api/organizations/${id}/user-role`);
       
       if (response.ok) {
         const data = await response.json();
@@ -60,7 +62,7 @@ export function DocumentsContent({ orgId }: DocumentsContentProps) {
   useEffect(() => {
     checkConnection();
     checkUserRole();
-  }, [orgId]);
+  }, [id]);
 
   const canManageConnections = userRole === 'owner' || userRole === 'admin';
 
@@ -95,7 +97,7 @@ export function DocumentsContent({ orgId }: DocumentsContentProps) {
                 <AlertDescription className="space-y-2">
                   <p>Connect your organization to a LlamaCloud project to access documents and pipelines.</p>
                   {canManageConnections ? (
-                    <Link href={`/org/${orgId}/settings`}>
+                    <Link href={`/organizations/${id}/settings`}>
                       <Button variant="outline" size="sm" className="mt-2">
                         <Settings className="mr-2 h-4 w-4" />
                         Go to Organization Settings
@@ -110,58 +112,12 @@ export function DocumentsContent({ orgId }: DocumentsContentProps) {
               </Alert>
             ) : (
               <LlamaCloudDocuments 
-                organizationId={orgId} 
+                organizationId={id} 
                 onDisconnect={() => setIsConnected(false)}
               />
             )}
           </div>
 
-          {/* Organization Library */}
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold">Organization Library</h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg flex items-center">
-                    <FileIcon className="h-4 w-4 mr-2" />
-                    Document Library
-                  </CardTitle>
-                  <CardDescription>
-                    Shared organization documents
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                    This page is under construction. Documents will be available soon.
-                  </p>
-                </CardContent>
-                <CardFooter>
-                  <Button variant="outline" className="w-full">View Library</Button>
-                </CardFooter>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg flex items-center">
-                    <FolderIcon className="h-4 w-4 mr-2" />
-                    RFP Templates
-                  </CardTitle>
-                  <CardDescription>
-                    Standard templates for RFPs
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                    Access standardized templates for different types of RFPs.
-                  </p>
-                </CardContent>
-                <CardFooter>
-                  <Button variant="outline" className="w-full">Browse Templates</Button>
-                </CardFooter>
-              </Card>
-            </div>
-          </div>
         </div>
       </div>
     </div>

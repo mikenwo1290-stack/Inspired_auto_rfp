@@ -14,8 +14,6 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { usePathname, useParams, useSearchParams } from 'next/navigation';
 import { HelpCircle, LogOut } from 'lucide-react';
-import { OrganizationSwitcher } from './organization-switcher';
-import { ProjectSwitcher } from './project-switcher';
 import Image from 'next/image';
 import { logout } from '@/app/login/actions';
 import { useTransition } from 'react';
@@ -36,7 +34,7 @@ function HeaderContent() {
   const showOnHomePage = pathname === '/' || pathname === '/new-organization';
   
   // Get current project and org IDs from URL params
-  const currentProjectId = searchParams.get('projectId');
+  const currentProjectId = pathname.startsWith('/project/') ? pathname.split('/')[2] : null;
   const currentOrgId = searchParams.get('orgId') || params.orgId as string;
 
   // Fetch user email on component mount
