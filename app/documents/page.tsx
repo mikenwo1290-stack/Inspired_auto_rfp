@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
 import DocumentList from './components/DocumentList'
 import DocumentListSkeleton from './components/DocumentListSkeleton'
-import { DocumentsSection } from '@/app/project/components/documents-section'
+import { DocumentsSection } from '@/app/projects/components/documents-section'
 
 export const metadata = {
   title: 'Documents',

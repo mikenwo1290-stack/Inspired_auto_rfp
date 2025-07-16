@@ -110,7 +110,7 @@ export function HomeContent() {
    
                   <div className="divide-y">
                     {filteredProjects.map((project) => (
-                      <Link href={`/project?projectId=${project.id}`} key={project.id}>
+                      <Link href={`/project/${project.id}`} key={project.id}>
                         <div className="p-4 hover:bg-muted/10 transition-colors flex items-center justify-between">
                           <div>
                             <h3 className="font-medium">{project.name}</h3>

@@ -10,11 +10,10 @@ import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 
 // Inner component that uses search params
-function ProjectContentInner() {
+function ProjectContentInner({ projectId }: { projectId: string }) {
   const [activeSection, setActiveSection] = useState("overview")
   const searchParams = useSearchParams()
   const router = useRouter()
-  const projectId = searchParams.get("projectId")
   const orgId = searchParams.get("orgId")
 
   // Function to navigate between sections
@@ -51,7 +50,7 @@ function ProjectContentInner() {
   )
 }
 
-export function ProjectContent() {
+export function ProjectContent({ projectId }: { projectId: string }) {
   return (
     <Suspense fallback={
       <div className="container py-6">
@@ -62,7 +61,7 @@ export function ProjectContent() {
         </div>
       </div>
     }>
-      <ProjectContentInner />
+      <ProjectContentInner projectId={projectId} />
     </Suspense>
   )
 }

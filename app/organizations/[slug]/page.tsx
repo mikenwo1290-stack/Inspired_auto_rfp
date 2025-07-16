@@ -22,6 +22,9 @@ export default function OrganizationPage() {
     const fetchOrganization = async () => {
       try {
         setIsLoading(true);
+
+        console.log("fetching organization by slug");
+        console.log("slug is ", slug);
         
         // First fetch the organization by slug
         const orgResponse = await fetch(`/api/organizations/by-slug/${slug}`);
@@ -31,6 +34,8 @@ export default function OrganizationPage() {
         }
         
         const orgData = await orgResponse.json();
+
+        console.log("orgData is ", orgData);
         setOrganization(orgData);
       } catch (error) {
         console.error('Error fetching organization:', error);

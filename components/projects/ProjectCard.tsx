@@ -39,7 +39,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
         </div>
       </CardContent>
       <CardFooter className="pt-0">
-        <Link href={`/project?projectId=${project.id}`} className="w-full">
+        <Link href={`/projects/${project.id}`} className="w-full">
           <Button variant="outline" className="w-full">View Project</Button>
         </Link>
       </CardFooter>

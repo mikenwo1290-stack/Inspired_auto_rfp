@@ -3,8 +3,8 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { QuestionsFilter } from "./questions-filter"
 import { QuestionEditor } from "./question-editor"
-import { QuestionNavigator } from "../../project/components/question-navigator"
-import { AISuggestionsPanel } from "../../project/components/ai-suggestions-panel"
+import { QuestionNavigator } from "../../projects/components/question-navigator"
+import { AISuggestionsPanel } from "../../projects/components/ai-suggestions-panel"
 import { AnswerSource } from "@/types/api"
 
 interface AnswerData {

@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils"
 
 interface ProjectOverviewProps {
   onViewQuestions: () => void;
-  projectId: string | null;
+  projectId: string;
   orgId?: string | null;
 }
 
@@ -27,36 +27,34 @@ export function ProjectOverview({ onViewQuestions, projectId, orgId }: ProjectOv
   const [sectionsExpanded, setSectionsExpanded] = useState(false)
 
   useEffect(() => {
-    if (projectId) {
-      const fetchProjectData = async () => {
-        setLoading(true)
-        try {
-          // Fetch project details
-          const projectResponse = await fetch(`/api/projects/${projectId}`)
-          if (!projectResponse.ok) {
-            throw new Error("Failed to fetch project details")
-          }
-          const projectData = await projectResponse.json()
-          setProject(projectData)
-
-          // Fetch RFP document with questions
-          const rfpResponse = await fetch(`/api/questions/${projectId}`)
-          if (!rfpResponse.ok) {
-            throw new Error("Failed to fetch RFP questions")
-          }
-          
-          const rfpData = await rfpResponse.json()
-          setRfpDocument(rfpData)
-        } catch (err) {
-          console.error("Error fetching project data:", err)
-          setError("Failed to load project data")
-        } finally {
-          setLoading(false)
+    const fetchProjectData = async () => {
+      setLoading(true)
+      try {
+        // Fetch project details
+        const projectResponse = await fetch(`/api/projects/${projectId}`)
+        if (!projectResponse.ok) {
+          throw new Error("Failed to fetch project details")
         }
-      }
+        const projectData = await projectResponse.json()
+        setProject(projectData)
 
-      fetchProjectData()
+        // Fetch RFP document with questions
+        const rfpResponse = await fetch(`/api/questions/${projectId}`)
+        if (!rfpResponse.ok) {
+          throw new Error("Failed to fetch RFP questions")
+        }
+        
+        const rfpData = await rfpResponse.json()
+        setRfpDocument(rfpData)
+      } catch (err) {
+        console.error("Error fetching project data:", err)
+        setError("Failed to load project data")
+      } finally {
+        setLoading(false)
+      }
     }
+
+    fetchProjectData()
   }, [projectId])
 
   // Calculate project metrics

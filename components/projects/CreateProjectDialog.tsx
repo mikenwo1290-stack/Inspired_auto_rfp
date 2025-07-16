@@ -81,7 +81,7 @@ export function CreateProjectDialog({
         if (onSuccess) {
           onSuccess(project.id);
         } else {
-          router.push(`/project?projectId=${project.id}`);
+          router.push(`/project/${project.id}`);
         }
       } else {
         const error = await response.json();

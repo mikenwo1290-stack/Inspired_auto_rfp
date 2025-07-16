@@ -36,7 +36,7 @@ function HeaderContent() {
   const showOnHomePage = pathname === '/' || pathname === '/new-organization';
   
   // Get current project and org IDs from URL params
-  const currentProjectId = searchParams.get('projectId');
+  const currentProjectId = pathname.startsWith('/project/') ? pathname.split('/')[2] : null;
   const currentOrgId = searchParams.get('orgId') || params.orgId as string;
 
   // Fetch user email on component mount

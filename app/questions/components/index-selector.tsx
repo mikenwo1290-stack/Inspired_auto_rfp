@@ -84,7 +84,65 @@ export function IndexSelector({
         )}
       </CardHeader>
       
-
+      {showIndexSelector && (
+        <CardContent className="pt-0">
+          <div className="space-y-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+              <p className="text-sm text-blue-800">
+                <strong>Note:</strong> This selection is temporary for AI generation in this session. 
+                To permanently configure project indexes, use the <strong>Documents</strong> tab.
+              </p>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">
+                Select which document indexes to use when generating AI answers:
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onSelectAllIndexes}
+              >
+                {selectedIndexes.size === availableIndexes.length ? 'Deselect All' : 'Select All'}
+              </Button>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {availableIndexes.map((index) => (
+                <div
+                  key={index.id}
+                  className={cn(
+                    "flex items-center space-x-3 p-3 border rounded-lg cursor-pointer transition-colors",
+                    selectedIndexes.has(index.id)
+                      ? "border-primary bg-primary/5"
+                      : "border-muted hover:border-muted-foreground/30"
+                  )}
+                  onClick={() => onIndexToggle(index.id)}
+                >
+                  <Checkbox
+                    checked={selectedIndexes.has(index.id)}
+                    onChange={() => onIndexToggle(index.id)}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <Database className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      <span className="font-medium text-sm truncate">{index.name}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            {selectedIndexes.size > 0 && (
+              <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                <p className="text-sm text-green-800">
+                  ✓ AI will use documents from {selectedIndexes.size} selected {selectedIndexes.size === 1 ? 'index' : 'indexes'} to generate answers.
+                </p>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      )}
     </Card>
   );
 } 
