@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
@@ -23,7 +23,7 @@ type Question = {
   question: string;
 }
 
-export default function CreateQuestionsPage() {
+function CreateQuestionsPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const projectId = searchParams.get("projectId");
@@ -340,5 +340,23 @@ export default function CreateQuestionsPage() {
       
       <Toaster />
     </div>
+  );
+}
+
+// Main export that wraps the inner component with Suspense
+export default function CreateQuestionsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto py-8 px-4 max-w-4xl">
+          <div className="flex flex-col items-center justify-center h-64">
+            <Spinner size="lg" className="mb-4" />
+            <p>Loading create questions page...</p>
+          </div>
+        </div>
+      </div>
+    }>
+      <CreateQuestionsPageInner />
+    </Suspense>
   );
 } 

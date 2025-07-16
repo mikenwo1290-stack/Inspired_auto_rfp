@@ -339,7 +339,7 @@ export default function OrganizationsPage() {
                   <Button 
                     variant="outline" 
                     className="w-full"
-                    onClick={() => window.location.href = `/organizations/${org.slug}`}
+                    onClick={() => window.location.href = `/organizations/${org.slug}/projects`}
                   >
                     <Settings className="mr-2 h-4 w-4" />
                     Visit Organization

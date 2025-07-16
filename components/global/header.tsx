@@ -14,8 +14,6 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { usePathname, useParams, useSearchParams } from 'next/navigation';
 import { HelpCircle, LogOut } from 'lucide-react';
-import { OrganizationSwitcher } from './organization-switcher';
-import { ProjectSwitcher } from './project-switcher';
 import Image from 'next/image';
 import { logout } from '@/app/login/actions';
 import { useTransition } from 'react';
