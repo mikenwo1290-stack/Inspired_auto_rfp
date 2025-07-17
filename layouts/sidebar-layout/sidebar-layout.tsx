@@ -153,7 +153,7 @@ function AppSidebar() {
   const contextNavigationItems = getNavigationItems();
 
   return (
-    <Sidebar variant="inset" className="border-r h-full">
+    <Sidebar variant="inset" collapsible="icon" className="border-r h-full">
       <SidebarHeader>
         <OrganizationProjectSwitcher />
       </SidebarHeader>
@@ -163,11 +163,6 @@ function AppSidebar() {
           {/* Context-specific navigation (organization or project) */}
           {contextNavigationItems.map((group) => (
             <div key={group.title}>
-              <SidebarMenuItem>
-                <SidebarMenuButton className="text-xs font-medium text-muted-foreground">
-                  {group.title}
-                </SidebarMenuButton>
-              </SidebarMenuItem>
               <SidebarMenuSub>
                 {group.items.map((item) => (
                   <SidebarMenuSubItem key={item.title}>
@@ -231,29 +226,26 @@ interface SidebarLayoutProps {
 export function SidebarLayout({ children }: SidebarLayoutProps) {
   return (
     <TooltipProvider>
-      <div className="flex h-full">
-        <SidebarProvider>
-          {/* Fixed sidebar that doesn't scroll with content */}
-          <div className="flex">
-            <AppSidebar />
-          </div>
-          
-          {/* Main content area with independent scrolling */}
-          <SidebarInset className="flex-1 flex flex-col overflow-hidden">
-            {/* Fixed header */}
-            <header className="flex h-16 shrink-0 items-center border-b bg-background transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
-              <div className="flex items-center gap-2 px-4">
-                <SidebarTrigger className="-ml-1" />
-              </div>
-            </header>
-            
-            {/* Scrollable content area */}
-            <div className="flex-1 overflow-y-auto">
-              {children}
+      <SidebarProvider>
+        
+        <AppSidebar />
+        
+        {/* Main content area with independent scrolling */}
+        <SidebarInset className="flex-1 flex flex-col overflow-hidden">
+          {/* Fixed header */}
+          <header className="flex h-16 shrink-0 items-center border-b bg-background transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
+            <div className="flex items-center gap-2 px-4">
+              <SidebarTrigger className="-ml-1" />
             </div>
-          </SidebarInset>
-        </SidebarProvider>
-      </div>
+          </header>
+          
+          {/* Scrollable content area */}
+          <div className="flex-1 overflow-y-auto">
+            {children}
+          </div>
+        </SidebarInset>
+        
+      </SidebarProvider>
     </TooltipProvider>
   );
 } 
