@@ -65,8 +65,9 @@ export async function POST(request: NextRequest) {
         organization: {
           select: {
             id: true,
-            llamaCloudApiKey: true,
+            llamaCloudProjectId: true,
             llamaCloudProjectName: true,
+            llamaCloudConnectedAt: true,
           },
         },
         projectIndexes: true,
@@ -95,7 +96,7 @@ export async function POST(request: NextRequest) {
     let documentContext = '';
     let documentSources: any[] = [];
     
-    if (project.organization.llamaCloudApiKey) {
+    if (project.organization.llamaCloudProjectId && project.organization.llamaCloudConnectedAt) {
       try {
         console.log('🔑 LlamaCloud API key found, initializing service...');
         
@@ -117,7 +118,6 @@ export async function POST(request: NextRequest) {
           console.log(`📋 Using index names: ${indexNames.join(', ')}`);
           
           const llamaIndexService = new LlamaIndexService({
-            apiKey: project.organization.llamaCloudApiKey,
             projectName: project.organization.llamaCloudProjectName || 'Default',
             indexNames: indexNames,
           });

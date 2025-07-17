@@ -36,7 +36,6 @@ model Organization {
   updatedAt   DateTime @updatedAt
 
   // LlamaCloud Project integration (project-specific connection)
-  llamaCloudApiKey       String?   @db.Text
   llamaCloudProjectId    String?
   llamaCloudProjectName  String?
   llamaCloudOrgName      String?

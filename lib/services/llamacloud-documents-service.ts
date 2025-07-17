@@ -1,16 +1,17 @@
 import { ILlamaCloudDocumentsService } from '@/lib/interfaces/llamacloud-service';
 import { 
-  LlamaCloudDocumentsRequest,
-  LlamaCloudDocumentsResponse,
-  LlamaCloudFile
+  LlamaCloudDocumentsRequest, 
+  LlamaCloudDocumentsResponse, 
+  LlamaCloudFile 
 } from '@/lib/validators/llamacloud';
 import { llamaCloudClient } from './llamacloud-client';
 import { organizationAuth } from './organization-auth';
 import { db } from '@/lib/db';
 import { DatabaseError, LlamaCloudConnectionError, NotFoundError } from '@/lib/errors/api-errors';
+import { env, validateEnv } from '@/lib/env';
 
 /**
- * LlamaCloud documents service implementation
+ * LlamaCloud documents management service
  */
 export class LlamaCloudDocumentsService implements ILlamaCloudDocumentsService {
   /**
@@ -18,29 +19,46 @@ export class LlamaCloudDocumentsService implements ILlamaCloudDocumentsService {
    */
   async getDocuments(request: LlamaCloudDocumentsRequest, userId: string): Promise<LlamaCloudDocumentsResponse> {
     try {
-      // Step 1: Verify user has access to organization
+      // Step 1: Verify user has organization access
       await organizationAuth.requireMembership(userId, request.organizationId);
 
-      // Step 2: Get organization and verify LlamaCloud connection
+      // Step 2: Validate environment variables
+      if (!validateEnv()) {
+        throw new LlamaCloudConnectionError('LlamaCloud API key not configured in environment variables');
+      }
+
+      // Step 3: Get connected organization
       const organization = await this.getConnectedOrganization(request.organizationId);
 
-      // Step 3: Fetch pipelines from LlamaCloud
+      // Step 4: Fetch pipelines for the project
       const pipelines = await llamaCloudClient.fetchPipelinesForProject(
-        organization.llamaCloudApiKey!,
+        env.LLAMACLOUD_API_KEY,
         organization.llamaCloudProjectId!
       );
 
-      console.log(`Found ${pipelines.length} pipelines for project ${organization.llamaCloudProjectId}`);
+      // Step 5: Collect all documents from all pipelines
+      const allDocuments: LlamaCloudFile[] = [];
+      const documentFetchPromises = pipelines.map(async (pipeline) => {
+        try {
+          const documents = await llamaCloudClient.fetchFilesForPipeline(
+            env.LLAMACLOUD_API_KEY,
+            pipeline.id
+          );
+          return documents.map((doc: any) => ({
+            ...doc,
+            pipelineName: pipeline.name,
+            pipelineId: pipeline.id,
+          }));
+        } catch (error) {
+          console.error(`Failed to fetch documents for pipeline ${pipeline.name}:`, error);
+          return [];
+        }
+      });
 
-      // Step 4: Fetch files for each pipeline
-      const allDocuments = await this.fetchDocumentsForPipelines(
-        organization.llamaCloudApiKey!,
-        pipelines
-      );
+      const documentArrays = await Promise.all(documentFetchPromises);
+      documentArrays.forEach((docs: any) => allDocuments.push(...docs));
 
-      console.log(`Found ${allDocuments.length} total documents across all pipelines`);
-
-      // Step 5: Return structured response
+      // Step 6: Return response
       const response: LlamaCloudDocumentsResponse = {
         projectName: organization.llamaCloudProjectName,
         projectId: organization.llamaCloudProjectId,
@@ -51,7 +69,7 @@ export class LlamaCloudDocumentsService implements ILlamaCloudDocumentsService {
 
       return response;
     } catch (error) {
-      if (error instanceof DatabaseError || error instanceof LlamaCloudConnectionError || error instanceof NotFoundError) {
+      if (error instanceof LlamaCloudConnectionError || error instanceof DatabaseError || error instanceof NotFoundError) {
         throw error;
       }
       throw new LlamaCloudConnectionError(
@@ -70,7 +88,6 @@ export class LlamaCloudDocumentsService implements ILlamaCloudDocumentsService {
         select: {
           id: true,
           name: true,
-          llamaCloudApiKey: true,
           llamaCloudProjectId: true,
           llamaCloudProjectName: true,
           llamaCloudConnectedAt: true,
@@ -81,7 +98,7 @@ export class LlamaCloudDocumentsService implements ILlamaCloudDocumentsService {
         throw new NotFoundError('Organization not found');
       }
 
-      if (!organization.llamaCloudApiKey || !organization.llamaCloudConnectedAt) {
+      if (!organization.llamaCloudProjectId || !organization.llamaCloudConnectedAt) {
         throw new LlamaCloudConnectionError('Organization is not connected to LlamaCloud');
       }
 
@@ -99,62 +116,51 @@ export class LlamaCloudDocumentsService implements ILlamaCloudDocumentsService {
   /**
    * Fetch documents for all pipelines
    */
-  private async fetchDocumentsForPipelines(apiKey: string, pipelines: any[]): Promise<LlamaCloudFile[]> {
-    const allDocuments: LlamaCloudFile[] = [];
-
-    for (const pipeline of pipelines) {
-      try {
-        console.log(`Fetching files for pipeline: ${pipeline.name} (${pipeline.id})`);
-        
-        const files = await llamaCloudClient.fetchFilesForPipeline(apiKey, pipeline.id);
-        
-        console.log(`Found ${files.length} files in pipeline: ${pipeline.name}`);
-        
-        // Add pipeline info to each file/document and normalize the structure
-        const documentsWithPipeline = files.map((file) => ({
-          ...file,
-          pipelineName: pipeline.name,
-          pipelineId: pipeline.id,
-          // Normalize file properties for consistency
-          name: file.name || 'Unknown', // API returns 'name' field directly
-          status: file.status || 'unknown',
-          size_bytes: file.file_size || file.size_bytes,
-        }));
-        
-        allDocuments.push(...documentsWithPipeline);
-      } catch (error) {
-        // Continue with other pipelines even if one fails
-        console.error(`Error fetching files for pipeline ${pipeline.id}:`, error);
-      }
-    }
-
-    return allDocuments;
-  }
-
-  /**
-   * Get documents statistics for monitoring
-   */
-  async getDocumentsStats(organizationId: string): Promise<{
-    totalDocuments: number;
-    totalPipelines: number;
-    lastFetched: Date;
-  }> {
+  async fetchDocumentsForAllPipelines(organizationId: string): Promise<LlamaCloudFile[]> {
     try {
-      const user = await organizationAuth.getCurrentUser();
-      if (!user) {
-        throw new Error('Authentication required');
+      // Validate environment variables
+      if (!validateEnv()) {
+        throw new LlamaCloudConnectionError('LlamaCloud API key not configured in environment variables');
       }
 
-      const documents = await this.getDocuments({ organizationId }, user.id);
-      
-      return {
-        totalDocuments: documents.documents.length,
-        totalPipelines: documents.pipelines.length,
-        lastFetched: new Date(),
-      };
+      const organization = await this.getConnectedOrganization(organizationId);
+
+      // Get all pipelines for the project
+      const pipelines = await llamaCloudClient.fetchPipelinesForProject(
+        env.LLAMACLOUD_API_KEY,
+        organization.llamaCloudProjectId!
+      );
+
+      // Fetch documents for each pipeline
+      const allDocuments: LlamaCloudFile[] = [];
+      for (const pipeline of pipelines) {
+        try {
+          const documents = await llamaCloudClient.fetchFilesForPipeline(
+            env.LLAMACLOUD_API_KEY,
+            pipeline.id
+          );
+          
+          // Add pipeline information to each document
+          const documentsWithPipeline = documents.map((doc: any) => ({
+            ...doc,
+            pipelineName: pipeline.name,
+            pipelineId: pipeline.id,
+          }));
+          
+          allDocuments.push(...documentsWithPipeline);
+        } catch (error) {
+          console.error(`Failed to fetch documents for pipeline ${pipeline.name}:`, error);
+          // Continue with other pipelines if one fails
+        }
+      }
+
+      return allDocuments;
     } catch (error) {
-      throw new DatabaseError(
-        `Failed to get documents stats: ${error instanceof Error ? error.message : 'Unknown error'}`
+      if (error instanceof LlamaCloudConnectionError || error instanceof DatabaseError || error instanceof NotFoundError) {
+        throw error;
+      }
+      throw new LlamaCloudConnectionError(
+        `Failed to fetch documents for all pipelines: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
     }
   }
