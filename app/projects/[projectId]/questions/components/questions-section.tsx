@@ -11,6 +11,7 @@ import { SourceDetailsDialog } from "./source-details-dialog"
 import { QuestionsFilterTabs } from "./questions-filter-tabs"
 import { QuestionsLoadingState, QuestionsErrorState } from "./questions-states"
 import { MultiStepResponseHandler } from "./multi-step-response-handler"
+import { IndexSelector } from "./index-selector"
 
 interface QuestionsSectionProps {
   projectId: string;
@@ -31,6 +32,11 @@ function QuestionsSectionInner({ projectId }: QuestionsSectionProps) {
     setIsSourceModalOpen,
     saveAllAnswers,
     handleExportAnswers,
+    selectedIndexes,
+    availableIndexes,
+    organizationConnected,
+    handleIndexToggle,
+    handleSelectAllIndexes,
   } = useQuestions();
 
   // Loading state
@@ -63,14 +69,14 @@ function QuestionsSectionInner({ projectId }: QuestionsSectionProps) {
         isSaving={savingQuestions.size > 0}
       />
 
-      {/* Index Selection Panel (commented out as in original) */}
-      {/* <IndexSelector
+      {/* Index Selection Panel */}
+      <IndexSelector
         availableIndexes={availableIndexes}
         selectedIndexes={selectedIndexes}
         organizationConnected={organizationConnected}
         onIndexToggle={handleIndexToggle}
         onSelectAllIndexes={handleSelectAllIndexes}
-      /> */}
+      />
 
       {/* Source Details Dialog */}
       <SourceDetailsDialog

@@ -71,7 +71,6 @@ interface QuestionsContextType {
   saveAnswer: (questionId: string) => Promise<void>;
   saveAllAnswers: () => Promise<void>;
   handleExportAnswers: () => void;
-  handleMarkComplete: (questionId: string) => void;
   handleSourceClick: (source: AnswerSource) => void;
   handleIndexToggle: (indexId: string) => void;
   handleSelectAllIndexes: () => void;
@@ -80,7 +79,7 @@ interface QuestionsContextType {
   
   // Utility functions
   getFilteredQuestions: (filterType?: string) => any[];
-  getCounts: () => { all: number; answered: number; unanswered: number; flagged: number };
+  getCounts: () => { all: number; answered: number; unanswered: number };
   getSelectedQuestionData: () => any;
 }
 
@@ -178,10 +177,11 @@ export function QuestionsProvider({ children, projectId }: QuestionsProviderProp
           const data = await response.json();
           setOrganizationConnected(data.organizationConnected);
           if (data.organizationConnected) {
-            const indexes = data.availableIndexes || [] as ProjectIndex[];
-            setAvailableIndexes(indexes);
-            
+            // Use project's configured indexes as the available indexes for temporary selection
             const currentIndexes = data.currentIndexes || [] as ProjectIndex[];
+            setAvailableIndexes(currentIndexes);
+            
+            // Initialize selection with all configured project indexes
             const currentIndexIds = new Set(currentIndexes.map((index: ProjectIndex) => index.id)) as Set<string>;
             setSelectedIndexes(currentIndexIds);
           }
@@ -540,15 +540,7 @@ export function QuestionsProvider({ children, projectId }: QuestionsProviderProp
     document.body.removeChild(link);
   };
 
-  // Handle marking a question as complete
-  const handleMarkComplete = (questionId: string) => {
-    saveAnswer(questionId).then(() => {
-      toast({
-        title: "Question Completed",
-        description: "This question has been marked as complete.",
-      });
-    });
-  };
+
 
   // Get the currently selected question data
   const getSelectedQuestionData = () => {
@@ -588,15 +580,6 @@ export function QuestionsProvider({ children, projectId }: QuestionsProviderProp
       statusFiltered = allQuestions.filter(q => 
         !answers[q.id]?.text || answers[q.id].text.trim() === ''
       );
-    } else if (filterType === "flagged") {
-      statusFiltered = allQuestions.filter(q => {
-        const answer = answers[q.id]?.text || "";
-        return answer && (
-          answer.toLowerCase().includes("review") || 
-          answer.toLowerCase().includes("incomplete") || 
-          answer.toLowerCase().includes("todo")
-        );
-      });
     }
     
     if (!searchQuery) return statusFiltered;
@@ -610,24 +593,15 @@ export function QuestionsProvider({ children, projectId }: QuestionsProviderProp
 
   // Count questions by status
   const getCounts = () => {
-    if (!rfpDocument) return { all: 0, answered: 0, unanswered: 0, flagged: 0 };
+    if (!rfpDocument) return { all: 0, answered: 0, unanswered: 0 };
     
     const allQuestions = rfpDocument.sections.flatMap(s => s.questions);
     const answeredCount = allQuestions.filter(q => answers[q.id]?.text && answers[q.id].text.trim() !== '').length;
-    const needsReviewCount = allQuestions.filter(q => {
-      const answer = answers[q.id]?.text || "";
-      return answer && (
-        answer.toLowerCase().includes("review") || 
-        answer.toLowerCase().includes("incomplete") || 
-        answer.toLowerCase().includes("todo")
-      );
-    }).length;
     
     return {
       all: allQuestions.length,
       answered: answeredCount,
-      unanswered: allQuestions.length - answeredCount,
-      flagged: needsReviewCount
+      unanswered: allQuestions.length - answeredCount
     };
   };
 
@@ -692,7 +666,6 @@ export function QuestionsProvider({ children, projectId }: QuestionsProviderProp
     saveAnswer,
     saveAllAnswers,
     handleExportAnswers,
-    handleMarkComplete,
     handleSourceClick,
     handleIndexToggle,
     handleSelectAllIndexes,

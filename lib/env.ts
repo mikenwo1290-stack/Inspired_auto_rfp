@@ -1,14 +1,12 @@
 // Environment variables configuration
 export const env = {
-    LLAMA_CLOUD_API_KEY: {
-    apiKey: process.env.LLAMA_CLOUD_API_KEY || '',
-  },
+  LLAMACLOUD_API_KEY: process.env.LLAMACLOUD_API_KEY || '',
 };
 
 // Function to validate required environment variables
 export function validateEnv() {
   const requiredVars = [
-    { key: 'LLAMA_CLOUD_API_KEY', value: env.LLAMA_CLOUD_API_KEY.apiKey }
+    { key: 'LLAMACLOUD_API_KEY', value: env.LLAMACLOUD_API_KEY }
   ];
 
   const missingVars = requiredVars.filter(v => !v.value);

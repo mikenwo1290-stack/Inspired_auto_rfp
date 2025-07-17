@@ -35,7 +35,6 @@ interface QuestionsTabsContentProps {
   onSelectQuestion: (questionId: string) => void;
   onAnswerChange: (questionId: string, value: string) => void;
   onSave: (questionId: string) => void;
-  onMarkComplete: (questionId: string) => void;
   onGenerateAnswer: (questionId: string) => void;
   onSourceClick: (source: AnswerSource) => void;
   onMultiStepToggle: (enabled: boolean) => void;
@@ -59,7 +58,6 @@ export function QuestionsTabsContent({
   onSelectQuestion,
   onAnswerChange,
   onSave,
-  onMarkComplete,
   onGenerateAnswer,
   onSourceClick,
   onMultiStepToggle,
@@ -70,7 +68,6 @@ export function QuestionsTabsContent({
     switch (filterType) {
       case "answered": return "Answered Questions";
       case "unanswered": return "Unanswered Questions";
-      case "flagged": return "Questions Needing Review";
       default: return "Question Navigator";
     }
   };
@@ -79,7 +76,6 @@ export function QuestionsTabsContent({
     switch (filterType) {
       case "answered": return "No answered questions found";
       case "unanswered": return "No unanswered questions found";
-      case "flagged": return "No questions flagged for review";
       default: return "No questions found";
     }
   };
@@ -90,7 +86,6 @@ export function QuestionsTabsContent({
     switch (filterType) {
       case "answered": return hasAnswer ? "Answered" : "Needs Answer";
       case "unanswered": return "Needs Answer";
-      case "flagged": return "Needs Review";
       default: return hasAnswer ? "Answered" : "Needs Answer";
     }
   };
@@ -141,7 +136,6 @@ export function QuestionsTabsContent({
               useMultiStep={useMultiStep}
               onAnswerChange={(value) => onAnswerChange(selectedQuestion, value)}
               onSave={() => onSave(selectedQuestion)}
-              onMarkComplete={() => onMarkComplete(selectedQuestion)}
               onGenerateAnswer={() => onGenerateAnswer(selectedQuestion)}
               onSourceClick={onSourceClick}
               onMultiStepToggle={onMultiStepToggle}

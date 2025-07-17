@@ -17,7 +17,6 @@ interface ProjectWithOrganization {
   id: string;
   organization: {
     id: string;
-    llamaCloudApiKey: string | null;
     llamaCloudProjectId: string | null;
     llamaCloudProjectName: string | null;
     llamaCloudConnectedAt: Date | null;
@@ -63,7 +62,6 @@ export class ResponseGenerationService {
         organization: {
           select: {
             id: true,
-            llamaCloudApiKey: true,
             llamaCloudProjectId: true,
             llamaCloudProjectName: true,
             llamaCloudConnectedAt: true,
@@ -90,7 +88,7 @@ export class ResponseGenerationService {
   }
 
   private validateLlamaCloudConnection(project: ProjectWithOrganization): void {
-    if (!project.organization.llamaCloudApiKey || !project.organization.llamaCloudConnectedAt) {
+    if (!project.organization.llamaCloudProjectId || !project.organization.llamaCloudConnectedAt) {
       throw new LlamaCloudConnectionError('Organization is not connected to LlamaCloud');
     }
   }
@@ -141,7 +139,7 @@ export class ResponseGenerationService {
     selectedIndexNames: string[]
   ): Promise<GenerateResponseResponse> {
     const llamaIndexService = new LlamaIndexService({
-      apiKey: project.organization.llamaCloudApiKey!,
+      apiKey: process.env.LLAMACLOUD_API_KEY!,
       projectName: project.organization.llamaCloudProjectName || 'Default',
       indexNames: request.useAllIndexes ? undefined : selectedIndexNames,
     });

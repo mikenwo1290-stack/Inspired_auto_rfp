@@ -1,9 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { ChevronDown, ChevronRight, CheckCircle, AlertCircle, Clock, CircleDot } from "lucide-react"
+import { ChevronDown, ChevronRight, CheckCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { RfpSection } from "@/types/api"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 // Interface for answer data
 interface AnswerData {
@@ -12,7 +13,7 @@ interface AnswerData {
 }
 
 // Define possible question statuses
-type QuestionStatus = "unanswered" | "in-progress" | "complete" | "needs-review";
+type QuestionStatus = "unanswered" | "complete";
 
 interface QuestionNavigatorProps {
   onSelectQuestion: (id: string) => void;
@@ -54,16 +55,9 @@ export function QuestionNavigator({
   const getQuestionStatus = (questionId: string): QuestionStatus => {
     const answer = answers[questionId];
     
-    // Add logic to determine if a question needs review
-    if (!answer || !answer.text) return "unanswered";
-    if (answer.text.length < 20) return "in-progress"; // Short answers considered in-progress
-    
-    // Additional logic could be added here to check if a question needs review
-    // For demo purposes, we'll mark questions with specific keywords as needing review
-    if (answer.text.toLowerCase().includes("review") || 
-        answer.text.toLowerCase().includes("incomplete") ||
-        answer.text.toLowerCase().includes("todo")) {
-      return "needs-review";
+    // Simple binary logic: either answered or unanswered
+    if (!answer || !answer.text || answer.text.trim() === "") {
+      return "unanswered";
     }
     
     return "complete";
@@ -101,8 +95,9 @@ export function QuestionNavigator({
   };
 
   return (
-    <div className="space-y-2 text-sm">
-      {filteredSections.map((section) => (
+    <TooltipProvider>
+      <div className="space-y-2 text-sm">
+        {filteredSections.map((section) => (
         <div key={section.id} className="space-y-1">
           <button
             className="flex w-full items-center justify-between rounded-md p-2 font-medium hover:bg-muted"
@@ -128,11 +123,25 @@ export function QuestionNavigator({
                   >
                     <div className="flex w-full">
                       <div className="flex-shrink-0 w-5 h-5 mt-0.5 mr-2">
-                        {status === "complete" && <CheckCircle className="h-4 w-4 text-green-500" />}
-                        {status === "needs-review" && <AlertCircle className="h-4 w-4 text-yellow-500" />}
-                        {status === "in-progress" && <Clock className="h-4 w-4 text-blue-500" />}
+                        {status === "complete" && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <CheckCircle className="h-4 w-4 text-green-500" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Question answered</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
                         {status === "unanswered" && (
-                          <div className="h-4 w-4 rounded-full border border-muted-foreground" />
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="h-4 w-4 rounded-full border border-muted-foreground" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Question not yet answered</p>
+                            </TooltipContent>
+                          </Tooltip>
                         )}
                       </div>
                       <div className={cn(
@@ -152,5 +161,6 @@ export function QuestionNavigator({
         </div>
       ))}
     </div>
+    </TooltipProvider>
   )
 }

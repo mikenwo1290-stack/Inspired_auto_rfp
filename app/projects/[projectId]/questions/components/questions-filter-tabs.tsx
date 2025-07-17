@@ -28,7 +28,6 @@ export function QuestionsFilterTabs({ rfpDocument }: QuestionsFilterTabsProps) {
     setShowAIPanel,
     handleAnswerChange,
     saveAnswer,
-    handleMarkComplete,
     handleGenerateAnswer,
     handleSourceClick,
     setUseMultiStep,
@@ -42,7 +41,7 @@ export function QuestionsFilterTabs({ rfpDocument }: QuestionsFilterTabsProps) {
 
   return (
     <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
-      <TabsList className="grid w-full grid-cols-4 mb-4">
+      <TabsList className="grid w-full grid-cols-3 mb-4">
         <TabsTrigger value="all" className="gap-1">
           All Questions
           <Badge variant="secondary" className="ml-1">{counts.all}</Badge>
@@ -55,13 +54,9 @@ export function QuestionsFilterTabs({ rfpDocument }: QuestionsFilterTabsProps) {
           Unanswered
           <Badge variant="secondary" className="ml-1">{counts.unanswered}</Badge>
         </TabsTrigger>
-        <TabsTrigger value="flagged" className="gap-1">
-          Needs Review
-          <Badge variant="secondary" className="ml-1">{counts.flagged}</Badge>
-        </TabsTrigger>
       </TabsList>
 
-      {["all", "answered", "unanswered", "flagged"].map(filterType => (
+      {["all", "answered", "unanswered"].map(filterType => (
         <TabsContent key={filterType} value={filterType} className="space-y-4">
           <QuestionsTabsContent
             questions={getFilteredQuestions(filterType)}
@@ -82,7 +77,6 @@ export function QuestionsFilterTabs({ rfpDocument }: QuestionsFilterTabsProps) {
             }}
             onAnswerChange={handleAnswerChange}
             onSave={saveAnswer}
-            onMarkComplete={handleMarkComplete}
             onGenerateAnswer={handleGenerateAnswer}
             onSourceClick={handleSourceClick}
             onMultiStepToggle={setUseMultiStep}

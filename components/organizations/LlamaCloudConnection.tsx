@@ -1,123 +1,67 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
-import { Badge } from '@/components/ui/badge';
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { 
-  AlertCircle, 
-  CheckCircle2, 
-  Cloud, 
-  Loader2, 
-  ExternalLink,
-  Unlink
-} from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Cloud, Loader2, AlertCircle, CheckCircle2, Unplug } from 'lucide-react';
 
 interface LlamaCloudProject {
   id: string;
   name: string;
   description?: string;
-  created_at?: string;
-  organization_id?: string;
-  organization_name?: string;
+  organization_id: string;
+  organization_name: string;
+  created_at: string;
+  updated_at: string;
 }
 
 interface LlamaCloudConnectionProps {
   orgId: string;
   organization: any;
-  onConnectionUpdate: (updatedOrg: any) => void;
+  onConnectionUpdate: (organization: any) => void;
 }
 
 export function LlamaCloudConnection({ orgId, organization, onConnectionUpdate }: LlamaCloudConnectionProps) {
-  const [apiKey, setApiKey] = useState('');
   const [selectedProjectId, setSelectedProjectId] = useState('');
   const [availableProjects, setAvailableProjects] = useState<LlamaCloudProject[]>([]);
-  const [isValidating, setIsValidating] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isDisconnecting, setIsDisconnecting] = useState(false);
   const [isFetchingProjects, setIsFetchingProjects] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const debounceRef = React.useRef<NodeJS.Timeout | undefined>(undefined);
   const { toast } = useToast();
 
   const isConnected = organization?.llamaCloudConnectedAt;
   const connectedProjectName = organization?.llamaCloudProjectName;
   const connectedProjectId = organization?.llamaCloudProjectId;
 
-  // Clean up timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (debounceRef.current) {
-        clearTimeout(debounceRef.current);
-      }
-    };
-  }, []);
-
-  // Fetch available projects when API key is entered
-  const fetchProjects = async (key: string) => {
-    if (!key.trim()) {
-      setAvailableProjects([]);
-      return;
-    }
-
+  // Fetch available projects using environment API key
+  const fetchProjects = async () => {
     setIsFetchingProjects(true);
     setError(null);
 
     try {
-      // First validate the API key and fetch projects
-      const [projectsResponse, organizationsResponse] = await Promise.all([
-        fetch('https://api.cloud.llamaindex.ai/api/v1/projects', {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${key}`,
-            'Content-Type': 'application/json',
-          },
-        }),
-        fetch('https://api.cloud.llamaindex.ai/api/v1/organizations', {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${key}`,
-            'Content-Type': 'application/json',
-          },
-        })
-      ]);
+      // Fetch projects through our API route (which uses environment variables on server side)
+      const response = await fetch('/api/llamacloud/projects', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
-      if (!projectsResponse.ok) {
-        if (projectsResponse.status === 401) {
-          throw new Error('Invalid API key. Please check your LlamaCloud API key.');
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('LlamaCloud API key is not configured or invalid. Please check your environment variables.');
         }
         throw new Error('Failed to fetch projects from LlamaCloud.');
       }
 
-      const projects = await projectsResponse.json();
-      const organizations = organizationsResponse.ok ? await organizationsResponse.json() : [];
-      
-      // Create a map of organization_id -> organization_name for quick lookup
-      const orgMap = new Map();
-      if (Array.isArray(organizations)) {
-        organizations.forEach((org: any) => {
-          orgMap.set(org.id, org.name);
-        });
-      }
-      
-      // Enhance projects with organization names
-      const enhancedProjects = (projects || []).map((project: any) => ({
-        ...project,
-        organization_name: orgMap.get(project.organization_id) || 'Unknown Organization'
-      }));
-      
-      setAvailableProjects(enhancedProjects);
+      const data = await response.json();
+      setAvailableProjects(data.projects || []);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch projects';
       setError(errorMessage);
@@ -125,14 +69,21 @@ export function LlamaCloudConnection({ orgId, organization, onConnectionUpdate }
     } finally {
       setIsFetchingProjects(false);
     }
-  };
+  }
+
+  // Fetch projects when component mounts
+  useEffect(() => {
+    if (!isConnected) {
+      fetchProjects();
+    }
+  }, [isConnected]);
 
   // Connect to LlamaCloud project
   const handleConnect = async () => {
-    if (!apiKey.trim() || !selectedProjectId) {
+    if (!selectedProjectId) {
       toast({
         title: 'Error',
-        description: 'Please enter an API key and select a project.',
+        description: 'Please select a project.',
         variant: 'destructive',
       });
       return;
@@ -151,7 +102,6 @@ export function LlamaCloudConnection({ orgId, organization, onConnectionUpdate }
         },
         body: JSON.stringify({
           organizationId: orgId,
-          apiKey: apiKey.trim(),
           projectId: selectedProjectId,
           projectName: selectedProject?.name || 'Unknown Project',
           llamaCloudOrgName: selectedProject?.organization_name || 'Unknown Organization',
@@ -172,7 +122,6 @@ export function LlamaCloudConnection({ orgId, organization, onConnectionUpdate }
       });
 
       // Clear form
-      setApiKey('');
       setSelectedProjectId('');
       setAvailableProjects([]);
     } catch (err) {
@@ -216,6 +165,9 @@ export function LlamaCloudConnection({ orgId, organization, onConnectionUpdate }
         title: 'Success',
         description: 'Disconnected from LlamaCloud',
       });
+
+      // Refresh projects for potential reconnection
+      fetchProjects();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to disconnect from LlamaCloud';
       setError(errorMessage);
@@ -237,7 +189,8 @@ export function LlamaCloudConnection({ orgId, organization, onConnectionUpdate }
           LlamaCloud Integration
         </CardTitle>
         <CardDescription>
-          Connect your organization to a LlamaCloud project for document indexing and search
+          Connect your organization to a LlamaCloud project for document indexing and search.
+          The API key is configured via environment variables.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -262,90 +215,36 @@ export function LlamaCloudConnection({ orgId, organization, onConnectionUpdate }
               </AlertDescription>
             </Alert>
 
-            <div className="flex items-center justify-between p-4 border rounded-lg">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium">
-                    {organization?.llamaCloudOrgName 
-                      ? `${organization.llamaCloudOrgName} - ${connectedProjectName}`
-                      : connectedProjectName
-                    }
-                  </span>
-                  <Badge variant="secondary">Connected</Badge>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Project ID: {connectedProjectId}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Connected: {new Date(organization.llamaCloudConnectedAt).toLocaleDateString()}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" asChild>
-                  <a
-                    href={`https://cloud.llamaindex.ai/project/${connectedProjectId}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <ExternalLink className="h-4 w-4 mr-1" />
-                    Open Project
-                  </a>
-                </Button>
-                <Button 
-                  variant="destructive" 
-                  size="sm"
-                  onClick={handleDisconnect}
-                  disabled={isDisconnecting}
-                >
-                  {isDisconnecting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                      Disconnecting...
-                    </>
-                  ) : (
-                    <>
-                      <Unlink className="h-4 w-4 mr-1" />
-                      Disconnect
-                    </>
-                  )}
-                </Button>
-              </div>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                onClick={handleDisconnect}
+                disabled={isDisconnecting}
+              >
+                {isDisconnecting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Disconnecting...
+                  </>
+                ) : (
+                  <>
+                    <Unplug className="h-4 w-4 mr-2" />
+                    Disconnect
+                  </>
+                )}
+              </Button>
             </div>
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="llamacloud-api-key">LlamaCloud API Key</Label>
-              <Input
-                id="llamacloud-api-key"
-                type="password"
-                value={apiKey}
-                onChange={(e) => {
-                  setApiKey(e.target.value);
-                  // Clear previous timeout
-                  if (debounceRef.current) {
-                    clearTimeout(debounceRef.current);
-                  }
-                  // Set new timeout for debounced project fetching
-                  debounceRef.current = setTimeout(() => {
-                    fetchProjects(e.target.value);
-                  }, 500);
-                }}
-                placeholder="Enter your LlamaCloud API key"
-                disabled={isValidating || isFetchingProjects}
-              />
-              <p className="text-xs text-muted-foreground">
-                Get your API key from{' '}
-                <a 
-                  href="https://cloud.llamaindex.ai/api-key" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="underline hover:no-underline"
-                >
-                  LlamaCloud API Key page
-                </a>
-              </p>
-            </div>
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Environment Configuration</AlertTitle>
+              <AlertDescription>
+                LlamaCloud API key is configured via environment variables. 
+                Make sure LLAMACLOUD_API_KEY is set in your environment.
+              </AlertDescription>
+            </Alert>
 
             {isFetchingProjects && (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -382,19 +281,19 @@ export function LlamaCloudConnection({ orgId, organization, onConnectionUpdate }
               </div>
             )}
 
-            {apiKey && availableProjects.length === 0 && !isFetchingProjects && !error && (
+            {!isFetchingProjects && availableProjects.length === 0 && !error && (
               <Alert>
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>No Projects Found</AlertTitle>
                 <AlertDescription>
-                  No projects were found for this API key. Make sure you have created a project in LlamaCloud.
+                  No projects were found. Make sure you have created a project in LlamaCloud and the API key is properly configured.
                 </AlertDescription>
               </Alert>
             )}
 
             <Button 
               onClick={handleConnect}
-              disabled={!apiKey.trim() || !selectedProjectId || isConnecting || isFetchingProjects}
+              disabled={!selectedProjectId || isConnecting || isFetchingProjects}
               className="w-full"
             >
               {isConnecting ? (

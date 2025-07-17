@@ -37,9 +37,9 @@ export function IndexSelector({
           <div className="flex items-center gap-3">
             <AlertCircle className="h-5 w-5 text-amber-600" />
             <div>
-              <p className="font-medium text-amber-800">No Document Indexes Available</p>
+              <p className="font-medium text-amber-800">No Project Indexes Configured</p>
               <p className="text-sm text-amber-700">
-                Connect your organization to LlamaCloud and select document indexes in the project settings to enable AI-powered answer generation.
+                This project has no document indexes configured. Go to the project's Documents tab to select indexes from your organization's LlamaCloud connection.
               </p>
             </div>
           </div>
@@ -49,7 +49,21 @@ export function IndexSelector({
   }
 
   if (availableIndexes.length === 0) {
-    return null;
+    return (
+      <Card className="mb-6 border-amber-200 bg-amber-50">
+        <CardContent className="pt-6">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="h-5 w-5 text-amber-600" />
+            <div>
+              <p className="font-medium text-amber-800">No Project Indexes Configured</p>
+              <p className="text-sm text-amber-700">
+                This project has no document indexes configured. Go to the project's Documents tab to select indexes from your organization's LlamaCloud connection.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
@@ -61,7 +75,7 @@ export function IndexSelector({
             <CardTitle className="text-base">
               {availableIndexes.length === 1 
                 ? availableIndexes[0].name
-                : `${availableIndexes.length} Document Indexes`
+                : `${availableIndexes.length} Project Indexes`
               }
             </CardTitle>
             <Badge variant="outline" className="text-xs">
@@ -79,7 +93,7 @@ export function IndexSelector({
         </div>
         {selectedIndexes.size === 0 && (
           <p className="text-sm text-amber-600 mt-2">
-            ⚠️ No indexes selected. AI generation will use default responses.
+            ⚠️ No project indexes selected. AI generation will use default responses.
           </p>
         )}
       </CardHeader>
@@ -90,13 +104,14 @@ export function IndexSelector({
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
               <p className="text-sm text-blue-800">
                 <strong>Note:</strong> This selection is temporary for AI generation in this session. 
-                To permanently configure project indexes, use the <strong>Documents</strong> tab.
+                You can only select from indexes that are already configured for this project. 
+                To add or remove project indexes permanently, use the <strong>Documents</strong> tab.
               </p>
             </div>
             
             <div className="flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
-                Select which document indexes to use when generating AI answers:
+                Select which of this project's configured indexes to use when generating AI answers:
               </p>
               <Button
                 variant="outline"
@@ -136,7 +151,7 @@ export function IndexSelector({
             {selectedIndexes.size > 0 && (
               <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
                 <p className="text-sm text-green-800">
-                  ✓ AI will use documents from {selectedIndexes.size} selected {selectedIndexes.size === 1 ? 'index' : 'indexes'} to generate answers.
+                  ✓ AI will use documents from {selectedIndexes.size} selected project {selectedIndexes.size === 1 ? 'index' : 'indexes'} to generate answers.
                 </p>
               </div>
             )}

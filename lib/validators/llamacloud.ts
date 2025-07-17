@@ -3,7 +3,6 @@ import { z } from 'zod';
 // Connect request validation schema
 export const LlamaCloudConnectRequestSchema = z.object({
   organizationId: z.string().min(1, 'Organization ID is required'),
-  apiKey: z.string().min(1, 'API key is required'),
   projectId: z.string().min(1, 'Project ID is required'),
   projectName: z.string().min(1, 'Project name is required'),
   llamaCloudOrgName: z.string().optional(),

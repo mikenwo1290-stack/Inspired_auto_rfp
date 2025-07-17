@@ -9,6 +9,7 @@ import { llamaCloudClient } from './llamacloud-client';
 import { organizationAuth } from './organization-auth';
 import { db } from '@/lib/db';
 import { DatabaseError, LlamaCloudConnectionError } from '@/lib/errors/api-errors';
+import { env, validateEnv } from '@/lib/env';
 
 /**
  * Main LlamaCloud connection management service
@@ -22,24 +23,29 @@ export class LlamaCloudConnectionService implements ILlamaCloudConnectionService
       // Step 1: Verify user has admin access
       await organizationAuth.requireAdminAccess(userId, request.organizationId);
 
-      // Step 2: Verify API key and project access
+      // Step 2: Validate environment variables
+      if (!validateEnv()) {
+        throw new LlamaCloudConnectionError('LlamaCloud API key not configured in environment variables');
+      }
+
+      // Step 3: Verify project access using environment API key
       const verifiedProject = await llamaCloudClient.verifyProjectAccess(
-        request.apiKey, 
+        env.LLAMACLOUD_API_KEY, 
         request.projectId
       );
 
       console.log(`Verified access to LlamaCloud project: ${verifiedProject.name} (${verifiedProject.id})`);
 
-      // Step 3: Store connection in database
+      // Step 4: Store connection in database (without API key)
       const updatedOrganization = await this.updateOrganizationConnection(request);
 
-      // Step 4: Return success response
+      // Step 5: Return success response
       const response: LlamaCloudConnectResponse = {
         success: true,
         organization: {
           id: updatedOrganization.id,
           name: updatedOrganization.name,
-          llamaCloudApiKey: updatedOrganization.llamaCloudApiKey,
+          llamaCloudApiKey: null, // API key is not stored
           llamaCloudProjectId: updatedOrganization.llamaCloudProjectId,
           llamaCloudProjectName: updatedOrganization.llamaCloudProjectName,
           llamaCloudOrgName: updatedOrganization.llamaCloudOrgName,
@@ -95,14 +101,13 @@ export class LlamaCloudConnectionService implements ILlamaCloudConnectionService
   }
 
   /**
-   * Update organization with LlamaCloud connection details
+   * Update organization with LlamaCloud connection details (without API key)
    */
   private async updateOrganizationConnection(request: LlamaCloudConnectRequest) {
     try {
       return await db.organization.update({
         where: { id: request.organizationId },
         data: {
-          llamaCloudApiKey: request.apiKey,
           llamaCloudProjectId: request.projectId,
           llamaCloudProjectName: request.projectName,
           llamaCloudOrgName: request.llamaCloudOrgName,
@@ -124,7 +129,6 @@ export class LlamaCloudConnectionService implements ILlamaCloudConnectionService
       return await db.organization.update({
         where: { id: organizationId },
         data: {
-          llamaCloudApiKey: null,
           llamaCloudProjectId: null,
           llamaCloudProjectName: null,
           llamaCloudOrgName: null,
@@ -152,12 +156,15 @@ export class LlamaCloudConnectionService implements ILlamaCloudConnectionService
         select: {
           llamaCloudConnectedAt: true,
           llamaCloudProjectName: true,
-          llamaCloudApiKey: true,
+          llamaCloudProjectId: true,
         },
       });
 
+      // Connection is considered active if there's a project ID and the environment API key is available
+      const isConnected = !!(organization?.llamaCloudProjectId && validateEnv());
+
       return {
-        isConnected: !!organization?.llamaCloudApiKey,
+        isConnected,
         connectedAt: organization?.llamaCloudConnectedAt || null,
         projectName: organization?.llamaCloudProjectName || null,
       };

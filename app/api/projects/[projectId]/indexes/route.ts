@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { organizationService } from '@/lib/organization-service';
+import { env } from '@/lib/env';
 
 // GET /api/projects/[projectId]/indexes - Get project indexes and available indexes
 export async function GET(
@@ -26,7 +27,6 @@ export async function GET(
           select: {
             id: true,
             name: true,
-            llamaCloudApiKey: true,
             llamaCloudProjectId: true,
             llamaCloudProjectName: true,
             llamaCloudConnectedAt: true,
@@ -57,7 +57,7 @@ export async function GET(
     }
 
     // If organization is not connected to LlamaCloud, return empty data
-    if (!project.organization.llamaCloudApiKey || !project.organization.llamaCloudConnectedAt) {
+    if (!project.organization.llamaCloudProjectId || !project.organization.llamaCloudConnectedAt) {
       return NextResponse.json({
         project: {
           id: project.id,
@@ -77,7 +77,7 @@ export async function GET(
       const pipelinesResponse = await fetch('https://api.cloud.llamaindex.ai/api/v1/pipelines', {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${project.organization.llamaCloudApiKey}`,
+          'Authorization': `Bearer ${env.LLAMACLOUD_API_KEY}`,
           'Content-Type': 'application/json',
         },
       });
@@ -194,7 +194,6 @@ export async function POST(
         organization: {
           select: {
             id: true,
-            llamaCloudApiKey: true,
             llamaCloudProjectId: true,
             llamaCloudConnectedAt: true,
           },
@@ -223,7 +222,7 @@ export async function POST(
     }
 
     // Check if organization is connected to LlamaCloud
-    if (!project.organization.llamaCloudApiKey || !project.organization.llamaCloudConnectedAt) {
+    if (!project.organization.llamaCloudProjectId || !project.organization.llamaCloudConnectedAt) {
       return NextResponse.json(
         { error: 'Organization is not connected to LlamaCloud' },
         { status: 400 }
@@ -248,7 +247,7 @@ export async function POST(
       const pipelinesResponse = await fetch('https://api.cloud.llamaindex.ai/api/v1/pipelines', {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${project.organization.llamaCloudApiKey}`,
+          'Authorization': `Bearer ${env.LLAMACLOUD_API_KEY}`,
           'Content-Type': 'application/json',
         },
       });

@@ -63,7 +63,6 @@ export const organizationService = {
           createdAt: true,
           updatedAt: true,
           // Include LlamaCloud connection fields
-          llamaCloudApiKey: true,
           llamaCloudProjectId: true,
           llamaCloudProjectName: true,
           llamaCloudConnectedAt: true,
@@ -102,7 +101,6 @@ export const organizationService = {
           createdAt: true,
           updatedAt: true,
           // Include LlamaCloud connection fields
-          llamaCloudApiKey: true,
           llamaCloudProjectId: true,
           llamaCloudProjectName: true,
           llamaCloudConnectedAt: true,

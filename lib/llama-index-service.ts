@@ -35,7 +35,7 @@ export class LlamaIndexService implements ILlamaIndexService {
       throw new Error('Required environment variables are missing');
     }
       this.config = {
-        apiKey: env.LLAMA_CLOUD_API_KEY.apiKey,
+        apiKey: env.LLAMACLOUD_API_KEY,
         projectName: 'Default',
       };
   }
@@ -44,7 +44,11 @@ export class LlamaIndexService implements ILlamaIndexService {
   }
 
   private initializeIndexes(): void {
+
+    console.log("debugging 123")
     try {
+
+      console.log('Initializing LlamaCloud indexes with config:', this.config);
       if (this.config.indexNames && this.config.indexNames.length > 0) {
         this.indexes.push(
           ...this.config.indexNames.map(indexName => 
