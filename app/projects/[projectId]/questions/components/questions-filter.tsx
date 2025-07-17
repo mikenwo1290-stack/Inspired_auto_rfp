@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle, AlertCircle } from "lucide-react"
+import { CheckCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface AnswerData {
@@ -43,8 +43,6 @@ export function QuestionsFilter({
     
     if (filterType === "answered" && hasAnswer) {
       return <CheckCircle className="h-4 w-4 text-green-500" />;
-    } else if (filterType === "flagged") {
-      return <AlertCircle className="h-4 w-4 text-yellow-500" />;
     } else if (filterType === "unanswered" && !hasAnswer) {
       return <div className="h-4 w-4 rounded-full border border-muted-foreground" />;
     }
