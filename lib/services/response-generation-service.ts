@@ -139,6 +139,7 @@ export class ResponseGenerationService {
     selectedIndexNames: string[]
   ): Promise<GenerateResponseResponse> {
     const llamaIndexService = new LlamaIndexService({
+      apiKey: process.env.LLAMACLOUD_API_KEY!,
       projectName: project.organization.llamaCloudProjectName || 'Default',
       indexNames: request.useAllIndexes ? undefined : selectedIndexNames,
     });

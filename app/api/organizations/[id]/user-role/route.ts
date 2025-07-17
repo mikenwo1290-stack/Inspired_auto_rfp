@@ -9,7 +9,6 @@ export async function GET(
     const { id } = await params;
     const organizationId = id;
 
-    console.log("user-role debugging 123456 ", id)
 
     const currentUser = await organizationService.getCurrentUser();
     

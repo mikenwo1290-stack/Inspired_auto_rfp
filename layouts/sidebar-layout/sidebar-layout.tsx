@@ -133,6 +133,11 @@ function AppSidebar() {
           url: `/projects/${projectId}/questions`,
           icon: MessageSquare,
         },
+        {
+          title: "Documents",
+          url: `/projects/${projectId}/documents`,
+          icon: FileText,
+        },
       ],
     },
   ];

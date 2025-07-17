@@ -11,7 +11,7 @@ interface DocumentsPageProps {
 export default async function DocumentsPage({ params }: DocumentsPageProps) {
   const { orgId } = await params;
 
-  console.log("DocumentsPage debugging 123456 ", orgId)
+  
   
   return (
     <Suspense fallback={<PageSkeleton />}>

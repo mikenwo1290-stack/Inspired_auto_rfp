@@ -76,7 +76,7 @@ export function QuestionEditor({
           <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-md text-sm">
             <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0" />
             <span className="text-amber-700">
-              No document indexes selected - AI will use default responses
+              No project indexes selected - AI will use default responses
             </span>
           </div>
         )}
@@ -153,7 +153,7 @@ export function QuestionEditor({
             {/* Index count badge */}
             {selectedIndexes.size > 0 && (
               <Badge variant="secondary" className="text-xs">
-                {selectedIndexes.size} {selectedIndexes.size === 1 ? 'index' : 'indexes'}
+                {selectedIndexes.size} project {selectedIndexes.size === 1 ? 'index' : 'indexes'}
               </Badge>
             )}
           </div>

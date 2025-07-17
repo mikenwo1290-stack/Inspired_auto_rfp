@@ -43,7 +43,7 @@ export function DocumentsContent({  id }: DocumentsContentProps) {
   const checkUserRole = async () => {
     try {
 
-      console.log("checkUserRole debugging 123456 ", id)
+      
       const response = await fetch(`/api/organizations/${id}/user-role`);
       
       if (response.ok) {

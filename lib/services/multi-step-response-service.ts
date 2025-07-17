@@ -60,12 +60,12 @@ export class MultiStepResponseService implements IMultiStepResponseService {
       console.log(`DEBUG Multi-step: project configuration:`, projectConfig);
       
       // Reconfigure LlamaIndex service with project-specific settings
-      if (projectConfig.organization.llamaCloudApiKey) {
+      if (projectConfig.organization.llamaCloudProjectId && projectConfig.organization.llamaCloudConnectedAt) {
         const selectedIndexNames = this.getSelectedIndexNames(request.indexIds, projectConfig.projectIndexes);
         console.log(`DEBUG Multi-step: selected index names:`, selectedIndexNames);
         
         this.llamaIndexService = new LlamaIndexService({
-          apiKey: projectConfig.organization.llamaCloudApiKey,
+          apiKey: process.env.LLAMACLOUD_API_KEY!,
           projectName: projectConfig.organization.llamaCloudProjectName || 'Default',
           indexNames: selectedIndexNames.length > 0 ? selectedIndexNames : undefined,
         });
@@ -178,7 +178,6 @@ export class MultiStepResponseService implements IMultiStepResponseService {
         organization: {
           select: {
             id: true,
-            llamaCloudApiKey: true,
             llamaCloudProjectId: true,
             llamaCloudProjectName: true,
             llamaCloudConnectedAt: true,

@@ -178,10 +178,11 @@ export function QuestionsProvider({ children, projectId }: QuestionsProviderProp
           const data = await response.json();
           setOrganizationConnected(data.organizationConnected);
           if (data.organizationConnected) {
-            const indexes = data.availableIndexes || [] as ProjectIndex[];
-            setAvailableIndexes(indexes);
-            
+            // Use project's configured indexes as the available indexes for temporary selection
             const currentIndexes = data.currentIndexes || [] as ProjectIndex[];
+            setAvailableIndexes(currentIndexes);
+            
+            // Initialize selection with all configured project indexes
             const currentIndexIds = new Set(currentIndexes.map((index: ProjectIndex) => index.id)) as Set<string>;
             setSelectedIndexes(currentIndexIds);
           }
