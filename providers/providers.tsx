@@ -2,6 +2,7 @@
 
 import { ThemeProvider } from "next-themes";
 import { ReactNode } from "react";
+import { OrganizationProvider } from "@/context/organization-context";
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
@@ -11,7 +12,9 @@ export function Providers({ children }: { children: ReactNode }) {
       enableSystem
       disableTransitionOnChange
     >
-      {children}
+      <OrganizationProvider>
+        {children}
+      </OrganizationProvider>
     </ThemeProvider>
   );
 } 

@@ -21,7 +21,7 @@ import {
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { UserSection } from "@/components/user-section";
 import { OrganizationProjectSwitcher } from "@/components/organization-project-switcher";
-import { OrganizationProvider, useOrganization } from "@/context/organization-context";
+import { useOrganization } from "@/context/organization-context";
 import { 
   BarChart3, 
   ChevronRight, 
@@ -135,21 +135,6 @@ function AppSidebar() {
         },
       ],
     },
-    {
-      title: "Tools",
-      items: [
-        {
-          title: "Upload Documents",
-          url: `/upload?projectId=${projectId}`,
-          icon: Upload,
-        },
-        {
-          title: "Create Questions",
-          url: `/questions/create?projectId=${projectId}`,
-          icon: Plus,
-        },
-      ],
-    },
   ];
 
   // Get navigation items based on current context
@@ -168,12 +153,12 @@ function AppSidebar() {
   const contextNavigationItems = getNavigationItems();
 
   return (
-    <Sidebar variant="inset" className="border-r">
+    <Sidebar variant="inset" className="border-r h-full">
       <SidebarHeader>
         <OrganizationProjectSwitcher />
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="overflow-y-auto">
         <SidebarMenu>
           {/* Context-specific navigation (organization or project) */}
           {contextNavigationItems.map((group) => (
@@ -189,8 +174,7 @@ function AppSidebar() {
                     <SidebarMenuSubButton 
                       asChild 
                       isActive={
-                        pathname === item.url || 
-                        pathname.startsWith(item.url) ||
+                        pathname === item.url ||
                         (item.url.includes('?') && pathname === item.url.split('?')[0] && 
                          typeof window !== 'undefined' && window.location.search.includes(item.url.split('?')[1]))
                       }
@@ -247,21 +231,29 @@ interface SidebarLayoutProps {
 export function SidebarLayout({ children }: SidebarLayoutProps) {
   return (
     <TooltipProvider>
-      <OrganizationProvider>
+      <div className="flex h-full">
         <SidebarProvider>
-          <AppSidebar />
-          <SidebarInset>
-            <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
+          {/* Fixed sidebar that doesn't scroll with content */}
+          <div className="flex">
+            <AppSidebar />
+          </div>
+          
+          {/* Main content area with independent scrolling */}
+          <SidebarInset className="flex-1 flex flex-col overflow-hidden">
+            {/* Fixed header */}
+            <header className="flex h-16 shrink-0 items-center border-b bg-background transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
               <div className="flex items-center gap-2 px-4">
                 <SidebarTrigger className="-ml-1" />
               </div>
             </header>
-            <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+            
+            {/* Scrollable content area */}
+            <div className="flex-1 overflow-y-auto">
               {children}
             </div>
           </SidebarInset>
         </SidebarProvider>
-      </OrganizationProvider>
+      </div>
     </TooltipProvider>
   );
 } 

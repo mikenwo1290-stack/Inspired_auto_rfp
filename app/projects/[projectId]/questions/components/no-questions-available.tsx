@@ -9,6 +9,10 @@ interface NoQuestionsAvailableProps {
 }
 
 export function NoQuestionsAvailable({ projectId }: NoQuestionsAvailableProps) {
+  
+  console.log("In NoQuestionsAvailable, projectId", projectId);
+
+  
   const router = useRouter();
 
   const handleUploadClick = () => {

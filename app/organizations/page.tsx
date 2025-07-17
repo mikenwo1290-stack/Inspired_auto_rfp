@@ -202,7 +202,7 @@ export default function OrganizationsPage() {
 
   return (
     <div className="w-full max-w-7xl mx-auto">
-      <div className="py-6 px-4 sm:px-6">
+      <div className="py-6 px-4 sm:px-6 pt-20">
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>

@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, Suspense } from "react"
+import React, { useState, useEffect, Suspense, use } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
@@ -23,10 +23,8 @@ type Question = {
   question: string;
 }
 
-function CreateQuestionsPageInner() {
+function CreateQuestionsPageInner( { projectId }: { projectId: string } ) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const projectId = searchParams.get("projectId");
   
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -192,7 +190,7 @@ function CreateQuestionsPageInner() {
       });
 
       // Redirect to questions page
-      router.push(`/questions?projectId=${projectId}`);
+      router.push(`/projects/${projectId}/questions`);
     } catch (error) {
       console.error("Error saving questions:", error);
       toast({
@@ -207,7 +205,7 @@ function CreateQuestionsPageInner() {
 
   // Back to questions
   const goBack = () => {
-    router.push(`/questions?projectId=${projectId}`);
+    router.push(`/projects/${projectId}/questions`);
   };
 
   // Loading state
@@ -344,7 +342,9 @@ function CreateQuestionsPageInner() {
 }
 
 // Main export that wraps the inner component with Suspense
-export default function CreateQuestionsPage() {
+export default function CreateQuestionsPage( { params }: { params: Promise<{ projectId: string }> } ) {
+  const { projectId } = use(params);
+
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-background">
@@ -356,7 +356,7 @@ export default function CreateQuestionsPage() {
         </div>
       </div>
     }>
-      <CreateQuestionsPageInner />
+      <CreateQuestionsPageInner projectId={projectId} />
     </Suspense>
   );
 } 

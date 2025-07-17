@@ -52,7 +52,7 @@ function UploadPageInner() {
 
   // Handle view questions button click
   const handleViewQuestions = (projectId: string) => {
-    router.push(`/questions?projectId=${projectId}`);
+    router.push(`/projects/${projectId}/questions`);
   };
 
   if (isLoading) {
