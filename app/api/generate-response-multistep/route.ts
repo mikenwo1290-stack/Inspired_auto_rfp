@@ -118,6 +118,7 @@ export async function POST(request: NextRequest) {
           console.log(`📋 Using index names: ${indexNames.join(', ')}`);
           
           const llamaIndexService = new LlamaIndexService({
+            apiKey: process.env.LLAMACLOUD_API_KEY!,
             projectName: project.organization.llamaCloudProjectName || 'Default',
             indexNames: indexNames,
           });
