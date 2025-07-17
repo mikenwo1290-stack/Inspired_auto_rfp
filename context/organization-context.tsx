@@ -224,11 +224,6 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
         }
         return prevProject;
       });
-      
-      // Navigate to the project dashboard only if we're not already on a specific page
-    //   if (pathname === '/' || pathname === '' || pathname === '/organizations') {
-    //     router.push(`/projects/${firstProject.id}/dashboard`);
-    //   }
     }
   }, [projects, initialLoad, pathname]); // Removed currentProject and currentOrganization to prevent infinite loops
 

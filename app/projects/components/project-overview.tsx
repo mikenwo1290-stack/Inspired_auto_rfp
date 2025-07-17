@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
 import { AlertCircle, Calendar, CheckCircle2, Clock, FileText, FolderOpen, MessageSquare, Users, Download, Info } from "lucide-react"
+import { ProjectTimeline } from "./project-timeline"
 import { RfpDocument } from "@/types/api"
 import { formatDistanceToNow, format } from "date-fns"
 import { cn } from "@/lib/utils"
@@ -156,115 +157,62 @@ export function ProjectOverview({ onViewQuestions, projectId, orgId }: ProjectOv
             <p className="text-muted-foreground">{project.description}</p>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="gap-1">
-            <Download className="h-4 w-4" />
-            Export
-          </Button>
-          <Button 
-            variant="outline"
-            onClick={onViewQuestions}
-          >
-            View Questions
-          </Button>
-        </div>
-      </div>
-
-      {/* Main metrics cards - 2x2 grid */}
-      <div className="grid gap-4 md:grid-cols-2">
-        {/* Questions card */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Questions</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{answeredQuestions}/{totalQuestions}</div>
-            <p className="text-xs text-muted-foreground">{completionPercentage}% completed</p>
-            <Progress value={completionPercentage} className="mt-3 h-2" />
-          </CardContent>
-        </Card>
         
-        {/* Sections card */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Sections</CardTitle>
-            <FolderOpen className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{rfpDocument?.sections.length || 0}</div>
-            <p className="text-xs text-muted-foreground">Topic categories</p>
-          </CardContent>
-        </Card>
-
-        {/* Project Details card */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Project Details</CardTitle>
-            <Info className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Project ID:</span>
-                <span className="font-mono text-xs">{project.id.slice(0, 8)}...</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Name:</span>
-                <span className="truncate ml-2">{project.name}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Created:</span>
-                <span>{createdAtFormatted}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Updated:</span>
-                <span>{updatedAtFormatted}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Attention Required card */}
-        <Card className={cn(
-          "border-l-4",
-          unansweredQuestions > 0 ? "border-l-orange-500 bg-orange-50/30" : "border-l-green-500 bg-green-50/30"
-        )}>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">
-              {unansweredQuestions > 0 ? "Attention Required" : "All Complete"}
-            </CardTitle>
-            {unansweredQuestions > 0 ? (
-              <AlertCircle className="h-4 w-4 text-orange-500" />
-            ) : (
-              <CheckCircle2 className="h-4 w-4 text-green-500" />
-            )}
-          </CardHeader>
-          <CardContent>
-            {unansweredQuestions > 0 ? (
-              <>
-                <div className="text-2xl font-bold text-orange-600">{unansweredQuestions}</div>
-                <p className="text-xs text-muted-foreground mb-3">
-                  {unansweredQuestions === 1 ? 'question needs' : 'questions need'} to be answered
-                </p>
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  className="w-full text-xs"
-                  onClick={onViewQuestions}
-                >
-                  View Questions
-                </Button>
-              </>
-            ) : (
-              <>
-                <div className="text-2xl font-bold text-green-600">✓</div>
-                <p className="text-xs text-muted-foreground">All questions answered</p>
-              </>
-            )}
-          </CardContent>
-        </Card>
       </div>
+
+      {/* Consolidated Project Summary */}
+      <Card>
+        <CardContent>
+          {/* Main metrics row */}
+          <div className="flex flex-wrap items-center gap-6 mb-4">
+            <div className="flex items-center gap-2">
+              <FileText className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">Questions:</span>
+              <span className="font-semibold">{answeredQuestions}/{totalQuestions}</span>
+              <Badge variant={completionPercentage === 100 ? "default" : "secondary"} className="text-xs">
+                {completionPercentage}% complete
+              </Badge>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <FolderOpen className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">Sections:</span>
+              <span className="font-semibold">{rfpDocument?.sections.length || 0}</span>
+            </div>
+
+            {unansweredQuestions === 0 && (
+              <div className="flex items-center gap-2 text-green-600">
+                <CheckCircle2 className="h-4 w-4" />
+                <span className="text-sm font-medium">All Complete</span>
+              </div>
+            )}
+          </div>
+
+          {/* Progress bar */}
+          <div className="mb-4">
+            <Progress value={completionPercentage} className="h-2" />
+          </div>
+
+          {/* Project details row */}
+          <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground border-t pt-3">
+            <div className="flex items-center gap-1">
+              <span>ID:</span>
+              <code className="bg-muted px-1.5 py-0.5 rounded text-xs">{project.id.slice(0, 12)}...</code>
+            </div>
+            <div className="flex items-center gap-1">
+              <Calendar className="h-3 w-3" />
+              <span>Created {createdAtFormatted}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              <span>Updated {updatedAtRelative}</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Timeline Section */}
+      <ProjectTimeline projectId={projectId} />
 
     </div>
   );

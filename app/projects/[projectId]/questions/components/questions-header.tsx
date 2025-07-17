@@ -27,16 +27,7 @@ export function QuestionsHeader({
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">RFP Questions</h2>
         <div className="flex items-center gap-2">
-          <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input 
-              type="search" 
-              placeholder="Search questions..." 
-              className="w-[250px] pl-8" 
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-            />
-          </div>
+
           
           <Button 
             variant="outline" 

@@ -10,8 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
-import { Plus, Users, FolderOpen, Settings, Trash2, Edit } from "lucide-react";
-import { toast } from "sonner";
+import { Plus, Users, FolderOpen, Settings, Trash2, Edit, Loader2 } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 interface Organization {
   id: string;
@@ -53,6 +53,10 @@ export default function OrganizationsPage() {
   const [loading, setLoading] = useState(true);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editingOrg, setEditingOrg] = useState<Organization | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [deletingOrgId, setDeletingOrgId] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const [formData, setFormData] = useState<CreateOrganizationData>({
     name: "",
@@ -67,10 +71,18 @@ export default function OrganizationsPage() {
       if (data.success) {
         setOrganizations(data.data);
       } else {
-        toast.error(data.error || "Failed to fetch organizations");
+        toast({
+          title: "Error",
+          description: data.error || "Failed to fetch organizations",
+          variant: "destructive",
+        });
       }
     } catch (error) {
-      toast.error("Failed to fetch organizations");
+      toast({
+        title: "Error", 
+        description: "Failed to fetch organizations",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -82,6 +94,7 @@ export default function OrganizationsPage() {
 
   const handleCreateOrganization = async () => {
     try {
+      setIsCreating(true);
       const response = await fetch("/api/organizations", {
         method: "POST",
         headers: {
@@ -93,7 +106,10 @@ export default function OrganizationsPage() {
       const data = await response.json();
 
       if (data.success) {
-        toast.success("Organization created successfully");
+        toast({
+          title: "Success",
+          description: "Organization created successfully",
+        });
         setCreateDialogOpen(false);
         setFormData({
           name: "",
@@ -101,10 +117,20 @@ export default function OrganizationsPage() {
         });
         fetchOrganizations();
       } else {
-        toast.error(data.error || "Failed to create organization");
+        toast({
+          title: "Error",
+          description: data.error || "Failed to create organization",
+          variant: "destructive",
+        });
       }
     } catch (error) {
-      toast.error("Failed to create organization");
+      toast({
+        title: "Error",
+        description: "Failed to create organization",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -112,8 +138,9 @@ export default function OrganizationsPage() {
     if (!editingOrg) return;
 
     try {
+      setIsUpdating(true);
       const response = await fetch(`/api/organizations/${editingOrg.id}`, {
-        method: "PUT",
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
@@ -122,15 +149,28 @@ export default function OrganizationsPage() {
 
       const data = await response.json();
 
-      if (data.success) {
-        toast.success("Organization updated successfully");
+      if (response.ok) {
+        toast({
+          title: "Success",
+          description: "Organization updated successfully",
+        });
         setEditingOrg(null);
         fetchOrganizations();
       } else {
-        toast.error(data.error || "Failed to update organization");
+        toast({
+          title: "Error", 
+          description: data.error || "Failed to update organization",
+          variant: "destructive",
+        });
       }
     } catch (error) {
-      toast.error("Failed to update organization");
+      toast({
+        title: "Error",
+        description: "Failed to update organization", 
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -138,20 +178,34 @@ export default function OrganizationsPage() {
     if (!confirm("Are you sure you want to delete this organization?")) return;
 
     try {
+      setDeletingOrgId(org.id);
       const response = await fetch(`/api/organizations/${org.id}`, {
         method: "DELETE",
       });
 
       const data = await response.json();
 
-      if (data.success) {
-        toast.success("Organization deleted successfully");
+      if (response.ok) {
+        toast({
+          title: "Success", 
+          description: "Organization deleted successfully",
+        });
         fetchOrganizations();
       } else {
-        toast.error(data.error || "Failed to delete organization");
+        toast({
+          title: "Error",
+          description: data.error || "Failed to delete organization",
+          variant: "destructive", 
+        });
       }
     } catch (error) {
-      toast.error("Failed to delete organization");
+      toast({
+        title: "Error",
+        description: "Failed to delete organization",
+        variant: "destructive",
+      });
+    } finally {
+      setDeletingOrgId(null);
     }
   };
 
@@ -252,11 +306,22 @@ export default function OrganizationsPage() {
                     <Button
                       variant="outline"
                       onClick={() => setCreateDialogOpen(false)}
+                      disabled={isCreating}
                     >
                       Cancel
                     </Button>
-                    <Button onClick={handleCreateOrganization}>
-                      Create Organization
+                    <Button 
+                      onClick={handleCreateOrganization}
+                      disabled={isCreating}
+                    >
+                      {isCreating ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Creating...
+                        </>
+                      ) : (
+                        "Create Organization"
+                      )}
                     </Button>
                   </div>
                 </div>
@@ -295,6 +360,7 @@ export default function OrganizationsPage() {
                           variant="ghost"
                           size="sm"
                           onClick={() => openEditDialog(org)}
+                          title="Edit organization"
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -302,9 +368,14 @@ export default function OrganizationsPage() {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleDeleteOrganization(org)}
-                          disabled={org._count.projects > 0 || org._count.organizationUsers > 0}
+                          disabled={org._count.projects > 0 || org._count.organizationUsers > 0 || deletingOrgId === org.id}
+                          title={org._count.projects > 0 || org._count.organizationUsers > 0 ? "Cannot delete: organization has projects or members" : "Delete organization"}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          {deletingOrgId === org.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
                         </Button>
                       </div>
                     </div>
@@ -374,11 +445,22 @@ export default function OrganizationsPage() {
                   <Button
                     variant="outline"
                     onClick={() => setEditingOrg(null)}
+                    disabled={isUpdating}
                   >
                     Cancel
                   </Button>
-                  <Button onClick={handleUpdateOrganization}>
-                    Update Organization
+                  <Button 
+                    onClick={handleUpdateOrganization}
+                    disabled={isUpdating}
+                  >
+                    {isUpdating ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Updating...
+                      </>
+                    ) : (
+                      "Update Organization"
+                    )}
                   </Button>
                 </div>
               </div>

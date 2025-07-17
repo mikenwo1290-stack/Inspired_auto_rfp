@@ -100,11 +100,6 @@ function AppSidebar() {
           icon: FolderOpen,
         },
         {
-          title: "Documents",
-          url: `/organizations/${orgId}/documents`,
-          icon: FileText,
-        },
-        {
           title: "Team",
           url: `/organizations/${orgId}/team`,
           icon: Users,

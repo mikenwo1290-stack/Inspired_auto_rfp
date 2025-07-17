@@ -513,67 +513,67 @@ export function ProjectDocuments({ projectId }: ProjectDocumentsProps) {
                         </CollapsibleTrigger>
                         <CollapsibleContent>
                           <CardContent className="pt-0">
-                            {/* Beautiful Card Grid */}
-                            <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-5">
+                            {/* Compact Card Grid */}
+                            <div className="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-3">
                               {visibleDocs.map((doc) => {
                                 const styles = getDocumentCardStyles(doc.file_type || '');
                                 const pillText = getPillText(doc.file_type || '');
                                 const displayName = doc.name;
 
                                 return (
-                                  <Card key={doc.id} className="rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out flex flex-col bg-white">
-                                    <CardContent className="flex flex-col items-center p-5 text-center flex-grow w-full">
+                                  <Card key={doc.id} className="rounded-lg overflow-hidden shadow hover:shadow-md transition-all duration-200 flex flex-col bg-white">
+                                    <CardContent className="flex flex-col items-center p-3 text-center flex-grow w-full">
                                       {/* Icon Area */}
                                       <div className={cn(
-                                          "w-[80px] h-[100px] mb-4 rounded-md flex flex-col items-center justify-center pt-2 pb-1 px-1 relative shrink-0",
+                                          "w-[50px] h-[60px] mb-2 rounded-md flex flex-col items-center justify-center pt-1 pb-1 px-1 relative shrink-0",
                                           styles.iconBgClass
                                       )}>
-                                        <FileText size={36} className={cn("mb-auto", styles.iconColorClass)} />
+                                        <FileText size={24} className={cn("mb-auto", styles.iconColorClass)} />
                                         <div className={cn(
-                                            "text-[10px] font-bold leading-none py-1 px-2 rounded shadow-sm",
+                                            "text-[8px] font-bold leading-none py-0.5 px-1 rounded shadow-sm",
                                             styles.textPillBgClass, styles.textPillTextColorClass
                                         )}>
                                           {pillText}
                                         </div>
                                         {/* Status indicator */}
                                         {doc.status === 'success' || doc.status === 'completed' ? (
-                                          <div className="absolute top-[calc(50%-13px)] right-[5px] bg-white rounded-full p-0.5 shadow-md">
-                                            <CheckCircle2 size={16} className="text-green-500 block" />
+                                          <div className="absolute top-[calc(50%-8px)] right-[2px] bg-white rounded-full p-0.5 shadow-md">
+                                            <CheckCircle2 size={12} className="text-green-500 block" />
                                           </div>
                                         ) : doc.status === 'processing' ? (
-                                          <div className="absolute top-[calc(50%-13px)] right-[5px] bg-white rounded-full p-0.5 shadow-md flex items-center justify-center">
-                                            <CircleDashed size={16} className="text-blue-500 block" />
+                                          <div className="absolute top-[calc(50%-8px)] right-[2px] bg-white rounded-full p-0.5 shadow-md flex items-center justify-center">
+                                            <CircleDashed size={12} className="text-blue-500 block" />
                                           </div>
                                         ) : null}
                                       </div>
 
-                                      <h3 className="text-sm font-semibold mb-1 leading-tight truncate w-full px-1" title={displayName}>
+                                      <h3 className="text-xs font-semibold mb-1 leading-tight truncate w-full" title={displayName}>
                                         {displayName}
                                       </h3>
                                       
                                       {/* Status Badge */}
                                       <div className="mb-1">
-                                        <Badge variant="outline" className={cn("text-xs px-1.5 py-0.5", getStatusColor(doc.status))}>
+                                        <Badge variant="outline" className={cn("text-[10px] px-1 py-0", getStatusColor(doc.status))}>
                                           {doc.status}
                                         </Badge>
                                       </div>
                                       
-                                      <p className="text-xs text-gray-500 mb-3">{formatDate(doc.created_at)}</p>
+                                      <p className="text-[10px] text-gray-500 mb-2">{formatDate(doc.created_at)}</p>
 
                                       {/* File size info */}
-                                      <div className="flex items-center text-xs text-gray-600 mt-auto pt-1 min-h-[20px]">
-                                        <span className="text-gray-400 text-[11px]">{formatFileSize(doc.size_bytes)}</span>
+                                      <div className="flex items-center text-[10px] text-gray-600 mt-auto">
+                                        <span className="text-gray-400">{formatFileSize(doc.size_bytes)}</span>
                                       </div>
                                       
-                                      {/* External link button */}
-                                      <Button variant="ghost" size="sm" className="mt-2 w-full" asChild>
+                                      {/* External link button - smaller */}
+                                      <Button variant="ghost" size="sm" className="mt-1 w-full h-6 text-[10px] p-1" asChild>
                                         <a
                                           href={`https://cloud.llamaindex.ai/project/${doc.indexId}`}
                                           target="_blank"
                                           rel="noopener noreferrer"
                                         >
-                                          <ExternalLink className="h-3 w-3 mr-1" />
-                                          View in LlamaCloud
+                                          <ExternalLink className="h-2 w-2 mr-1" />
+                                          View
                                         </a>
                                       </Button>
                                     </CardContent>
