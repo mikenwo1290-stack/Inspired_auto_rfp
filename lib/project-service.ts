@@ -171,6 +171,7 @@ export const projectService = {
   },
 
   async getQuestions(projectId: string) {
+    console.log("In getQuestions, projectId", projectId);
     console.log(`Fetching questions for project ${projectId}`);
     
     try {

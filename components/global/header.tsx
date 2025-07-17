@@ -31,6 +31,7 @@ function HeaderContent() {
   // Check if we're on different page types
   const isOrgPage = pathname.startsWith('/org/');
   const isProjectPage = pathname.startsWith('/project');
+  const isOrganizationsPage = pathname === '/organizations';
   const showOnHomePage = pathname === '/' || pathname === '/new-organization';
   
   // Get current project and org IDs from URL params
@@ -46,8 +47,8 @@ function HeaderContent() {
     fetchUserEmail();
   }, []);
   
-  // Don't show if we're not on the home page, org page, or project page
-  if (!showOnHomePage && !isOrgPage && !isProjectPage) {
+  // Don't show if we're not on the home page, org page, organizations page, or project page
+  if (!showOnHomePage && !isOrgPage && !isProjectPage && !isOrganizationsPage) {
     return null;
   }
   

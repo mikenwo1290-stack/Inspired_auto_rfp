@@ -219,7 +219,7 @@ export function FileUploader({
           } else {
             // This path shouldn't typically be used, but just in case
             setShowProcessingModal(false);
-            router.push(`/questions?projectId=${result.documentId}`);
+            router.push(`/projects/${result.documentId}/questions`);
           }
         }
       }, 200);

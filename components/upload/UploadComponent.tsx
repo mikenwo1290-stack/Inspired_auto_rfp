@@ -70,7 +70,7 @@ export function UploadComponent({ projectId }: UploadComponentProps) {
       // Wait a moment to show completion state before redirecting
       setTimeout(() => {
         // Redirect to questions page
-        router.push(`/questions?projectId=${projectId}`);
+        router.push(`/projects/${projectId}/questions`);
       }, 1000);
     } catch (error) {
       console.error('Error processing document:', error);
