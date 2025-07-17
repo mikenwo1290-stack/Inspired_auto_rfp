@@ -23,13 +23,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { ChevronsUpDown, Plus, Settings, Building2 } from "lucide-react";
-import { toast } from "sonner";
+import { useToast } from "@/components/ui/use-toast";
 import { useOrganization } from "@/context/organization-context";
 
 export function OrganizationProjectSwitcher() {
   const { isMobile, open } = useSidebar();
   const router = useRouter();
   const pathname = usePathname();
+  const { toast } = useToast();
 
   const {
     currentOrganization,
@@ -99,15 +100,26 @@ export function OrganizationProjectSwitcher() {
 
       const data = await response.json();
       if (data.success) {
-        toast.success("Organization created successfully");
+        toast({
+          title: "Success",
+          description: "Organization created successfully",
+        });
         setCreateOrgDialogOpen(false);
         setOrgFormData({ name: "", slug: "", description: "" });
         await refreshData();
       } else {
-        toast.error(data.error || "Failed to create organization");
+        toast({
+          title: "Error",
+          description: data.error || "Failed to create organization",
+          variant: "destructive",
+        });
       }
     } catch (error) {
-      toast.error("Failed to create organization");
+      toast({
+        title: "Error",
+        description: "Failed to create organization",
+        variant: "destructive",
+      });
     }
   };
 
@@ -126,15 +138,26 @@ export function OrganizationProjectSwitcher() {
 
       const data = await response.json();
       if (data.success) {
-        toast.success("Project created successfully");
+        toast({
+          title: "Success", 
+          description: "Project created successfully",
+        });
         setCreateProjectDialogOpen(false);
         setProjectFormData({ name: "", description: "" });
         await refreshData();
       } else {
-        toast.error(data.error || "Failed to create project");
+        toast({
+          title: "Error",
+          description: data.error || "Failed to create project",
+          variant: "destructive",
+        });
       }
     } catch (error) {
-      toast.error("Failed to create project");
+      toast({
+        title: "Error",
+        description: "Failed to create project",
+        variant: "destructive",
+      });
     }
   };
 

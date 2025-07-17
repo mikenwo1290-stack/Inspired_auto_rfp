@@ -68,7 +68,7 @@ export function IndexSelector({
 
   return (
     <Card className="mb-6">
-      <CardHeader className="pb-4">
+      <CardHeader className="">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Database className="h-5 w-5 text-muted-foreground" />

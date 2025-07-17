@@ -92,7 +92,7 @@ export default function OrganizationPage({ params }: OrganizationPageProps) {
   }
 
   return (
-    <div className="container mx-auto py-6 px-4">
+    <div className="container mx-auto p-12">
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-3xl font-bold">{organization.name}</h1>
