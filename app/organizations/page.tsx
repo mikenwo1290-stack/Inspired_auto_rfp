@@ -106,10 +106,18 @@ export default function OrganizationsPage() {
       const data = await response.json();
 
       if (data.success) {
-        toast({
-          title: "Success",
-          description: "Organization created successfully",
-        });
+        // Show success message with auto-connection status
+        if (data.llamaCloudAutoConnected) {
+          toast({
+            title: "Success",
+            description: "Organization created successfully and automatically connected to LlamaCloud",
+          });
+        } else {
+          toast({
+            title: "Success",
+            description: "Organization created successfully",
+          });
+        }
         setCreateDialogOpen(false);
         setFormData({
           name: "",
