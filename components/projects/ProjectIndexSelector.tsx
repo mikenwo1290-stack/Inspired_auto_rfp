@@ -265,8 +265,6 @@ export function ProjectIndexSelector({ projectId }: ProjectIndexSelectorProps) {
             <div className="space-y-3">
               {availableIndexes.map((index) => {
                 const isSelected = selectedIndexIds.includes(index.id);
-
-                console.log("availableIndexes",availableIndexes);
                 
                 return (
                   <div

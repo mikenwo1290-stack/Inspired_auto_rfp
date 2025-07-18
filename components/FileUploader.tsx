@@ -135,7 +135,6 @@ export function FileUploader({
     }
 
     // Show the processing modal immediately
-    console.log("Starting upload - showing modal immediately");
     updateProcessingStatus("uploading");
     setProcessingProgress(0);
     setShowProcessingModal(true);
@@ -166,7 +165,7 @@ export function FileUploader({
       }
       
       // Send the file to our API endpoint
-      console.log('Sending file to API...');
+  
       const response = await fetch('/api/llamaparse', {
         method: 'POST',
         body: formData,
@@ -202,7 +201,6 @@ export function FileUploader({
           
           // When complete, move to parsing status
           updateProcessingStatus("parsing");
-          console.log("LlamaParse processing complete, waiting for OpenAI to extract questions");
           
           // Call the onFileProcessed callback to begin question extraction
           if (onFileProcessed) {
@@ -211,7 +209,6 @@ export function FileUploader({
             // Update to extracting status when OpenAI API call begins
             setTimeout(() => {
               updateProcessingStatus("extracting");
-              console.log("Starting OpenAI extraction process");
               
               // Keep modal open until question extraction completes
               // The page component will handle hiding the modal

@@ -44,8 +44,6 @@ export async function GET(
     
     // Use the optimized query with selective loading
     const organization = await organizationService.getOrganization(organizationId, true);
-
-    console.log("organization is ", organization);
     
     if (!organization) {
       return NextResponse.json(

@@ -63,11 +63,7 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
     try {
       const response = await fetch("/api/organizations");
       const data = await response.json();
-
-      console.log("from /api/organizations data", data);
       if (data.success) {
-        console.log("data.success is true");
-        console.log("setting organizations", data.data);
         setOrganizations(data.data);
       }
     } catch (error) {
@@ -148,20 +144,20 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
       const projectMatch = pathname.match(/\/projects\/([^\/]+)/);
       if (projectMatch) {
         const projectId = projectMatch[1];
-        console.log(`Initializing from URL: Found project ID ${projectId}`);
+        
         
         // Only fetch if we don't already have this project set
         if (!currentProject || currentProject.id !== projectId) {
           const project = await fetchProjectById(projectId);
-          console.log(`Fetched project:`, project);
+          
           if (project) {
             setCurrentProject(project);
             setCurrentOrganization(project.organization);
             await fetchProjects(project.organization.id);
             manualSelectionRef.current = true; // Mark as manually set from URL
-            console.log(`Set current project to:`, project.name);
+            
           } else {
-            console.log(`Failed to fetch project with ID: ${projectId}`);
+            
           }
         }
       } else {
@@ -170,7 +166,7 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
                                     pathname.includes('/upload') || 
                                     pathname.includes('/documents');
         if (currentProject && !isProjectRelatedPage) {
-          console.log(`Clearing current project because not on project-related page`);
+          
           setCurrentProject(null);
         }
       }

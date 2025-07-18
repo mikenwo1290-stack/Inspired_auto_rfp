@@ -372,19 +372,6 @@ export default function OrganizationsPage() {
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteOrganization(org)}
-                          disabled={org._count.projects > 0 || org._count.organizationUsers > 0 || deletingOrgId === org.id}
-                          title={org._count.projects > 0 || org._count.organizationUsers > 0 ? "Cannot delete: organization has projects or members" : "Delete organization"}
-                        >
-                          {deletingOrgId === org.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Trash2 className="h-4 w-4" />
-                          )}
-                        </Button>
                       </div>
                     </div>
                   </CardHeader>
