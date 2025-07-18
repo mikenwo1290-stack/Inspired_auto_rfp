@@ -61,14 +61,6 @@ export function MultiStepResponseDialog({
   finalResponse,
   sources,
 }: MultiStepResponseDialogProps) {
-  console.log('🎭 MultiStepResponseDialog rendered with:', {
-    isOpen,
-    isGenerating,
-    stepsCount: currentSteps.length,
-    hasFinalResponse: !!finalResponse,
-    sourcesCount: sources?.length || 0,
-    sources: sources
-  });
 
   const handleAccept = () => {
     if (finalResponse) {

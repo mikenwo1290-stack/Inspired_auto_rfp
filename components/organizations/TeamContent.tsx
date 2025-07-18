@@ -13,8 +13,6 @@ interface TeamContentProps {
 
 export function TeamContent({ orgId }: TeamContentProps) {
 
-  console.log("TeamContent debugging 1 orgId", orgId)
-
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [organization, setOrganization] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -30,7 +28,7 @@ export function TeamContent({ orgId }: TeamContentProps) {
     }
     
     if (membersData && Array.isArray(membersData)) {
-      console.log("API response for members:", membersData);
+      
       
       // Transform the data structure to match our TeamMember interface
       const transformedMembers = membersData.map((orgUser: any) => ({
@@ -42,7 +40,6 @@ export function TeamContent({ orgId }: TeamContentProps) {
         avatarUrl: orgUser.user?.avatarUrl
       }));
       
-      console.log("Transformed members:", transformedMembers);
       setMembers(transformedMembers);
     }
     

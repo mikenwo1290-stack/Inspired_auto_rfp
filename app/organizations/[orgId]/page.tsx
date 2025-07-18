@@ -48,7 +48,6 @@ export default function OrganizationPage({ params }: OrganizationPageProps) {
         
         const orgData = await orgResponse.json();
 
-        console.log("orgData is ", orgData);
         setOrganization(orgData);
       } catch (error) {
         console.error('Error fetching organization:', error);

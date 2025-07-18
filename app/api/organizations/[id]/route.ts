@@ -8,14 +8,13 @@ export async function GET(
 ) {
   try {
 
-    console.log("fetching organization by id");
+  
 
     const { id } = await params;
-    console.log("id is ", id);
+
 
     const organizationId = id;
     
-    console.log("organizationId is ", organizationId);
 
     // Get user from auth service - only once
     const currentUser = await organizationService.getCurrentUser();
@@ -39,13 +38,9 @@ export async function GET(
         { status: 403 }
       );
     }
-
-    console.log("isMember is ", isMember);
     
     // Use the optimized query with selective loading
     const organization = await organizationService.getOrganization(organizationId, true);
-
-    console.log("organization is ", organization);
     
     if (!organization) {
       return NextResponse.json(

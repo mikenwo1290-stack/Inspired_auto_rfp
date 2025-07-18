@@ -7,16 +7,13 @@ export async function GET(
   { params }: { params: Promise<{ slug: string }> }
 ) {
 
-  console.log("request is ", request);
+
   try {
 
     const { slug } = await params;
-    console.log("slug is ", slug);
-
 
     const currentUser = await organizationService.getCurrentUser();
 
-    console.log("currentUser is ", currentUser);
     
     if (!currentUser) {
       return NextResponse.json(
@@ -25,11 +22,8 @@ export async function GET(
       );
     }
 
-    console.log("fetching organization by slug");
     
     const organization = await organizationService.getOrganizationBySlug(slug,true);
-
-    console.log("organization is ", organization);
     
     if (!organization) {
       return NextResponse.json(
@@ -44,7 +38,6 @@ export async function GET(
       organization.id
     );
 
-    console.log("isMember is ", isMember);
     if (!isMember) {
       return NextResponse.json(
         { error: 'You do not have access to this organization' },
@@ -52,8 +45,6 @@ export async function GET(
       );
     }
 
-    console.log("returning organization");
-    
     return NextResponse.json(organization);
   } catch (error) {
     console.error('Error fetching organization by slug:', error);

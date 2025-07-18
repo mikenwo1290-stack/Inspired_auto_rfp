@@ -187,6 +187,13 @@ function GlobalHeaderContent() {
 
           {/* Right side - User menu */}
           <div className="flex items-center gap-3">
+            {/* Help Link */}
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/help" className="flex items-center gap-1.5">
+                <HelpCircle className="h-4 w-4" />
+                <span className="text-sm">Help</span>
+              </Link>
+            </Button>
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

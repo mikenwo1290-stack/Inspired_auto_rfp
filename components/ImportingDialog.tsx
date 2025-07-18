@@ -30,12 +30,11 @@ export function ImportingDialog({
   const isAnalyzed = status === "mapping" || status === "complete";
   const isComplete = status === "complete";
 
-  console.log("ImportingDialog render:", { open, fileName, status, progress });
   
   // Force rerender to ensure dialog visibility
   useEffect(() => {
     if (open) {
-      console.log("EFFECT: Dialog should be visible now");
+      
       // Force a reflow to ensure dialog renders
       document.body.style.overflow = "hidden";
       return () => {
@@ -46,7 +45,6 @@ export function ImportingDialog({
 
   // Force the dialog to be non-dismissible during processing
   const handleOpenChange = (newOpen: boolean) => {
-    console.log("Dialog open state change requested:", newOpen);
     
     // Only allow closing if process is complete or if explicitly trying to close
     if (status === "complete" || !newOpen) {
@@ -55,7 +53,7 @@ export function ImportingDialog({
   };
 
   if (!open) {
-    console.log("Dialog is not open, not rendering content");
+    
     return null;
   }
 

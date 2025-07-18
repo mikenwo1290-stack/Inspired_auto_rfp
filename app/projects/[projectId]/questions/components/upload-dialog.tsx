@@ -18,12 +18,10 @@ export function UploadDialog({ isOpen, onClose, projectId, onUploadComplete }: U
   const [processingStatus, setProcessingStatus] = useState<ProcessingStatus>("uploading")
 
   const handleFileProcessed = async (result: LlamaParseResult) => {
-    console.log("File processed:", result)
-
+    
     try {
       // Update status to parsing when starting OpenAI processing
       setProcessingStatus("parsing")
-      console.log("Starting OpenAI extraction process")
       
       // Store the questions in the database
       const extractResponse = await fetch('/api/extract-questions', {
@@ -48,7 +46,6 @@ export function UploadDialog({ isOpen, onClose, projectId, onUploadComplete }: U
       
       // Get the response data
       const extractedData = await extractResponse.json()
-      console.log("Questions extracted successfully:", extractedData)
       
       // Mark as complete
       setProcessingStatus("complete")

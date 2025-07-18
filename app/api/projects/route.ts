@@ -102,7 +102,6 @@ export async function POST(request: Request) {
         },
       }
     });
-    console.log("project is ", project);
     return NextResponse.json({
       success: true,
       data: project
