@@ -22,7 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { ChevronsUpDown, Plus, Settings, Building2 } from "lucide-react";
+import { ChevronsUpDown, Plus, Settings, Building2, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useOrganization } from "@/context/organization-context";
 
@@ -46,6 +46,8 @@ export function OrganizationProjectSwitcher() {
   // Dialog states
   const [createOrgDialogOpen, setCreateOrgDialogOpen] = useState(false);
   const [createProjectDialogOpen, setCreateProjectDialogOpen] = useState(false);
+  const [isCreatingOrg, setIsCreatingOrg] = useState(false);
+  const [isCreatingProject, setIsCreatingProject] = useState(false);
 
   // Form data
   const [orgFormData, setOrgFormData] = useState({
@@ -88,6 +90,7 @@ export function OrganizationProjectSwitcher() {
 
   const handleCreateOrganization = async () => {
     try {
+      setIsCreatingOrg(true);
       const response = await fetch("/api/organizations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -128,6 +131,8 @@ export function OrganizationProjectSwitcher() {
         description: "Failed to create organization",
         variant: "destructive",
       });
+    } finally {
+      setIsCreatingOrg(false);
     }
   };
 
@@ -378,6 +383,7 @@ export function OrganizationProjectSwitcher() {
                   }));
                 }}
                 placeholder="My Organization"
+                disabled={isCreatingOrg}
               />
             </div>
             <div className="space-y-2">
@@ -387,6 +393,7 @@ export function OrganizationProjectSwitcher() {
                 value={orgFormData.slug}
                 onChange={(e) => setOrgFormData(prev => ({ ...prev, slug: e.target.value }))}
                 placeholder="my-organization"
+                disabled={isCreatingOrg}
               />
             </div>
             <div className="space-y-2">
@@ -396,14 +403,16 @@ export function OrganizationProjectSwitcher() {
                 value={orgFormData.description}
                 onChange={(e) => setOrgFormData(prev => ({ ...prev, description: e.target.value }))}
                 placeholder="Organization description..."
+                disabled={isCreatingOrg}
               />
             </div>
             <div className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={() => setCreateOrgDialogOpen(false)}>
+              <Button variant="outline" onClick={() => setCreateOrgDialogOpen(false)} disabled={isCreatingOrg}>
                 Cancel
               </Button>
-              <Button onClick={handleCreateOrganization}>
-                Create Organization
+              <Button onClick={handleCreateOrganization} disabled={isCreatingOrg}>
+                {isCreatingOrg && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isCreatingOrg ? "Creating Organization..." : "Create Organization"}
               </Button>
             </div>
           </div>

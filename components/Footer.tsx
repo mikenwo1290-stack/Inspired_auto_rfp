@@ -100,6 +100,9 @@ export function Footer() {
                 <Link href="#" className="hover:text-foreground">Case Studies</Link>
               </li>
               <li>
+                <Link href="/help" className="hover:text-foreground">Help Center</Link>
+              </li>
+              <li>
                 <Link href="#" className="hover:text-foreground">Documentation</Link>
               </li>
               <li>

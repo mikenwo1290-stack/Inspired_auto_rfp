@@ -80,7 +80,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY="your-supabase-anon-key"
 # OpenAI API
 OPENAI_API_KEY="your-openai-api-key"
 
-# LlamaCloud (Optional)
+# LlamaCloud
 LLAMACLOUD_API_KEY="your-llamacloud-api-key"
 
 # App Configuration
