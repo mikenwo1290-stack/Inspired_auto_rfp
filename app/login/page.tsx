@@ -20,25 +20,9 @@ export default function LoginPage() {
 
           <div className="mt-8">
             <div className="mt-6">
-              <div className="space-y-3 mb-6">
-                <Button variant="outline" className="w-full" type="button" onClick={() => alert('GitHub login not implemented')}>
-                  <Github className="mr-2 h-4 w-4" />
-                  Continue with GitHub
-                </Button>
-                <Button variant="outline" className="w-full" type="button" onClick={() => alert('SSO login not implemented')}>
-                  <Lock className="mr-2 h-4 w-4" /> 
-                  Continue with SSO
-                </Button>
-              </div>
+  
 
-              <div className="relative my-6">
-                <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                  <div className="w-full border-t border-gray-300" />
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="bg-gray-50 px-2 text-gray-500">or sign in with email</span>
-                </div>
-              </div>
+  
 
               <form action={signInWithMagicLink} method="POST" className="space-y-6">
                 <div>
@@ -61,7 +45,7 @@ export default function LoginPage() {
                 <div>
                   <Button
                     type="submit"
-                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium"
                   >
                     <Mail className="mr-2 h-4 w-4" />
                     Send Magic Link
@@ -73,15 +57,6 @@ export default function LoginPage() {
                 We'll email you a magic link for a password-free sign in.
               </p>
 
-              <div className="mt-8 text-center">
-                <p className="text-sm text-gray-600">
-                  Need to create an account?{' '}
-                  {/* This link can point to a dedicated sign-up page or the same magic link flow */}
-                  <Link href="#" className="font-medium text-indigo-600 hover:text-indigo-500">
-                    Sign Up
-                  </Link>
-                </p>
-              </div>
             </div>
           </div>
         </div>

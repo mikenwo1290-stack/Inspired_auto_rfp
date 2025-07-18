@@ -187,10 +187,6 @@ function GlobalHeaderContent() {
 
           {/* Right side - User menu */}
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm">
-              <HelpCircle className="h-4 w-4 mr-1.5" />
-              Help
-            </Button>
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -214,15 +210,6 @@ function GlobalHeaderContent() {
                     )}
                   </div>
                 </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => router.push('/organizations')}>
-                  <Building2 className="mr-2 h-4 w-4" />
-                  <span>Organizations</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Account Settings</span>
-                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
                   className="text-destructive cursor-pointer"
