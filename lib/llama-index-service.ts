@@ -45,7 +45,6 @@ export class LlamaIndexService implements ILlamaIndexService {
 
   private initializeIndexes(): void {
 
-    console.log("debugging 123")
     try {
 
       console.log('Initializing LlamaCloud indexes with config:', this.config);

@@ -560,22 +560,6 @@ export function ProjectDocuments({ projectId }: ProjectDocumentsProps) {
                                       
                                       <p className="text-[10px] text-gray-500 mb-2">{formatDate(doc.created_at)}</p>
 
-                                      {/* File size info */}
-                                      <div className="flex items-center text-[10px] text-gray-600 mt-auto">
-                                        <span className="text-gray-400">{formatFileSize(doc.size_bytes)}</span>
-                                      </div>
-                                      
-                                      {/* External link button - smaller */}
-                                      <Button variant="ghost" size="sm" className="mt-1 w-full h-6 text-[10px] p-1" asChild>
-                                        <a
-                                          href={`https://cloud.llamaindex.ai/project/${doc.indexId}`}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                        >
-                                          <ExternalLink className="h-2 w-2 mr-1" />
-                                          View
-                                        </a>
-                                      </Button>
                                     </CardContent>
                                   </Card>
                                 );

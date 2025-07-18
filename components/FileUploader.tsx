@@ -180,7 +180,6 @@ export function FileUploader({
       }
       
       const result = await response.json();
-      console.log('API response received:', result);
       
       // Upload is done, now switch to import progress flow
       setIsUploading(false);

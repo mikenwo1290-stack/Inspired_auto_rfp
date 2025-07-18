@@ -6,14 +6,9 @@ export async function GET(
   { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
-    console.log('GET request received at /api/questions/[projectId]');
-    console.log('Params:', params);
-    
     const projectId = (await params).projectId;
-    console.log('Project ID extracted from params:', projectId);
     
     if (!projectId) {
-      console.log('No project ID found in params');
       return NextResponse.json(
         { error: 'Project ID is required' },
         { status: 400 }
@@ -21,7 +16,6 @@ export async function GET(
     }
     
     // Get questions from the database
-    console.log(`Calling projectService.getQuestions with projectId: ${projectId}`);
     const rfpDocument = await projectService.getQuestions(projectId);
     
     if (!rfpDocument) {
@@ -32,7 +26,6 @@ export async function GET(
       );
     }
     
-    console.log(`Successfully retrieved RFP document with ${rfpDocument.sections.length} sections`);
     return NextResponse.json(rfpDocument);
   } catch (error) {
     console.error('Error fetching questions:', error);

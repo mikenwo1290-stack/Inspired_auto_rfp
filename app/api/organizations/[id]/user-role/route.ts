@@ -12,7 +12,6 @@ export async function GET(
 
     const currentUser = await organizationService.getCurrentUser();
     
-    console.log("user-role debugging 234567 ", currentUser)
     if (!currentUser) {
       return NextResponse.json(
         { error: 'Unauthorized' },

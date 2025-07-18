@@ -40,7 +40,6 @@ export function TeamContent({ orgId }: TeamContentProps) {
         avatarUrl: orgUser.user?.avatarUrl
       }));
       
-      
       setMembers(transformedMembers);
     }
     

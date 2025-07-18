@@ -44,7 +44,6 @@ export function DocumentViewer({ document, onBack, updateProcessingStatus }: Doc
       }
       
       const result = await response.json();
-      console.log('Questions extracted:', result);
       
       // Update to complete status when done
       if (updateProcessingStatus) {

@@ -71,8 +71,6 @@ export async function GET(
 
     // Fetch available indexes from LlamaCloud
     try {
-      console.log('Fetching available indexes for project:', projectId);
-      console.log('Connected to LlamaCloud project:', project.organization.llamaCloudProjectId);
       
       const pipelinesResponse = await fetch('https://api.cloud.llamaindex.ai/api/v1/pipelines', {
         method: 'GET',
@@ -98,7 +96,6 @@ export async function GET(
         pipeline.project_id === project.organization.llamaCloudProjectId
       );
       
-      console.log(`Filtered ${pipelines.length} total pipelines to ${filteredPipelines.length} from project ${project.organization.llamaCloudProjectId}`);
       
       // Map pipelines to indexes for user-friendly terminology
       const availableIndexes = filteredPipelines.map((pipeline: any) => ({
@@ -123,7 +120,6 @@ export async function GET(
       );
       
       if (staleIndexes.length > 0) {
-        console.log(`Cleaning up ${staleIndexes.length} stale project indexes`);
         await db.projectIndex.deleteMany({
           where: {
             projectId,

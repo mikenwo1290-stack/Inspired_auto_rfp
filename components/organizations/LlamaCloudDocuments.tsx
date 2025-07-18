@@ -351,7 +351,7 @@ export function LlamaCloudDocuments({ organizationId, onDisconnect }: LlamaCloud
                                     <Calendar className="mr-1 h-3 w-3" />
                                     {formatDate(doc.updated_at)}
                                   </span>
-                                  <span>{formatFileSize(doc.size_bytes)}</span>
+                                  
                                 </div>
                               </div>
                             </div>
