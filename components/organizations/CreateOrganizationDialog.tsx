@@ -61,12 +61,21 @@ export function CreateOrganizationDialog({
       });
       
       if (response.ok) {
-        const organization = await response.json();
+        const result = await response.json();
+        const organization = result.data;
         
-        toast({
-          title: 'Success',
-          description: `${organization.name} has been created`,
-        });
+        // Show success message with auto-connection status
+        if (result.llamaCloudAutoConnected) {
+          toast({
+            title: 'Success',
+            description: `${organization.name} has been created and automatically connected to LlamaCloud`,
+          });
+        } else {
+          toast({
+            title: 'Success',
+            description: `${organization.name} has been created`,
+          });
+        }
         
         // Reset form
         setName('');

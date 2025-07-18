@@ -100,10 +100,18 @@ export function OrganizationProjectSwitcher() {
 
       const data = await response.json();
       if (data.success) {
-        toast({
-          title: "Success",
-          description: "Organization created successfully",
-        });
+        // Show success message with auto-connection status
+        if (data.llamaCloudAutoConnected) {
+          toast({
+            title: "Success",
+            description: "Organization created successfully and automatically connected to LlamaCloud",
+          });
+        } else {
+          toast({
+            title: "Success",
+            description: "Organization created successfully",
+          });
+        }
         setCreateOrgDialogOpen(false);
         setOrgFormData({ name: "", slug: "", description: "" });
         await refreshData();
@@ -341,13 +349,6 @@ export function OrganizationProjectSwitcher() {
                   >
                     <Plus className="size-4" />
                     <span>Add Project</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => router.push(`/organizations/${currentOrganization.id}/projects`)}
-                    className="cursor-pointer"
-                  >
-                    <Settings className="size-4" />
-                    <span>Manage Projects</span>
                   </DropdownMenuItem>
                 </div>
               </div>

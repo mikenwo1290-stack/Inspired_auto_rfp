@@ -81,6 +81,7 @@ interface QuestionsContextType {
   getFilteredQuestions: (filterType?: string) => any[];
   getCounts: () => { all: number; answered: number; unanswered: number };
   getSelectedQuestionData: () => any;
+  refreshQuestions: () => Promise<void>;
 }
 
 const QuestionsContext = createContext<QuestionsContextType | undefined>(undefined);
@@ -611,6 +612,44 @@ export function QuestionsProvider({ children, projectId }: QuestionsProviderProp
     setIsSourceModalOpen(true);
   };
 
+  // Refresh questions data
+  const refreshQuestions = async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const response = await fetch(`/api/questions/${projectId}`);
+      
+      if (!response.ok) {
+        throw new Error("Failed to load questions");
+      }
+      
+      const data = await response.json();
+      setRfpDocument(data);
+
+      const answersResponse = await fetch(`/api/questions/${projectId}/answers`);
+      if (answersResponse.ok) {
+        const savedAnswers = await answersResponse.json();
+        
+        const normalizedAnswers: Record<string, AnswerData> = {};
+        for (const [questionId, answerData] of Object.entries(savedAnswers)) {
+          if (typeof answerData === 'string') {
+            normalizedAnswers[questionId] = { text: answerData };
+          } else {
+            normalizedAnswers[questionId] = answerData as AnswerData;
+          }
+        }
+        
+        setAnswers(normalizedAnswers);
+      }
+    } catch (error) {
+      console.error("Error refreshing questions:", error);
+      setError("Failed to refresh questions. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const value: QuestionsContextType = {
     // UI state
     showAIPanel,
@@ -676,6 +715,7 @@ export function QuestionsProvider({ children, projectId }: QuestionsProviderProp
     getFilteredQuestions,
     getCounts,
     getSelectedQuestionData,
+    refreshQuestions,
   };
 
   return (

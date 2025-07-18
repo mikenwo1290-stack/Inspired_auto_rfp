@@ -101,12 +101,6 @@ export default function OrganizationPage({ params }: OrganizationPageProps) {
           )}
         </div>
         <div className="flex gap-2">
-          <Link href={`/organization/${organizationId}/members`}>
-            <Button variant="outline">
-              <Users className="mr-2 h-4 w-4" />
-              Members
-            </Button>
-          </Link>
           <Button onClick={() => setIsCreateProjectOpen(true)}>
             <PlusCircle className="mr-2 h-4 w-4" />
             New Project

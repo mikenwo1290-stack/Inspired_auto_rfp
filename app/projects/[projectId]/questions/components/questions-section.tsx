@@ -1,6 +1,6 @@
 "use client"
 
-import React, { Suspense } from "react"
+import React, { Suspense, useState } from "react"
 import { Toaster } from "@/components/ui/toaster"
 
 // Import the new components
@@ -12,6 +12,7 @@ import { QuestionsFilterTabs } from "./questions-filter-tabs"
 import { QuestionsLoadingState, QuestionsErrorState } from "./questions-states"
 import { MultiStepResponseHandler } from "./multi-step-response-handler"
 import { IndexSelector } from "./index-selector"
+import { UploadDialog } from "./upload-dialog"
 
 interface QuestionsSectionProps {
   projectId: string;
@@ -19,6 +20,8 @@ interface QuestionsSectionProps {
 
 // Inner component that uses the context
 function QuestionsSectionInner({ projectId }: QuestionsSectionProps) {
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false)
+  
   const {
     isLoading,
     error,
@@ -37,7 +40,13 @@ function QuestionsSectionInner({ projectId }: QuestionsSectionProps) {
     organizationConnected,
     handleIndexToggle,
     handleSelectAllIndexes,
+    refreshQuestions, // Add this method to refresh questions after upload
   } = useQuestions();
+
+  const handleUploadComplete = () => {
+    // Refresh the questions data after successful upload
+    refreshQuestions();
+  };
 
   return (
     <div className="space-y-6 p-6 md:p-8 lg:p-12 min-h-screen">
@@ -47,11 +56,11 @@ function QuestionsSectionInner({ projectId }: QuestionsSectionProps) {
       {/* Error state */}
       {error && <QuestionsErrorState error={error} />}
 
-      {/* No questions state */}
-      {(!isLoading && !error && (!rfpDocument || rfpDocument.sections.length === 0 || 
-        rfpDocument.sections.every(section => section.questions.length === 0))) && (
-        <NoQuestionsAvailable projectId={projectId} />
-      )}
+             {/* No questions state */}
+       {(!isLoading && !error && (!rfpDocument || rfpDocument.sections.length === 0 || 
+         rfpDocument.sections.every(section => section.questions.length === 0))) && (
+         <NoQuestionsAvailable projectId={projectId} onUploadClick={() => setIsUploadDialogOpen(true)} />
+       )}
 
       {/* Questions available state */}
       {!isLoading && !error && rfpDocument && rfpDocument.sections.length > 0 && 
@@ -87,11 +96,19 @@ function QuestionsSectionInner({ projectId }: QuestionsSectionProps) {
         source={selectedSource}
       />
       
-      {/* Multi-step Response Dialog */}
-      <MultiStepResponseHandler />
-      
-      <Toaster />
-    </div>
+             {/* Multi-step Response Dialog */}
+       <MultiStepResponseHandler />
+
+       {/* Upload Dialog */}
+       <UploadDialog
+         isOpen={isUploadDialogOpen}
+         onClose={() => setIsUploadDialogOpen(false)}
+         projectId={projectId}
+         onUploadComplete={handleUploadComplete}
+       />
+       
+       <Toaster />
+     </div>
   );
 }
 
