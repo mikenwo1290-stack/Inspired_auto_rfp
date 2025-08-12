@@ -35,6 +35,9 @@ export class OpenAIQuestionExtractor implements IAIQuestionExtractor {
   async extractQuestions(content: string, documentName: string): Promise<ExtractedQuestions> {
     try {
       const systemPrompt = this.getSystemPrompt();
+
+      console.log("content of the document", content); 
+      console.log("documentName", documentName);
       
       const response = await this.client.chat.completions.create({
         model: this.config.model,
