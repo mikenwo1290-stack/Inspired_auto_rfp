@@ -7,6 +7,8 @@ import { ValidationError } from '@/lib/errors/api-errors';
 export async function POST(request: NextRequest) {
   return apiHandler(async () => {
     // Parse and validate request body
+
+    console.log("request", request);  
     const body = await request.json();
     const validatedRequest = ExtractQuestionsRequestSchema.parse(body);
     

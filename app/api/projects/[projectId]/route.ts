@@ -7,7 +7,10 @@ export async function GET(
   { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
+
+    console.log("API Route: Received params:", await params);
     const projectId = (await params).projectId;
+    console.log("API Route: Extracted projectId:", projectId);
     const currentUser = await organizationService.getCurrentUser();
     
     if (!currentUser) {

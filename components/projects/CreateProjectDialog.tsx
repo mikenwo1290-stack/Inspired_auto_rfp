@@ -63,7 +63,9 @@ export function CreateProjectDialog({
       });
       
       if (response.ok) {
-        const project = await response.json();
+        const result = await response.json();
+        console.log("CreateProjectDialog: API response:", result);
+        const project = result.data; // Extract project from data property
         
         toast({
           title: 'Success',
@@ -78,10 +80,11 @@ export function CreateProjectDialog({
         onOpenChange(false);
         
         // Call success callback or redirect
+        console.log("CreateProjectDialog: About to redirect/callback with projectId:", project.id);
         if (onSuccess) {
           onSuccess(project.id);
         } else {
-          router.push(`/project/${project.id}`);
+          router.push(`/projects/${project.id}`);
         }
       } else {
         const error = await response.json();

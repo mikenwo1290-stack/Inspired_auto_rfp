@@ -21,6 +21,7 @@ interface ProjectPageProps {
 
 export default async function ProjectPage({ params }: ProjectPageProps) {
   const { projectId } = await params;
+  console.log("ProjectPage received projectId:", projectId);
   
   return (
     <ProjectPageProvider projectId={projectId}>
