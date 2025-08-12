@@ -89,11 +89,17 @@ export class LlamaParseService {
       // Step 7: Clean up the temporary file
       await fs.promises.unlink(filePath);
       
-      // Step 8: Get the parsed content
-      const documentText = documents[0]?.text || '';
+      // Step 8: Combine all documents into one text (LlamaParse often returns multiple docs for multi-page content)
+      const documentText = documents.map(doc => doc.text || '').join('\n\n');
       
       // Log final content for debugging
-      console.log(`Final document text length: ${documentText.length}`);
+      console.log(`Total documents parsed: ${documents.length}`);
+      console.log(`Final combined document text length: ${documentText.length}`);
+      
+      if (documents.length > 1) {
+        console.log(`Individual document lengths: ${documents.map((doc, i) => `Doc ${i+1}: ${doc.text?.length || 0} chars`).join(', ')}`);
+      }
+      
       if (documentText.length === 0) {
         console.error("ERROR: Document content is empty after parsing!");
       }
