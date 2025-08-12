@@ -150,14 +150,21 @@ export function OrganizationProjectSwitcher() {
       });
 
       const data = await response.json();
+      console.log("OrganizationProjectSwitcher: API response:", data);
       if (data.success) {
+        const project = data.data; // Extract project from data property
+        console.log("OrganizationProjectSwitcher: Created project:", project);
+        
         toast({
           title: "Success", 
           description: "Project created successfully",
         });
         setCreateProjectDialogOpen(false);
         setProjectFormData({ name: "", description: "" });
-        await refreshData();
+        
+        // Redirect to the new project page
+        console.log("OrganizationProjectSwitcher: Redirecting to project:", project.id);
+        router.push(`/projects/${project.id}`);
       } else {
         toast({
           title: "Error",

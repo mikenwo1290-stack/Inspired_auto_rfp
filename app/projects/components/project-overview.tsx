@@ -29,14 +29,18 @@ export function ProjectOverview({ onViewQuestions, projectId, orgId }: ProjectOv
 
   useEffect(() => {
     const fetchProjectData = async () => {
+      console.log("ProjectOverview: fetchProjectData called with projectId:", projectId);
       setLoading(true)
       try {
         // Fetch project details
+        console.log("ProjectOverview: Making API call to /api/projects/" + projectId);
         const projectResponse = await fetch(`/api/projects/${projectId}`)
+        console.log("ProjectOverview: Response status:", projectResponse.status);
         if (!projectResponse.ok) {
           throw new Error("Failed to fetch project details")
         }
         const projectData = await projectResponse.json()
+        console.log("ProjectOverview: Received project data:", projectData);
         setProject(projectData)
 
         // Fetch RFP document with questions

@@ -11,6 +11,7 @@ import { ArrowLeft } from "lucide-react"
 
 // Inner component that uses search params
 function ProjectContentInner({ projectId }: { projectId: string }) {
+  console.log("ProjectContentInner received projectId:", projectId);
   const [activeSection, setActiveSection] = useState("overview")
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -51,6 +52,8 @@ function ProjectContentInner({ projectId }: { projectId: string }) {
 }
 
 export function ProjectContent({ projectId }: { projectId: string }) {
+  console.log("ProjectContent received projectId:", projectId);
+  
   return (
     <Suspense fallback={
       <div className="container py-6">

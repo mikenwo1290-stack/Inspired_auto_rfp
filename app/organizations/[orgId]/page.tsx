@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { Organization } from '@/types/organization';
 import { ProjectGrid } from '@/components/projects/ProjectGrid';
 import { CreateProjectDialog } from '@/components/projects/CreateProjectDialog';
@@ -21,6 +21,7 @@ export default function OrganizationPage({ params }: OrganizationPageProps) {
   const [isCreateProjectOpen, setIsCreateProjectOpen] = useState(false);
   const [organizationId, setOrganizationId] = useState<string | null>(null);
   const { toast } = useToast();
+  const router = useRouter();
 
   // Handle async params
   useEffect(() => {
@@ -132,9 +133,9 @@ export default function OrganizationPage({ params }: OrganizationPageProps) {
           isOpen={isCreateProjectOpen}
           onOpenChange={setIsCreateProjectOpen}
           organizationId={organization.id}
-          onSuccess={() => {
-            // Refresh the organization data to show the new project
-            window.location.reload();
+          onSuccess={(projectId) => {
+            // Redirect to the new project page
+            router.push(`/projects/${projectId}`);
           }}
         />
       )}
