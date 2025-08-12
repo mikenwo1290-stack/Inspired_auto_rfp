@@ -81,9 +81,14 @@ export function ImportingDialog({
       >
         <DialogHeader>
           <DialogTitle>Importing</DialogTitle>
-          <div className="text-sm text-muted-foreground">
+          <div className="text-sm text-muted-foreground mb-2">
             {fileName}
           </div>
+          {status === "analyzing" && (
+            <div className="text-sm text-blue-600 font-medium">
+              Parsing document structure...
+            </div>
+          )}
         </DialogHeader>
         
         <div className="py-6 space-y-6">
@@ -140,7 +145,9 @@ export function ImportingDialog({
             </div>
             <div>
               <div className="font-medium">Analysis Complete</div>
-              <div className="text-sm text-muted-foreground">Excel File • Your file has been analyzed successfully</div>
+              <div className="text-sm text-muted-foreground">
+                {isAnalyzed ? "Your file has been analyzed successfully" : "Analyzing document structure and content"}
+              </div>
             </div>
           </div>
 
@@ -156,21 +163,31 @@ export function ImportingDialog({
               ) : status === "mapping" ? (
                 <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-600 animate-spin">
-                    <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                    <circle cx="12" cy="12" r="4"/>
                   </svg>
                 </div>
               ) : (
-                <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400">
+                <div className="h-8 w-8 rounded-full bg-yellow-100 flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-yellow-600">
                     <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+                    <path d="M12 9v4"/>
+                    <path d="m12 17 .01 0"/>
                   </svg>
                 </div>
               )}
             </div>
             <div>
-              <div className="font-medium">File Mapping Agent is processing</div>
+              <div className="font-medium">
+                {isComplete ? "Processing Complete" : status === "mapping" ? "Processing Document" : "Waiting for processing to begin"}
+              </div>
               <div className="text-sm text-muted-foreground">
-                The file is being configured. This may take a while,we will notify you when it's done.
+                {isComplete 
+                  ? "Your document has been processed successfully" 
+                  : status === "mapping" 
+                    ? "The file is being configured. This may take a while, we will notify you when it's done."
+                    : "The file is being configured. This may take a while, we will notify you when it's done."
+                }
               </div>
               {status === "mapping" && (
                 <div className="mt-2">
