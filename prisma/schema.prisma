@@ -71,6 +71,7 @@ model Project {
   id          String     @id @default(cuid())
   name        String
   description String?
+  summary     String?    // RFP summary generated from uploaded documents
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
   questions   Question[]

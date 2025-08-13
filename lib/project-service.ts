@@ -24,6 +24,7 @@ export const projectService = {
           id: true,
           name: true,
           description: true,
+          summary: true,
           createdAt: true,
           updatedAt: true,
           organizationId: true
@@ -40,6 +41,7 @@ export const projectService = {
         id: true,
         name: true,
         description: true,
+        summary: true,
         createdAt: true,
         updatedAt: true,
         organizationId: true,
@@ -65,6 +67,7 @@ export const projectService = {
           id: true,
           name: true,
           description: true,
+          summary: true,
           createdAt: true,
           updatedAt: true,
           organizationId: true,
@@ -272,6 +275,20 @@ export const projectService = {
       return rfpDocument;
     } catch (error) {
       console.error(`Error in getQuestions for project ${projectId}:`, error);
+      throw error;
+    }
+  },
+
+  // Summary operations
+  async saveSummary(projectId: string, summary: string) {
+    try {
+      await db.project.update({
+        where: { id: projectId },
+        data: { summary },
+      });
+      console.log(`Successfully saved summary for project ${projectId}`);
+    } catch (error) {
+      console.error(`Error saving summary for project ${projectId}:`, error);
       throw error;
     }
   },

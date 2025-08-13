@@ -227,6 +227,23 @@ export function ProjectOverview({ onViewQuestions, projectId, orgId }: ProjectOv
         </div>
       </div>
 
+      {/* RFP Summary */}
+      {project.summary && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Info className="h-5 w-5" />
+              RFP Summary
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground leading-relaxed">
+              {project.summary}
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Consolidated Project Summary */}
       <Card>
         <CardContent>

@@ -8,6 +8,11 @@ export interface IAIQuestionExtractor {
    * Extract structured questions from document content
    */
   extractQuestions(content: string, documentName: string): Promise<ExtractedQuestions>;
+  
+  /**
+   * Generate a summary of the RFP document
+   */
+  generateSummary(content: string, documentName: string): Promise<string>;
 }
 
 /**

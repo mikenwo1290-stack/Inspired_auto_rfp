@@ -13,11 +13,17 @@ export class QuestionExtractionService implements IQuestionExtractionService {
    */
   async processDocument(request: ExtractQuestionsRequest): Promise<ExtractQuestionsResponse> {
     try {
-      // Stage 1: Extract questions using AI
-      const extractedQuestions = await this.extractQuestions(request.content, request.documentName);
+      // Stage 1: Extract questions and generate summary using AI (parallel execution)
+      const [extractedQuestions, summary] = await Promise.all([
+        this.extractQuestions(request.content, request.documentName),
+        this.generateSummary(request.content, request.documentName)
+      ]);
       
-      // Stage 2: Save to database
-      await this.saveQuestions(request.projectId, extractedQuestions.sections);
+      // Stage 2: Save to database (questions and summary)
+      await Promise.all([
+        this.saveQuestions(request.projectId, extractedQuestions.sections),
+        this.saveSummary(request.projectId, summary)
+      ]);
       
       // Stage 3: Return structured response
       const response: ExtractQuestionsResponse = {
@@ -25,6 +31,7 @@ export class QuestionExtractionService implements IQuestionExtractionService {
         documentName: request.documentName,
         sections: extractedQuestions.sections,
         extractedAt: new Date().toISOString(),
+        summary, // Include summary in response
       };
       
       return response;
@@ -48,6 +55,17 @@ export class QuestionExtractionService implements IQuestionExtractionService {
   }
 
   /**
+   * Generate summary from content using AI
+   */
+  private async generateSummary(content: string, documentName: string): Promise<string> {
+    try {
+      return await openAIQuestionExtractor.generateSummary(content, documentName);
+    } catch (error) {
+      throw new AIServiceError(`AI summary generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
    * Save extracted questions to storage
    */
   async saveQuestions(projectId: string, sections: any[]): Promise<void> {
@@ -55,6 +73,17 @@ export class QuestionExtractionService implements IQuestionExtractionService {
       await projectService.saveQuestions(projectId, sections);
     } catch (error) {
       throw new DatabaseError(`Failed to save questions: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Save generated summary to storage
+   */
+  async saveSummary(projectId: string, summary: string): Promise<void> {
+    try {
+      await projectService.saveSummary(projectId, summary);
+    } catch (error) {
+      throw new DatabaseError(`Failed to save summary: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 

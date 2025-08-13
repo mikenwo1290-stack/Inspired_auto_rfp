@@ -30,6 +30,37 @@ export class OpenAIQuestionExtractor implements IAIQuestionExtractor {
   }
 
   /**
+   * Generate a summary of the RFP document
+   */
+  async generateSummary(content: string, documentName: string): Promise<string> {
+    try {
+      const systemPrompt = this.getSummarySystemPrompt();
+      
+      const response = await this.client.chat.completions.create({
+        model: this.config.model,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: this.formatUserPrompt(content, documentName) }
+        ],
+        temperature: 0.3, // Slightly higher for more creative summaries
+        max_tokens: 500, // Limit summary length
+      });
+
+      const assistantMessage = response.choices[0]?.message?.content;
+      if (!assistantMessage) {
+        throw new AIServiceError('Empty response from OpenAI for summary generation');
+      }
+
+      return assistantMessage.trim();
+    } catch (error) {
+      if (error instanceof AIServiceError) {
+        throw error;
+      }
+      throw new AIServiceError(`Summary generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
    * Extract structured questions from document content
    */
   async extractQuestions(content: string, documentName: string): Promise<ExtractedQuestions> {
@@ -69,6 +100,26 @@ export class OpenAIQuestionExtractor implements IAIQuestionExtractor {
       }
       throw new AIServiceError(`Question extraction failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
+  }
+
+  /**
+   * Get the system prompt for RFP summary generation
+   */
+  private getSummarySystemPrompt(): string {
+    return `
+You are an expert at analyzing RFP (Request for Proposal) documents and creating concise, informative summaries.
+
+Your task is to read through the RFP document and create a comprehensive paragraph summary that captures:
+1. The purpose and scope of the project/procurement
+2. Key requirements and deliverables
+3. Important dates, deadlines, or timelines mentioned
+4. Any special qualifications or criteria for vendors
+5. The overall scale or nature of the work
+
+Write a clear, professional summary in paragraph form (3-5 sentences) that would help someone quickly understand what this RFP is about and what the organization is seeking. Focus on the most important aspects that potential bidders would need to know.
+
+Do not include section numbers, question lists, or administrative details like submission instructions. Focus on the substance of what is being procured.
+    `.trim();
   }
 
   /**
