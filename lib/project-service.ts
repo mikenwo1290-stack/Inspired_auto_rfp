@@ -25,6 +25,7 @@ export const projectService = {
           name: true,
           description: true,
           summary: true,
+          eligibility: true,
           createdAt: true,
           updatedAt: true,
           organizationId: true
@@ -42,6 +43,7 @@ export const projectService = {
         name: true,
         description: true,
         summary: true,
+        eligibility: true,
         createdAt: true,
         updatedAt: true,
         organizationId: true,
@@ -68,6 +70,7 @@ export const projectService = {
           name: true,
           description: true,
           summary: true,
+          eligibility: true,
           createdAt: true,
           updatedAt: true,
           organizationId: true,
@@ -289,6 +292,20 @@ export const projectService = {
       console.log(`Successfully saved summary for project ${projectId}`);
     } catch (error) {
       console.error(`Error saving summary for project ${projectId}:`, error);
+      throw error;
+    }
+  },
+
+  // Eligibility operations
+  async saveEligibility(projectId: string, eligibility: string[]) {
+    try {
+      await db.project.update({
+        where: { id: projectId },
+        data: { eligibility },
+      });
+      console.log(`Successfully saved eligibility for project ${projectId}`);
+    } catch (error) {
+      console.error(`Error saving eligibility for project ${projectId}:`, error);
       throw error;
     }
   },

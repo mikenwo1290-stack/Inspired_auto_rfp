@@ -13,6 +13,11 @@ export interface IAIQuestionExtractor {
    * Generate a summary of the RFP document
    */
   generateSummary(content: string, documentName: string): Promise<string>;
+  
+  /**
+   * Extract vendor eligibility requirements as bullet points
+   */
+  extractEligibility(content: string, documentName: string): Promise<string[]>;
 }
 
 /**

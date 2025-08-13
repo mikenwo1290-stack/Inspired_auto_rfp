@@ -72,6 +72,7 @@ model Project {
   name        String
   description String?
   summary     String?    // RFP summary generated from uploaded documents
+  eligibility String[]   // Vendor eligibility requirements as bullet points
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
   questions   Question[]

@@ -61,6 +61,49 @@ export class OpenAIQuestionExtractor implements IAIQuestionExtractor {
   }
 
   /**
+   * Extract vendor eligibility requirements from RFP document
+   */
+  async extractEligibility(content: string, documentName: string): Promise<string[]> {
+    try {
+      const systemPrompt = this.getEligibilitySystemPrompt();
+      
+      const response = await this.client.chat.completions.create({
+        model: this.config.model,
+        response_format: { type: "json_object" },
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: this.formatUserPrompt(content, documentName) }
+        ],
+        temperature: 0.1, // Low temperature for precise extraction
+        max_tokens: 1000, // Allow for comprehensive eligibility lists
+      });
+
+      const assistantMessage = response.choices[0]?.message?.content;
+      if (!assistantMessage) {
+        throw new AIServiceError('Empty response from OpenAI for eligibility extraction');
+      }
+
+      // Parse and validate the JSON response
+      const rawData = JSON.parse(assistantMessage);
+      
+      // Expect format: { "eligibility": ["requirement 1", "requirement 2", ...] }
+      if (!rawData.eligibility || !Array.isArray(rawData.eligibility)) {
+        throw new AIServiceError('Invalid eligibility format from AI service');
+      }
+
+      return rawData.eligibility.filter((item: any) => typeof item === 'string' && item.trim().length > 0);
+    } catch (error) {
+      if (error instanceof SyntaxError) {
+        throw new AIServiceError('Invalid JSON response from AI service for eligibility extraction');
+      }
+      if (error instanceof AIServiceError) {
+        throw error;
+      }
+      throw new AIServiceError(`Eligibility extraction failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
    * Extract structured questions from document content
    */
   async extractQuestions(content: string, documentName: string): Promise<ExtractedQuestions> {
@@ -119,6 +162,42 @@ Your task is to read through the RFP document and create a comprehensive paragra
 Write a clear, professional summary in paragraph form (3-5 sentences) that would help someone quickly understand what this RFP is about and what the organization is seeking. Focus on the most important aspects that potential bidders would need to know.
 
 Do not include section numbers, question lists, or administrative details like submission instructions. Focus on the substance of what is being procured.
+    `.trim();
+  }
+
+  /**
+   * Get the system prompt for vendor eligibility extraction
+   */
+  private getEligibilitySystemPrompt(): string {
+    return `
+You are an expert at analyzing RFP (Request for Proposal) documents and extracting vendor eligibility requirements.
+
+Your task is to read through the RFP document and identify all key eligibility criteria that vendors must meet to qualify for this proposal. Focus on extracting:
+
+1. Minimum experience requirements (years in business, project experience)
+2. Technical qualifications and certifications
+3. Financial requirements (bonding, insurance, revenue thresholds)
+4. Geographic restrictions or preferences
+5. Industry-specific licenses or accreditations
+6. Staff qualifications and expertise requirements
+7. Past performance criteria
+8. Legal and compliance requirements
+9. Size classifications (small business, minority-owned, etc.)
+10. Any other mandatory qualifications mentioned
+
+Format your response as a JSON object with an "eligibility" array containing clear, concise bullet points. Each requirement should be a standalone statement that a vendor can easily evaluate against their own qualifications.
+
+Example format:
+{
+  "eligibility": [
+    "Minimum 5 years of experience in software development",
+    "Must hold current ISO 27001 certification",
+    "Annual revenue of at least $10 million",
+    "Licensed to operate in the State of California"
+  ]
+}
+
+Focus only on mandatory requirements, not preferences. If no clear eligibility criteria are found, return an empty array.
     `.trim();
   }
 

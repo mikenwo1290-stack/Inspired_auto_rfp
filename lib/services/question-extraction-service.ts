@@ -13,16 +13,18 @@ export class QuestionExtractionService implements IQuestionExtractionService {
    */
   async processDocument(request: ExtractQuestionsRequest): Promise<ExtractQuestionsResponse> {
     try {
-      // Stage 1: Extract questions and generate summary using AI (parallel execution)
-      const [extractedQuestions, summary] = await Promise.all([
+      // Stage 1: Extract questions, generate summary, and extract eligibility using AI (parallel execution)
+      const [extractedQuestions, summary, eligibility] = await Promise.all([
         this.extractQuestions(request.content, request.documentName),
-        this.generateSummary(request.content, request.documentName)
+        this.generateSummary(request.content, request.documentName),
+        this.extractEligibility(request.content, request.documentName)
       ]);
       
-      // Stage 2: Save to database (questions and summary)
+      // Stage 2: Save to database (questions, summary, and eligibility)
       await Promise.all([
         this.saveQuestions(request.projectId, extractedQuestions.sections),
-        this.saveSummary(request.projectId, summary)
+        this.saveSummary(request.projectId, summary),
+        this.saveEligibility(request.projectId, eligibility)
       ]);
       
       // Stage 3: Return structured response
@@ -32,6 +34,7 @@ export class QuestionExtractionService implements IQuestionExtractionService {
         sections: extractedQuestions.sections,
         extractedAt: new Date().toISOString(),
         summary, // Include summary in response
+        eligibility, // Include eligibility in response
       };
       
       return response;
@@ -66,6 +69,17 @@ export class QuestionExtractionService implements IQuestionExtractionService {
   }
 
   /**
+   * Extract eligibility requirements from content using AI
+   */
+  private async extractEligibility(content: string, documentName: string): Promise<string[]> {
+    try {
+      return await openAIQuestionExtractor.extractEligibility(content, documentName);
+    } catch (error) {
+      throw new AIServiceError(`AI eligibility extraction failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
    * Save extracted questions to storage
    */
   async saveQuestions(projectId: string, sections: any[]): Promise<void> {
@@ -84,6 +98,17 @@ export class QuestionExtractionService implements IQuestionExtractionService {
       await projectService.saveSummary(projectId, summary);
     } catch (error) {
       throw new DatabaseError(`Failed to save summary: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Save extracted eligibility requirements to storage
+   */
+  async saveEligibility(projectId: string, eligibility: string[]): Promise<void> {
+    try {
+      await projectService.saveEligibility(projectId, eligibility);
+    } catch (error) {
+      throw new DatabaseError(`Failed to save eligibility: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
