@@ -33,35 +33,35 @@ export default function OrganizationPage({ params }: OrganizationPageProps) {
     handleParams();
   }, [params]);
 
-  useEffect(() => {
-    const fetchOrganization = async () => {
-      if (!organizationId) return;
+  const fetchOrganization = async () => {
+    if (!organizationId) return;
+    
+    try {
+      setIsLoading(true);
       
-      try {
-        setIsLoading(true);
-        
-        // First fetch the organization by slug
-        const orgResponse = await fetch(`/api/organizations/${organizationId}`);
-        
-        if (!orgResponse.ok) {
-          throw new Error('Failed to fetch organization');
-        }
-        
-        const orgData = await orgResponse.json();
-
-        setOrganization(orgData);
-      } catch (error) {
-        console.error('Error fetching organization:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to load organization data',
-          variant: 'destructive',
-        });
-      } finally {
-        setIsLoading(false);
+      // First fetch the organization by slug
+      const orgResponse = await fetch(`/api/organizations/${organizationId}`);
+      
+      if (!orgResponse.ok) {
+        throw new Error('Failed to fetch organization');
       }
-    };
+      
+      const orgData = await orgResponse.json();
 
+      setOrganization(orgData);
+    } catch (error) {
+      console.error('Error fetching organization:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load organization data',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     if (organizationId) {
       fetchOrganization();
     }
@@ -113,7 +113,8 @@ export default function OrganizationPage({ params }: OrganizationPageProps) {
         {organization.projects && organization.projects.length > 0 ? (
           <ProjectGrid 
             projects={organization.projects} 
-            isLoading={false} 
+            isLoading={false}
+            onProjectDeleted={fetchOrganization}
           />
         ) : (
           <div className="border rounded-lg p-8 text-center">
