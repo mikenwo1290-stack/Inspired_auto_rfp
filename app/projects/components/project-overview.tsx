@@ -8,11 +8,15 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
-import { AlertCircle, Calendar, CheckCircle2, Clock, FileText, FolderOpen, MessageSquare, Users, Download, Info } from "lucide-react"
+import { AlertCircle, Calendar, CheckCircle2, Clock, FileText, FolderOpen, MessageSquare, Users, Download, Info, Trash2, Settings } from "lucide-react"
 import { ProjectTimeline } from "./project-timeline"
+import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog"
 import { RfpDocument } from "@/types/api"
 import { formatDistanceToNow, format } from "date-fns"
 import { cn } from "@/lib/utils"
+import { useToast } from "@/components/ui/use-toast"
+import { useRouter } from "next/navigation"
+import { useOrganization } from "@/context/organization-context"
 
 interface ProjectOverviewProps {
   onViewQuestions: () => void;
@@ -26,6 +30,11 @@ export function ProjectOverview({ onViewQuestions, projectId, orgId }: ProjectOv
   const [rfpDocument, setRfpDocument] = useState<RfpDocument | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [sectionsExpanded, setSectionsExpanded] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const { toast } = useToast()
+  const router = useRouter()
+  const { refreshData } = useOrganization()
 
   useEffect(() => {
     const fetchProjectData = async () => {
@@ -151,6 +160,48 @@ export function ProjectOverview({ onViewQuestions, projectId, orgId }: ProjectOv
 
   const unansweredQuestions = totalQuestions - answeredQuestions
 
+  const handleDeleteProject = async () => {
+    try {
+      setIsDeleting(true)
+      
+      const response = await fetch(`/api/projects/${projectId}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to delete project')
+      }
+
+      toast({
+        title: 'Success',
+        description: `Project "${project.name}" has been deleted successfully.`,
+      })
+
+      setShowDeleteDialog(false)
+      
+      // Refresh the organization context to update the switcher
+      await refreshData()
+      
+      // Navigate back to organization page
+      if (orgId) {
+        router.push(`/organizations/${orgId}`)
+      } else {
+        router.push('/organizations')
+      }
+      
+    } catch (error) {
+      console.error('Error deleting project:', error)
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to delete project',
+        variant: 'destructive',
+      })
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
   return (
     <div className="space-y-6 p-12">
       {/* Action buttons */}
@@ -162,6 +213,18 @@ export function ProjectOverview({ onViewQuestions, projectId, orgId }: ProjectOv
           )}
         </div>
         
+        <div className="flex gap-2">
+
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setShowDeleteDialog(true)}
+            className="text-destructive hover:text-destructive border-destructive/20 hover:bg-destructive/10"
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete Project
+          </Button>
+        </div>
       </div>
 
       {/* Consolidated Project Summary */}
@@ -218,6 +281,16 @@ export function ProjectOverview({ onViewQuestions, projectId, orgId }: ProjectOv
       {/* Timeline Section */}
       <ProjectTimeline projectId={projectId} />
 
+      {/* Delete Confirmation Dialog */}
+      <DeleteConfirmationDialog
+        isOpen={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        onConfirm={handleDeleteProject}
+        title="Delete Project"
+        description="This will permanently delete the project and all its associated data."
+        itemName={project.name}
+        isLoading={isDeleting}
+      />
     </div>
   );
 }
