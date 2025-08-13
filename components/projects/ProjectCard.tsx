@@ -84,12 +84,17 @@ export function ProjectCard({ project, onProjectDeleted }: ProjectCardProps) {
           <Card className="hover:shadow-lg hover:bg-accent/50 transition-all duration-200 cursor-pointer flex flex-col h-full min-h-[180px]">
             <CardHeader className="pb-2 flex-shrink-0">
               <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <CardTitle className="text-lg line-clamp-2">{project.name}</CardTitle>
-                  <CardDescription className="mt-1 line-clamp-3 min-h-[60px]">
-                    {project.description || 'No description available'}
-                  </CardDescription>
-                </div>
+                              <div className="flex-1">
+                <CardTitle className="text-lg line-clamp-2">{project.name}</CardTitle>
+                <CardDescription className="mt-1 line-clamp-3 min-h-[60px]">
+                  {project.summary 
+                    ? (project.summary.length > 100 
+                        ? `${project.summary.substring(0, 100)}...` 
+                        : project.summary)
+                    : (project.description || 'No description available')
+                  }
+                </CardDescription>
+              </div>
                 <div className="flex items-center gap-2 ml-2">
                   <Badge variant={status === "Completed" ? "default" : "secondary"} className="flex-shrink-0">
                     {status}

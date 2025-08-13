@@ -227,6 +227,47 @@ export function ProjectOverview({ onViewQuestions, projectId, orgId }: ProjectOv
         </div>
       </div>
 
+      {/* RFP Summary */}
+      {project.summary && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Info className="h-5 w-5" />
+              RFP Summary
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground leading-relaxed">
+              {project.summary}
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Vendor Eligibility */}
+      {project.eligibility && project.eligibility.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Vendor Eligibility Requirements
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-2">
+              {project.eligibility.map((requirement: string, index: number) => (
+                <li key={index} className="flex items-start gap-3">
+                  <div className="h-1.5 w-1.5 rounded-full bg-primary mt-2.5 flex-shrink-0" />
+                  <span className="text-muted-foreground leading-relaxed">
+                    {requirement}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Consolidated Project Summary */}
       <Card>
         <CardContent>
