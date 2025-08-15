@@ -40,7 +40,8 @@ import {
   Receipt,
   CheckSquare,
   Plus,
-  MessageSquare
+  MessageSquare,
+  BookOpen
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -98,6 +99,11 @@ function AppSidebar() {
           title: "Projects",
           url: `/organizations/${orgId}`,
           icon: FolderOpen,
+        },
+        {
+          title: "Knowledge Base",
+          url: `/organizations/${orgId}/knowledge-base`,
+          icon: BookOpen,
         },
         {
           title: "Team",
