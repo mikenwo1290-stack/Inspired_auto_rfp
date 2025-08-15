@@ -44,6 +44,7 @@ model Organization {
   // Relationships
   projects          Project[]
   organizationUsers OrganizationUser[]
+  knowledgeBases    KnowledgeBase[]
 
   @@map("organizations")
 }
@@ -153,4 +154,56 @@ model Source {
   
   @@index([answerId])
   @@map("sources")
+}
+
+model KnowledgeBase {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Foreign key
+  organizationId String
+
+  // Relationships  
+  organization Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  questions    KnowledgeBaseQuestion[]
+
+  @@index([organizationId])
+  @@map("knowledge_bases")
+}
+
+model KnowledgeBaseQuestion {
+  id        String   @id @default(cuid())
+  text      String
+  topic     String?  // Optional categorization
+  tags      String[] // Optional tags for better organization
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Foreign key
+  knowledgeBaseId String
+
+  // Relationships
+  knowledgeBase KnowledgeBase        @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
+  answer        KnowledgeBaseAnswer?
+
+  @@index([knowledgeBaseId])
+  @@map("knowledge_base_questions")
+}
+
+model KnowledgeBaseAnswer {
+  id        String   @id @default(cuid())
+  text      String   @db.Text // Using Text for longer answers
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Foreign key
+  questionId String @unique
+
+  // Relationships
+  question KnowledgeBaseQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@map("knowledge_base_answers")
 }
