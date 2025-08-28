@@ -80,6 +80,9 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY="your-supabase-anon-key"
 # AI Services
 OPENAI_API_KEY="your-openai-api-key"
 LLAMACLOUD_API_KEY="your-llamacloud-api-key"
+# Optional: Internal API key and domain for internal users
+# LLAMACLOUD_API_KEY_INTERNAL="your-internal-llamacloud-api-key"
+# INTERNAL_EMAIL_DOMAIN="@yourdomain.com"  # Defaults to @runllama.ai
 
 # App
 NEXT_PUBLIC_APP_URL="http://localhost:3000"

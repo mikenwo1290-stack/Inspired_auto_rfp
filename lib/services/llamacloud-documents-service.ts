@@ -8,7 +8,7 @@ import { llamaCloudClient } from './llamacloud-client';
 import { organizationAuth } from './organization-auth';
 import { db } from '@/lib/db';
 import { DatabaseError, LlamaCloudConnectionError, NotFoundError } from '@/lib/errors/api-errors';
-import { env, validateEnv } from '@/lib/env';
+import { env, validateEnv, getLlamaCloudApiKey } from '@/lib/env';
 
 /**
  * LlamaCloud documents management service
@@ -27,12 +27,19 @@ export class LlamaCloudDocumentsService implements ILlamaCloudDocumentsService {
         throw new LlamaCloudConnectionError('LlamaCloud API key not configured in environment variables');
       }
 
+      // Get user's email to determine which API key to use
+      const user = await db.user.findUnique({
+        where: { id: userId },
+        select: { email: true }
+      });
+      const apiKey = getLlamaCloudApiKey(user?.email);
+
       // Step 3: Get connected organization
       const organization = await this.getConnectedOrganization(request.organizationId);
 
       // Step 4: Fetch pipelines for the project
       const pipelines = await llamaCloudClient.fetchPipelinesForProject(
-        env.LLAMACLOUD_API_KEY,
+        apiKey,
         organization.llamaCloudProjectId!
       );
 
@@ -41,7 +48,7 @@ export class LlamaCloudDocumentsService implements ILlamaCloudDocumentsService {
       const documentFetchPromises = pipelines.map(async (pipeline) => {
         try {
           const documents = await llamaCloudClient.fetchFilesForPipeline(
-            env.LLAMACLOUD_API_KEY,
+            apiKey,
             pipeline.id
           );
           return documents.map((doc: any) => ({

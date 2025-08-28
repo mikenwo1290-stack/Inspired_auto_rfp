@@ -9,7 +9,7 @@ import { llamaCloudClient } from './llamacloud-client';
 import { organizationAuth } from './organization-auth';
 import { db } from '@/lib/db';
 import { DatabaseError, LlamaCloudConnectionError } from '@/lib/errors/api-errors';
-import { env, validateEnv } from '@/lib/env';
+import { env, validateEnv, getLlamaCloudApiKey } from '@/lib/env';
 
 /**
  * Main LlamaCloud connection management service
@@ -28,9 +28,16 @@ export class LlamaCloudConnectionService implements ILlamaCloudConnectionService
         throw new LlamaCloudConnectionError('LlamaCloud API key not configured in environment variables');
       }
 
-      // Step 3: Verify project access using environment API key
+      // Get user's email to determine which API key to use
+      const user = await db.user.findUnique({
+        where: { id: userId },
+        select: { email: true }
+      });
+
+      // Step 3: Verify project access using appropriate API key based on user
+      const apiKey = getLlamaCloudApiKey(user?.email);
       const verifiedProject = await llamaCloudClient.verifyProjectAccess(
-        env.LLAMACLOUD_API_KEY, 
+        apiKey, 
         request.projectId
       );
 

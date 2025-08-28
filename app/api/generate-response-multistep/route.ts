@@ -5,6 +5,7 @@ import { NextRequest } from 'next/server';
 import { organizationService } from '@/lib/organization-service';
 import { db } from '@/lib/db';
 import { LlamaIndexService } from '@/lib/llama-index-service';
+import { getLlamaCloudApiKey } from '@/lib/env';
 
 export async function POST(request: NextRequest) {
   console.log('🎯 Multi-step API route called');
@@ -117,8 +118,9 @@ export async function POST(request: NextRequest) {
         } else {
           console.log(`📋 Using index names: ${indexNames.join(', ')}`);
           
+          const apiKey = getLlamaCloudApiKey(currentUser.email);
           const llamaIndexService = new LlamaIndexService({
-            apiKey: process.env.LLAMACLOUD_API_KEY!,
+            apiKey: apiKey,
             projectName: project.organization.llamaCloudProjectName || 'Default',
             indexNames: indexNames,
           });

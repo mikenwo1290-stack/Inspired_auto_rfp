@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { apiHandler } from '@/lib/middleware/api-handler';
-import { env, validateEnv } from '@/lib/env';
+import { env, validateEnv, getLlamaCloudApiKey } from '@/lib/env';
+import { organizationService } from '@/lib/organization-service';
 
 export async function GET(request: NextRequest) {
   return apiHandler(async () => {
@@ -13,19 +14,23 @@ export async function GET(request: NextRequest) {
     }
 
     try {
+      // Get current user to determine which API key to use
+      const currentUser = await organizationService.getCurrentUser();
+      const apiKey = getLlamaCloudApiKey(currentUser?.email);
+
       // Fetch projects and organizations from LlamaCloud
       const [projectsResponse, organizationsResponse] = await Promise.all([
         fetch('https://api.cloud.llamaindex.ai/api/v1/projects', {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${env.LLAMACLOUD_API_KEY}`,
+            'Authorization': `Bearer ${apiKey}`,
             'Content-Type': 'application/json',
           },
         }),
         fetch('https://api.cloud.llamaindex.ai/api/v1/organizations', {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${env.LLAMACLOUD_API_KEY}`,
+            'Authorization': `Bearer ${apiKey}`,
             'Content-Type': 'application/json',
           },
         })
