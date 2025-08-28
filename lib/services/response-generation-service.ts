@@ -1,6 +1,7 @@
 import { db } from '@/lib/db';
 import { organizationService } from '@/lib/organization-service';
 import { LlamaIndexService } from '@/lib/llama-index-service';
+import { getLlamaCloudApiKey } from '@/lib/env';
 import { 
   GenerateResponseRequest, 
   GenerateResponseResponse,
@@ -44,7 +45,7 @@ export class ResponseGenerationService {
       return this.generateDefaultResponse(request.question, 'No valid indexes found');
     }
 
-    return this.generateLlamaIndexResponse(request, project, selectedIndexNames);
+    return this.generateLlamaIndexResponse(request, project, selectedIndexNames, currentUser.email);
   }
 
   private async getCurrentUser() {
@@ -136,10 +137,12 @@ export class ResponseGenerationService {
   private async generateLlamaIndexResponse(
     request: GenerateResponseRequest, 
     project: ProjectWithOrganization, 
-    selectedIndexNames: string[]
+    selectedIndexNames: string[],
+    userEmail: string
   ): Promise<GenerateResponseResponse> {
+    const apiKey = getLlamaCloudApiKey(userEmail);
     const llamaIndexService = new LlamaIndexService({
-      apiKey: process.env.LLAMACLOUD_API_KEY!,
+      apiKey: apiKey,
       projectName: project.organization.llamaCloudProjectName || 'Default',
       indexNames: request.useAllIndexes ? undefined : selectedIndexNames,
     });

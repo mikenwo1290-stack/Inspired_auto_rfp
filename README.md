@@ -82,6 +82,9 @@ OPENAI_API_KEY="your-openai-api-key"
 
 # LlamaCloud
 LLAMACLOUD_API_KEY="your-llamacloud-api-key"
+# Optional: Internal API key and domain for internal users
+# LLAMACLOUD_API_KEY_INTERNAL="your-internal-llamacloud-api-key"
+# INTERNAL_EMAIL_DOMAIN="@yourdomain.com"  # Defaults to @runllama.ai
 
 # App Configuration
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
@@ -217,6 +220,8 @@ NEXT_PUBLIC_SUPABASE_URL="your-supabase-url"
 NEXT_PUBLIC_SUPABASE_ANON_KEY="your-supabase-anon-key"
 OPENAI_API_KEY="your-openai-api-key"
 LLAMACLOUD_API_KEY="your-llamacloud-api-key"
+# LLAMACLOUD_API_KEY_INTERNAL="your-internal-llamacloud-api-key"  # Optional: for internal users
+# INTERNAL_EMAIL_DOMAIN="@yourdomain.com"  # Optional: defaults to @runllama.ai
 NEXT_PUBLIC_APP_URL="https://your-domain.com"
 ```
 

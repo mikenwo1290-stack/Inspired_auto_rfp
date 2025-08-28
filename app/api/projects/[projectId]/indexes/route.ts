@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { organizationService } from '@/lib/organization-service';
-import { env } from '@/lib/env';
+import { env, getLlamaCloudApiKey } from '@/lib/env';
 
 // GET /api/projects/[projectId]/indexes - Get project indexes and available indexes
 export async function GET(
@@ -71,11 +71,13 @@ export async function GET(
 
     // Fetch available indexes from LlamaCloud
     try {
+      // Get the appropriate API key based on user's email
+      const apiKey = getLlamaCloudApiKey(currentUser.email);
       
       const pipelinesResponse = await fetch('https://api.cloud.llamaindex.ai/api/v1/pipelines', {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${env.LLAMACLOUD_API_KEY}`,
+          'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
       });
@@ -240,10 +242,13 @@ export async function POST(
 
     // Fetch index names from LlamaCloud to validate and get names
     try {
+      // Get the appropriate API key based on user's email
+      const apiKey = getLlamaCloudApiKey(currentUser.email);
+      
       const pipelinesResponse = await fetch('https://api.cloud.llamaindex.ai/api/v1/pipelines', {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${env.LLAMACLOUD_API_KEY}`,
+          'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
       });

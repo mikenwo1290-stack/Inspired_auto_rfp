@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { organizationService } from '@/lib/organization-service';
 import { llamaCloudConnectionService } from '@/lib/services/llamacloud-connection-service';
-import { env, validateEnv } from '@/lib/env';
+import { env, validateEnv, getLlamaCloudApiKey } from '@/lib/env';
 
 export async function GET() {
 
@@ -76,24 +76,27 @@ export async function GET() {
 }
 
 // Helper function to fetch available LlamaCloud projects
-async function fetchLlamaCloudProjects() {
+async function fetchLlamaCloudProjects(userEmail?: string) {
   try {
     if (!validateEnv()) {
       return [];
     }
 
+    // Get the appropriate API key based on user's email
+    const apiKey = getLlamaCloudApiKey(userEmail);
+
     const [projectsResponse, organizationsResponse] = await Promise.all([
       fetch('https://api.cloud.llamaindex.ai/api/v1/projects', {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${env.LLAMACLOUD_API_KEY}`,
+          'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
       }),
       fetch('https://api.cloud.llamaindex.ai/api/v1/organizations', {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${env.LLAMACLOUD_API_KEY}`,
+          'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
       })
@@ -164,7 +167,7 @@ export async function POST(request: Request) {
     // Attempt automatic LlamaCloud connection if there's exactly one project
     let llamaCloudConnectionResult = null;
     try {
-      const availableProjects = await fetchLlamaCloudProjects();
+      const availableProjects = await fetchLlamaCloudProjects(currentUser.email);
       
       if (availableProjects.length === 1) {
         const project = availableProjects[0];
