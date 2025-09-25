@@ -13,26 +13,23 @@ export async function signInWithMagicLink(formData: FormData) {
   
   // Validate email
   if (!email || !email.includes('@')) {
-    // In a real app, you'd want to return an error message
     redirect('/error')
   }
 
-  // Get the origin for creating the full redirect URL
-  // In production, you should set NEXT_PUBLIC_APP_URL in your environment variables
-  const origin = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-  
+  // Send magic link via Supabase
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: {
-      emailRedirectTo: `${origin}/auth/callback`, // Redirect to our auth callback handler
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback`,
     },
   })
 
   if (error) {
+    console.error('Error sending magic link:', error)
     redirect('/error')
   }
 
-  // Redirect to a confirmation page
+  // Redirect to confirmation page
   redirect('/login/confirmation')
 }
 

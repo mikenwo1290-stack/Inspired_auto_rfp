@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AutoRFP - AI-Powered RFP Response Solution",
+  title: "Inspired Solutions Auto RFP - AI-Powered RFP Response Solution",
   description: "Automatically answer RFP questions with AI document agents powered by LlamaIndex",
 };
 

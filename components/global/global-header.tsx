@@ -148,8 +148,8 @@ function GlobalHeaderContent() {
           {/* Left side - Logo and Breadcrumbs */}
           <div className="flex items-center gap-3">
             <Link href="/organizations" className="flex items-center gap-2">
-              <Image src="/llamaindex_logo.jpeg" alt="AutoRFP" width={24} height={24} />
-              <span className="font-semibold text-lg">AutoRFP</span>
+              <Image src="/llamaindex_logo.jpeg" alt="Inspired Solutions Auto RFP" width={24} height={24} />
+              <span className="font-semibold text-lg">Inspired Solutions Auto RFP</span>
             </Link>
             
             {/* Breadcrumbs */}

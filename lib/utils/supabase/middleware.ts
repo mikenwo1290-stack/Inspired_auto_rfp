@@ -37,6 +37,15 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
+  // For development: Allow access without authentication only for specific paths
+  // Remove this in production!
+  if (process.env.NODE_ENV === 'development' && 
+      (request.nextUrl.pathname.startsWith('/login') || 
+       request.nextUrl.pathname.startsWith('/auth') ||
+       request.nextUrl.pathname === '/')) {
+    return supabaseResponse
+  }
+
   if (
     !user &&
     !request.nextUrl.pathname.startsWith('/login') &&
