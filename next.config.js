@@ -12,6 +12,22 @@ const nextConfig = {
   },
   // Other Next.js config options
   reactStrictMode: true,
+  // Configure for Replit environment  
+  serverExternalPackages: [],
+  // Allow all hosts for Replit proxy
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-cache, no-store, must-revalidate',
+          },
+        ],
+      },
+    ];
+  },
 }
 
 module.exports = nextConfig; 
