@@ -6,6 +6,12 @@ export async function updateSession(request: NextRequest) {
     request,
   })
 
+  // For development: Skip Supabase authentication to allow app to load
+  // TODO: Configure proper Supabase credentials for authentication
+  if (process.env.NODE_ENV === 'development') {
+    return supabaseResponse
+  }
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -36,15 +42,6 @@ export async function updateSession(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser()
-
-  // For development: Allow access without authentication only for specific paths
-  // Remove this in production!
-  if (process.env.NODE_ENV === 'development' && 
-      (request.nextUrl.pathname.startsWith('/login') || 
-       request.nextUrl.pathname.startsWith('/auth') ||
-       request.nextUrl.pathname === '/')) {
-    return supabaseResponse
-  }
 
   if (
     !user &&
