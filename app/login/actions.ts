@@ -17,10 +17,13 @@ export async function signInWithMagicLink(formData: FormData) {
   }
 
   // Send magic link via Supabase
+  const redirectUrl = `${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback`
+  console.log('Sending magic link with redirect URL:', redirectUrl)
+  
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: {
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback`,
+      emailRedirectTo: redirectUrl,
     },
   })
 
