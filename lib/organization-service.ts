@@ -300,6 +300,9 @@ export const organizationService = {
           organizationId,
         },
       },
+      select: {
+        role: true
+      }
     });
 
     return orgUser?.role || null;
