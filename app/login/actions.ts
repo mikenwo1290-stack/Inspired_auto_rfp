@@ -19,6 +19,10 @@ export async function signInWithMagicLink(formData: FormData) {
   // Send magic link via Supabase
   const redirectUrl = `${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback`
   console.log('Sending magic link with redirect URL:', redirectUrl)
+  console.log('Environment variables:', {
+    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+    NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL
+  })
   
   const { error } = await supabase.auth.signInWithOtp({
     email,
