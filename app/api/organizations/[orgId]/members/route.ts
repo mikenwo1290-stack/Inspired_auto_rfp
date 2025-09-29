@@ -19,7 +19,7 @@ export async function GET(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const members = await organizationService.listMembers(orgId);
+    const members = await organizationService.getOrganizationMembers(orgId);
 
     return NextResponse.json({ success: true, members });
   } catch (error) {

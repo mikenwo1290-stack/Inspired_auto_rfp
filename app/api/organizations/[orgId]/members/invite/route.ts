@@ -26,7 +26,7 @@ export async function POST(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    await organizationService.inviteMember(orgId, normalizedEmail, role ?? "member", currentUser.id);
+    await organizationService.addUserToOrganization(orgId, normalizedEmail, role ?? "member");
 
     return NextResponse.json({ success: true });
   } catch (error) {
