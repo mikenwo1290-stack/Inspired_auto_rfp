@@ -340,4 +340,168 @@ export const organizationService = {
 
     return ["owner", "admin"].includes(orgUser.role);
   },
+
+  // Knowledge base operations
+  async listKnowledgeBases(organizationId: string) {
+    return db.knowledgeBase.findMany({
+      where: { organizationId },
+      orderBy: { createdAt: 'desc' },
+    });
+  },
+
+  async createKnowledgeBase(
+    organizationId: string,
+    data: { name: string; description?: string | null; [key: string]: unknown }
+  ) {
+    const { name, description } = data;
+    return db.knowledgeBase.create({
+      data: {
+        name,
+        description: description ?? null,
+        organizationId,
+      },
+    });
+  },
+
+  async getKnowledgeBase(
+    organizationId: string,
+    knowledgeBaseId: string,
+    options?: { includeQuestions?: boolean }
+  ) {
+    const includeQuestions = options?.includeQuestions === true;
+    return db.knowledgeBase.findFirst({
+      where: { id: knowledgeBaseId, organizationId },
+      include: includeQuestions
+        ? {
+            questions: {
+              include: {
+                answer: true,
+              },
+              orderBy: { createdAt: 'desc' },
+            },
+          }
+        : undefined,
+    });
+  },
+
+  async updateKnowledgeBase(
+    organizationId: string,
+    knowledgeBaseId: string,
+    data: { name?: string; description?: string | null }
+  ) {
+    const existing = await db.knowledgeBase.findFirst({
+      where: { id: knowledgeBaseId, organizationId },
+      select: { id: true },
+    });
+    if (!existing) {
+      return null;
+    }
+    return db.knowledgeBase.update({
+      where: { id: knowledgeBaseId },
+      data,
+    });
+  },
+
+  async deleteKnowledgeBase(organizationId: string, knowledgeBaseId: string) {
+    const existing = await db.knowledgeBase.findFirst({
+      where: { id: knowledgeBaseId, organizationId },
+      select: { id: true },
+    });
+    if (!existing) {
+      return null;
+    }
+    return db.knowledgeBase.delete({ where: { id: knowledgeBaseId } });
+  },
+
+  // Knowledge base question operations
+  async listKnowledgeBaseQuestions(organizationId: string, knowledgeBaseId: string) {
+    return db.knowledgeBaseQuestion.findMany({
+      where: {
+        knowledgeBaseId,
+        knowledgeBase: { organizationId },
+      },
+      include: { answer: true },
+      orderBy: { createdAt: 'desc' },
+    });
+  },
+
+  async createKnowledgeBaseQuestion(
+    organizationId: string,
+    knowledgeBaseId: string,
+    data: { text: string; topic?: string | null; tags?: string[]; [key: string]: unknown }
+  ) {
+    const kb = await db.knowledgeBase.findFirst({
+      where: { id: knowledgeBaseId, organizationId },
+      select: { id: true },
+    });
+    if (!kb) {
+      throw new Error('Knowledge base not found');
+    }
+    const { text, topic, tags } = data;
+    return db.knowledgeBaseQuestion.create({
+      data: {
+        text,
+        topic: topic ?? null,
+        tags: tags ?? [],
+        knowledgeBaseId,
+      },
+    });
+  },
+
+  async getKnowledgeBaseQuestion(
+    organizationId: string,
+    knowledgeBaseId: string,
+    questionId: string
+  ) {
+    return db.knowledgeBaseQuestion.findFirst({
+      where: {
+        id: questionId,
+        knowledgeBaseId,
+        knowledgeBase: { organizationId },
+      },
+      include: { answer: true },
+    });
+  },
+
+  async updateKnowledgeBaseQuestion(
+    organizationId: string,
+    knowledgeBaseId: string,
+    questionId: string,
+    data: { text?: string; topic?: string | null; tags?: string[] }
+  ) {
+    const existing = await db.knowledgeBaseQuestion.findFirst({
+      where: {
+        id: questionId,
+        knowledgeBaseId,
+        knowledgeBase: { organizationId },
+      },
+      select: { id: true },
+    });
+    if (!existing) {
+      return null;
+    }
+    return db.knowledgeBaseQuestion.update({
+      where: { id: questionId },
+      data,
+    });
+  },
+
+  async deleteKnowledgeBaseQuestion(
+    organizationId: string,
+    knowledgeBaseId: string,
+    questionId: string
+  ) {
+    const existing = await db.knowledgeBaseQuestion.findFirst({
+      where: {
+        id: questionId,
+        knowledgeBaseId,
+        knowledgeBase: { organizationId },
+      },
+      select: { id: true },
+    });
+    if (!existing) {
+      return null;
+    }
+    return db.knowledgeBaseQuestion.delete({ where: { id: questionId } });
+  },
 }; 
