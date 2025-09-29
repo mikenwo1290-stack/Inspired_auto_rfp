@@ -1,56 +1,41 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { organizationService } from '@/lib/organization-service';
+import { NextRequest, NextResponse } from "next/server";
 
-// Get organization members
+import { organizationService } from "@/lib/organization-service";
+
 export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  _request: NextRequest,
+  { params }: { params: Promise<{ orgId: string }> }
 ) {
   try {
-    const { id } = await params;
-    const organizationId = id;
+    const { orgId } = await params;
+
     const currentUser = await organizationService.getCurrentUser();
-    
     if (!currentUser) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    
-    // Check if user is a member of this organization
-    const isMember = await organizationService.isUserOrganizationMember(
-      currentUser.id,
-      organizationId
-    );
-    
+
+    const isMember = await organizationService.isUserOrganizationMember(currentUser.id, orgId);
     if (!isMember) {
-      return NextResponse.json(
-        { error: 'You do not have access to this organization' },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
-    
-    const members = await organizationService.getOrganizationMembers(organizationId);
-    
-    return NextResponse.json(members);
+
+    const members = await organizationService.listMembers(orgId);
+
+    return NextResponse.json({ success: true, members });
   } catch (error) {
-    console.error('Error fetching organization members:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch organization members' },
-      { status: 500 }
-    );
+    console.error("Failed to fetch organization members", error);
+    return NextResponse.json({ error: "Failed to fetch members" }, { status: 500 });
   }
 }
 
 // Add a new member to the organization
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ orgId: string }> }
 ) {
   try {
-    const { id } = await params;
-    const organizationId = id;
+    const { orgId } = await params;
+    const organizationId = orgId;
     const { email, role } = await request.json();
     const currentUser = await organizationService.getCurrentUser();
     

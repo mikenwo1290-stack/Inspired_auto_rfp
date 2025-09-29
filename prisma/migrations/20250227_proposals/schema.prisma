@@ -1,0 +1,78 @@
+// This file mirrors the datamodel used for the 20250227_proposals migration.
+// Kept for reference when inspecting the migration in isolation.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model ProposalTemplate {
+  id             String        @id @default(cuid())
+  name           String
+  description    String?
+  fileKey        String
+  fileSize       Int
+  mimeType       String
+  uploadedAt     DateTime      @default(now())
+  organizationId String
+  uploadedById   String?
+  metadata       Json?
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  uploadedBy     User?         @relation("UploadedTemplates", fields: [uploadedById], references: [id], onDelete: SetNull)
+  proposals      Proposal[]
+
+  @@index([organizationId])
+  @@map("proposal_templates")
+}
+
+model Proposal {
+  id             String        @id @default(cuid())
+  organizationId String
+  templateId     String
+  fileKey        String
+  fileName       String
+  fileSize       Int
+  generatedAt    DateTime      @default(now())
+  generatedById  String?
+  status         String        @default("generated")
+  data           Json
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  template       ProposalTemplate @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  generatedBy    User?         @relation("GeneratedProposals", fields: [generatedById], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([templateId])
+  @@map("proposals")
+}
+
+model Organization {
+  id                String             @id @default(cuid())
+  name              String
+  slug              String             @unique
+  description       String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  knowledgeBases    KnowledgeBase[]
+  organizationUsers OrganizationUser[]
+  projects          Project[]
+  proposalTemplates ProposalTemplate[]
+  proposals         Proposal[]
+}
+
+model User {
+  id                 String              @id
+  email              String              @unique
+  name               String?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  organizationUsers  OrganizationUser[]
+  uploadedTemplates  ProposalTemplate[]  @relation("UploadedTemplates")
+  generatedProposals Proposal[]          @relation("GeneratedProposals")
+}
+
+// Other models omitted for brevity in this scoped schema snapshot.

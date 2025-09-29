@@ -1,16 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
 import { organizationService } from '@/lib/organization-service';
 
-// Get specific knowledge base
+// Get organization by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string; kbId: string }> }
+  { params }: { params: Promise<{ orgId: string }> }
 ) {
   try {
-    const { id, kbId } = await params;
-    const organizationId = id;
 
+  
+
+    const { orgId } = await params;
+
+
+    const organizationId = orgId;
+    
+
+    // Get user from auth service - only once
     const currentUser = await organizationService.getCurrentUser();
     
     if (!currentUser) {
@@ -32,56 +38,36 @@ export async function GET(
         { status: 403 }
       );
     }
-
-    const knowledgeBase = await db.knowledgeBase.findUnique({
-      where: {
-        id: kbId,
-        organizationId,
-      },
-      include: {
-        questions: {
-          include: {
-            answer: true,
-          },
-          orderBy: {
-            createdAt: 'desc',
-          },
-        },
-        _count: {
-          select: {
-            questions: true,
-          },
-        },
-      },
-    });
-
-    if (!knowledgeBase) {
+    
+    // Use the optimized query with selective loading
+    const organization = await organizationService.getOrganization(organizationId, true);
+    
+    if (!organization) {
       return NextResponse.json(
-        { error: 'Knowledge base not found' },
+        { error: 'Organization not found' },
         { status: 404 }
       );
     }
 
-    return NextResponse.json(knowledgeBase);
+    return NextResponse.json(organization);
   } catch (error) {
-    console.error('Error fetching knowledge base:', error);
+    console.error('Error fetching organization:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch knowledge base' },
+      { error: 'Failed to fetch organization' },
       { status: 500 }
     );
   }
 }
 
-// Update knowledge base
+// Update organization
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string; kbId: string }> }
+  { params }: { params: Promise<{ orgId: string }> }
 ) {
   try {
-    const { id, kbId } = await params;
-    const organizationId = id;
+    const { orgId } = await params;
+    const organizationId = orgId;
     const { name, description } = await request.json();
-
     const currentUser = await organizationService.getCurrentUser();
     
     if (!currentUser) {
@@ -91,7 +77,7 @@ export async function PATCH(
       );
     }
     
-    // Check if user has admin/owner permissions
+    // Check if user is an admin or owner of this organization
     const userRole = await organizationService.getUserOrganizationRole(
       currentUser.id,
       organizationId
@@ -99,48 +85,39 @@ export async function PATCH(
     
     if (!userRole || !['admin', 'owner'].includes(userRole)) {
       return NextResponse.json(
-        { error: 'You do not have permission to update knowledge bases' },
+        { error: 'You do not have permission to update this organization' },
         { status: 403 }
       );
     }
-
-    const knowledgeBase = await db.knowledgeBase.update({
-      where: {
-        id: kbId,
-        organizationId,
-      },
-      data: {
-        name,
-        description,
-      },
-      include: {
-        _count: {
-          select: {
-            questions: true,
-          },
-        },
-      },
-    });
-
-    return NextResponse.json(knowledgeBase);
+    
+    const updateData: { name?: string; description?: string } = {};
+    
+    if (name) updateData.name = name;
+    if (description !== undefined) updateData.description = description;
+    
+    const organization = await organizationService.updateOrganization(
+      organizationId,
+      updateData
+    );
+    
+    return NextResponse.json(organization);
   } catch (error) {
-    console.error('Error updating knowledge base:', error);
+    console.error('Error updating organization:', error);
     return NextResponse.json(
-      { error: 'Failed to update knowledge base' },
+      { error: 'Failed to update organization' },
       { status: 500 }
     );
   }
 }
 
-// Delete knowledge base
+// Delete organization
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string; kbId: string }> }
+  { params }: { params: Promise<{ orgId: string }> }
 ) {
   try {
-    const { id, kbId } = await params;
-    const organizationId = id;
-
+    const { orgId } = await params;
+    const organizationId = orgId;
     const currentUser = await organizationService.getCurrentUser();
     
     if (!currentUser) {
@@ -150,32 +127,27 @@ export async function DELETE(
       );
     }
     
-    // Check if user has admin/owner permissions
+    // Only owners can delete organizations
     const userRole = await organizationService.getUserOrganizationRole(
       currentUser.id,
       organizationId
     );
     
-    if (!userRole || !['admin', 'owner'].includes(userRole)) {
+    if (userRole !== 'owner') {
       return NextResponse.json(
-        { error: 'You do not have permission to delete knowledge bases' },
+        { error: 'Only organization owners can delete organizations' },
         { status: 403 }
       );
     }
-
-    await db.knowledgeBase.delete({
-      where: {
-        id: kbId,
-        organizationId,
-      },
-    });
-
+    
+    await organizationService.deleteOrganization(organizationId);
+    
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error deleting knowledge base:', error);
+    console.error('Error deleting organization:', error);
     return NextResponse.json(
-      { error: 'Failed to delete knowledge base' },
+      { error: 'Failed to delete organization' },
       { status: 500 }
     );
   }
-}
+} 

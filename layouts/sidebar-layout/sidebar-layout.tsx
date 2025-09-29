@@ -41,7 +41,8 @@ import {
   CheckSquare,
   Plus,
   MessageSquare,
-  BookOpen
+  BookOpen,
+  FileSignature
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -104,6 +105,11 @@ function AppSidebar() {
           title: "Knowledge Base",
           url: `/organizations/${orgId}/knowledge-base`,
           icon: BookOpen,
+        },
+        {
+          title: "Generate Proposal",
+          url: `/organizations/${orgId}/proposals`,
+          icon: FileSignature,
         },
         {
           title: "Team",

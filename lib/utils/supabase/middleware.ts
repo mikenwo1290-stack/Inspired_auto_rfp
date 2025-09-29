@@ -6,11 +6,8 @@ export async function updateSession(request: NextRequest) {
     request,
   })
 
-  // For development: Skip Supabase authentication to allow app to load
-  // TODO: Configure proper Supabase credentials for authentication
-  if (process.env.NODE_ENV === 'development') {
-    return supabaseResponse
-  }
+  // Note: Authentication is now required even in development
+  // Make sure to configure proper Supabase credentials in .env.local
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

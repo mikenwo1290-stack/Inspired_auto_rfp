@@ -19,6 +19,7 @@ export { KnowledgeBaseContent } from './KnowledgeBaseContent';
 export { LlamaCloudConnection } from './LlamaCloudConnection';
 export { LlamaCloudConnectionDialog } from './LlamaCloudConnectionDialog';
 export { LlamaCloudDocuments } from './LlamaCloudDocuments';
+export { ProposalGenerationContent } from './ProposalGenerationContent';
 export { SettingsContent } from './SettingsContent';
 
 // Types

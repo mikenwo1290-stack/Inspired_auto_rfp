@@ -320,4 +320,24 @@ export const organizationService = {
 
     return !!orgUser;
   },
+
+  async canManageOrganization(userId: string, organizationId: string) {
+    const orgUser = await db.organizationUser.findUnique({
+      where: {
+        userId_organizationId: {
+          userId,
+          organizationId,
+        },
+      },
+      select: {
+        role: true,
+      },
+    });
+
+    if (!orgUser) {
+      return false;
+    }
+
+    return ["owner", "admin"].includes(orgUser.role);
+  },
 }; 
