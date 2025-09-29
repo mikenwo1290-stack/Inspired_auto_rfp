@@ -1,0 +1,24 @@
+
+> auto_rfp@0.1.0 build C:\Users\miken\OneDrive\RFP opensource repo\auto_rfp
+> next build
+
+   Γû▓ Next.js 15.3.1
+   - Environments: .env.local, .env
+
+   Creating an optimized production build ...
+ Γ£ô Compiled successfully in 4.3min
+   Linting and checking validity of types ...
+Failed to compile.
+
+./app/api/organizations/[orgId]/members/invite/route.ts:29:31
+Type error: Property 'inviteMember' does not exist on type '{ createOrganization(name: string, description: string | null | undefined, userId: string): Promise<{ name: string; id: string; description: string | null; createdAt: Date; updatedAt: Date; ... 4 more ...; llamaCloudOrgName: string | null; }>; ... 23 more ...; deleteKnowledgeBaseQuestion(organizationId: string, know...'.
+
+  27 |     }
+  28 |
+> 29 |     await organizationService.inviteMember(orgId, normalizedEmail, role ?? "member", currentUser.id);
+     |                               ^
+  30 |
+  31 |     return NextResponse.json({ success: true });
+  32 |   } catch (error) {
+Next.js build worker exited with code: 1 and signal: null
+ΓÇëELIFECYCLEΓÇë Command failed with exit code 1.
